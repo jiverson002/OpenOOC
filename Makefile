@@ -1,5 +1,5 @@
 # Name of project
-PROJECT := OpenOOC
+PROJECT := OPENOOC
 
 
 # Name of library
