@@ -24,10 +24,11 @@ mm(
 {
   size_t i, j, k;
 
-  #define a(R,C) a[R*n+C]
-  #define b(R,C) b[R*p+C]
-  #define c(R,C) c[R*p+C]
+#define a(R,C) a[R*n+C]
+#define b(R,C) b[R*p+C]
+#define c(R,C) c[R*p+C]
 
+#pragma omp parallel for schedule(static) default(none) private(j,k)
   for (i=0; i<m; ++i) {
     for (j=0; j<n; ++j) {
       c(i,j) = a(i,0)*b(0,j);
@@ -37,9 +38,9 @@ mm(
     }
   }
 
-  #undef a
-  #undef b
-  #undef c
+#undef a
+#undef b
+#undef c
 }
 
 
