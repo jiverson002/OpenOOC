@@ -1,7 +1,7 @@
 # Modules in the project (you could 'find' these, but stating them explicitly
 # allows for subdirectories like 'tmp' or 'doc' without upsetting the build
 # process.
-MODULES := apps src
+MODULES := apps bench src
 
 
 # List of all non-source files/directories that are part of the distribution
