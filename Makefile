@@ -2,6 +2,10 @@
 # allows for subdirectories like 'tmp' or 'doc' without upsetting the build
 # process.
 MODULES := apps src
+
+
+# List of all non-source files/directories that are part of the distribution
+AUXFILES := AUTHORS ChangeLog COPYING Makefile NEWS README.md
  
 
 # Default target
@@ -134,6 +138,27 @@ clean:
 # Make clean and remove executables and libraries 
 realclean: clean
 	$(RM) bin/* include/* lib/*
+
+
+# Aggregation of all files
+SRCFILES := $(foreach mod, $(MODULES), $(foreach lib, $($(mod)_LIBRARIES), \
+  $(addprefix $(mod)/,$($(lib)_SOURCES))))
+HDRFILES := $(foreach mod, $(MODULES), $(foreach lib, $($(mod)_LIBRARIES), \
+  $(addprefix $(mod)/,$($(lib)_HEADERS))))
+SRCFILES += $(foreach mod, $(MODULES), $(foreach bin, $($(mod)_PROGRAMS), \
+  $(addprefix $(mod)/,$($(bin)_SOURCES))))
+HDRFILES += $(foreach mod, $(MODULES), $(foreach bin, $($(mod)_PROGRAMS), \
+  $(addprefix $(mod)/,$($(bin)_HEADERS))))
+BLDFILES := $(foreach mod, $(MODULES), $(mod)/build.mk)
+ALLFILES := $(addprefix $(ROOTDIR), $(SRCFILES) $(HDRFILES) $(AUXFILES) $(BLDFILES))
+
+
+# Print out any TODO or FIXME notations
+todolist:
+	-@for file in $(ALLFILES:$(ROOTDIR)Makefile=); do \
+    fgrep -H -e TODO -e FIXME $$file; \
+  done; \
+  true
 #}}}1
 
 
