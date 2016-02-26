@@ -41,9 +41,25 @@ LDFLAGS  :=
 
 
 #-------------------------------------------------------------------------------
+# COMPILATION INFO
+#-------------------------------------------------------------------------------
+#{{{1
+# Root directory where Makefile is located
+ROOTDIR := $(dir $(lastword $(MAKEFILE_LIST)))
+# Date of compilation
+DATE    := $(shell date)
+# Git commit of compilation
+COMMIT  := $(shell cd $(ROOTDIR) && git rev-parse --short HEAD)
+#}}}1
+
+
+#-------------------------------------------------------------------------------
 # TEMPLATES
 #-------------------------------------------------------------------------------
 #{{{1
+DEPFILES :=
+
+
 # Including a module's build.mk
 define MK_template
 include $(ROOTDIR)$(1)/build.mk
@@ -55,8 +71,9 @@ define RULES_template
 obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
 	@$(ECHO) "  CC       $(1)/$$(@F)"
 	@(test -d obj/$(1) || mkdir -p obj/$(1)) && \
-  (test -d dep/$(1) || mkdir -p dep/$(1)) && \
-  $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/`basename $$(@F) .o`.d -c $$< -o $$@
+    (test -d dep/$(1) || mkdir -p dep/$(1)) && \
+    $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/`basename $$(@F) .o`.d \
+      -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
 endef
 
  
@@ -64,24 +81,25 @@ endef
 # (Depending on its sources' object files and any libraries.)
 # Also adds a module's dependency files to the global list.
 define PROGRAM_template
-DEPFILES := $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+
 bin/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES))) \
-          $(if $($(1)_LDADD), $(foreach library,$($(1)_LDADD),lib/$(library))) \
-          $(if $($(2)_LDADD), $(foreach library,$($(2)_LDADD),lib/$(library)))
+          $(foreach library,$($(1)_LDADD),lib/$(library)) \
+          $(foreach library,$($(2)_LDADD),lib/$(library))
 	@$(ECHO) "  LD       $$@"
 	@(test -d bin || mkdir -p bin) && \
-  $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) $$^ -o $$@
+    $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) $$^ -o $$@
 endef
 
  
 # Setting a module's build rules for archive targets.
 # (Depending on its sources' object files.)
 define LIBRARY_template
-DEPFILES := $(DEPFILES) $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+
 lib/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES)))
 	@$(ECHO) "  AR       $$@"
-	@(test -d lib || mkdir -p lib) && \
-  $$(AR) $$(ARFLAGS) $$@ $$?
+	@(test -d lib || mkdir -p lib) && $$(AR) $$(ARFLAGS) $$@ $$?
 endef
 
  
@@ -98,10 +116,6 @@ endef
 # INSTANTIATE TEMPLATES
 #-------------------------------------------------------------------------------
 #{{{1
-# Root directory where Makefile is located
-ROOTDIR := $(dir $(lastword $(MAKEFILE_LIST)))
-
- 
 # Now, instantiating the templates for each module.
 $(foreach mod, $(MODULES),$(eval $(call MK_template,$(mod))))
 $(foreach mod, $(MODULES),$(eval $(call RULES_template,$(mod))))
