@@ -1,45 +1,28 @@
-# Name of project
-PROJECT := OPENOOC
+# Modules in the project (you could 'find' these, but stating them explicitly
+# allows for subdirectories like 'tmp' or 'doc' without upsetting the build
+# process.
+MODULES := apps src
+ 
 
-
-# Name of library
-LIBRARY := openooc
-
-
-# Directory which holds $(LIBRARY).h
-#   $(LIBRARY).h MUST contain the version information for the project in the
-#   following macros: $(PROJECT)_MAJOR, $(PROJECT)_MINOR, $(PROJECT)_PATCH, and
-#   optionally $(PROJECT)_RCAND.
-INCLUDE := src/include
-
-
-# Sub-directories holding lib sources
-PROJDIRS := src
-
-
-# Sub-directories holding app sources
-APPSDIRS := apps
-
-
-# List of all non-source files/directories that are part of the distribution
-AUXFILES := AUTHORS ChangeLog COPYING Makefile NEWS README.md
+# Default target
+default: all
 
 
 #-------------------------------------------------------------------------------
-# PROGRAMS
+# DEFAULT PROGRAMS
 #-------------------------------------------------------------------------------
 #{{{1
 # Program variables
-AR := ar
-RM := rm -f
+AR   := ar
+RM   := rm -f
+CC   := cc
+LD   := cc
 ECHO := echo
-CC := cc
-LD := cc
 #}}}1
 
 
 #-------------------------------------------------------------------------------
-# FLAGS
+# DEFAULT FLAGS
 #-------------------------------------------------------------------------------
 #{{{1
 ARFLAGS  := crsP
@@ -53,123 +36,80 @@ LDFLAGS  :=
 #}}}1
 
 
-#===============================================================================
-# MUST NOT CHANGE ANYTHING BELOW HERE
-#===============================================================================
-
-
 #-------------------------------------------------------------------------------
-# INTERNAL VARIABLES
+# TEMPLATES
 #-------------------------------------------------------------------------------
 #{{{1
-# Version information
-DATE    := $(shell date)
-COMMIT  := $(shell git rev-parse --short HEAD)
-VERSION := $(shell grep -e '^\#define $(PROJECT)_MAJOR' \
-                        -e '^\#define $(PROJECT)_MINOR' \
-                        -e '^\#define $(PROJECT)_PATCH' \
-                        -e '^\#define $(PROJECT)_RCAND' \
-                        $(INCLUDE)/$(LIBRARY).h \
-                 | awk '{print $$3}' \
-                 | paste -d ' ' - - - - \
-                 | awk '{printf "%d.%d.%d%s", $$1,$$2,$$3,$$4}')
+# Including a module's build.mk
+define MK_template
+include $(ROOTDIR)$(1)/build.mk
+endef
+
+ 
+# Setting a module's build rules for object files in <module>/obj.
+define RULES_template
+obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
+	@$(ECHO) "  CC       $(1)/$$(@F)"
+	@(test -d obj/$(1) || mkdir -p obj/$(1)) && \
+  (test -d dep/$(1) || mkdir -p dep/$(1)) && \
+  $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/`basename $$(@F) .o`.d -c $$< -o $$@
+endef
+
+ 
+# Setting a module's build rules for executable targets.
+# (Depending on its sources' object files and any libraries.)
+# Also adds a module's dependency files to the global list.
+define PROGRAM_template
+DEPFILES := $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+bin/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES))) \
+          $(if $($(1)_LDADD), $(foreach library,$($(1)_LDADD),lib/$(library))) \
+          $(if $($(2)_LDADD), $(foreach library,$($(2)_LDADD),lib/$(library)))
+	@$(ECHO) "  LD       $$@"
+	@(test -d bin || mkdir -p bin) && \
+  $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) $$^ -o $$@
+endef
+
+ 
+# Setting a module's build rules for archive targets.
+# (Depending on its sources' object files.)
+define LIBRARY_template
+DEPFILES := $(DEPFILES) $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+lib/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES)))
+	@$(ECHO) "  AR       $$@"
+	@(test -d lib || mkdir -p lib) && \
+  $$(AR) $$(ARFLAGS) $$@ $$?
+endef
+
+ 
+# Linking a module's global includes into the global include directory
+# (where they will be available as <module>/filename.h).
+define INCLUDE_template
+$$(shell (test -d include || mkdir -p include))
+$$(shell (test -h include/$(1) || ln -s ../$(ROOTDIR)$(1)/include include/$(1)))
+endef
 #}}}1
 
-
+ 
 #-------------------------------------------------------------------------------
-# FILES
-#-------------------------------------------------------------------------------
-#{{{1
-SRCFILES    := $(shell find $(PROJDIRS) -type f -name "*.c")
-HDRFILES    := $(shell find $(PROJDIRS) -type f -name "*.h")
-APPFILES    := $(shell find $(APPSDIRS) -type f -name "*.c")
-
-OBJFILES    := $(patsubst %.c,%.o,$(SRCFILES))
-BINFILES    := $(patsubst %.c,%,$(APPFILES))
-TSTFILES    := $(patsubst %.c,%_t,$(SRCFILES))
-
-DEPFILES    := $(patsubst %.c,%.d,$(SRCFILES))
-BINDEPFILES := $(patsubst %.c,%.d,$(APPFILES))
-TSTDEPFILES := $(patsubst %,%.d,$(TSTFILES))
-
-ALLFILES    := $(SRCFILES) $(HDRFILES) $(APPFILES) $(AUXFILES)
-
-LIB         := lib$(LIBRARY).a
-DIST        := $(LIBRARY)-$(VERSION).tar.gz
-#}}}1
-
-
-#-------------------------------------------------------------------------------
-# COMPILE TARGETS
+# INSTANTIATE TEMPLATES
 #-------------------------------------------------------------------------------
 #{{{1
-all: $(LIB) $(BINFILES)
+# Root directory where Makefile is located
+ROOTDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
--include $(DEPFILES) $(BINDEPFILES) $(TSTDEPFILES)
+ 
+# Now, instantiating the templates for each module.
+$(foreach mod, $(MODULES),$(eval $(call MK_template,$(mod))))
+$(foreach mod, $(MODULES),$(eval $(call RULES_template,$(mod))))
+$(foreach mod, $(MODULES),$(eval $(foreach bin,$($(mod)_PROGRAMS),\
+  $(call PROGRAM_template,$(bin),$(mod)))))
+$(foreach mod, $(MODULES),$(eval $(foreach lib,$($(mod)_LIBRARIES),\
+  $(call LIBRARY_template,$(lib),$(mod)))))
+$(foreach mod, $(MODULES),$(eval $(call INCLUDE_template,$(mod))))
 
-$(LIB): $(OBJFILES)
-	@echo "  AR       $@"
-	@$(AR) $(ARFLAGS) $@ $?
-
-%.o: %.c Makefile
-	@echo "  CC       $@"
-	@$(CC) $(CFLAGS) -MMD -MP -I$(INCLUDE) \
-         -DVERSION="$(VERSION)" -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" \
-         -c $< -o $@
-
-%: %.c Makefile $(LIB)
-	@echo "  CC       $@"
-	@$(CC) $(CFLAGS) -MMD -MP -I$(INCLUDE) $(LDFLAGS) \
-         -DVERSION="$(VERSION)" -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" \
-         $< $(LIB) -o $@
-
-%_t: %.c Makefile $(LIB)
-	@echo "  CC       $@"
-	@$(CC) $(CFLAGS) -MMD -MP -I$(INCLUDE) $(LDFLAGS) -DTEST \
-         -DVERSION="$(VERSION)" -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" \
-         $< $(LIB) -o $@
-
-# FIXME This will not update distribution if a file in a directory included in
-# ALLFILES is updated/added.
-$(DIST): $(ALLFILES)
-	-tar czf $(DIST) $(ALLFILES)
-#}}}1
-
-
-#-------------------------------------------------------------------------------
-# PHONY TARGETS
-#-------------------------------------------------------------------------------
-#{{{1
-check: $(TSTFILES)
-	-@rc=0; count=0; \
-    for file in $(TSTFILES); do \
-      ./$$file; \
-      ret=$$?; \
-      rc=`expr $$rc + $$ret`; count=`expr $$count + 1`; \
-      if [ $$ret -eq 0 ] ; then \
-        echo -n "  PASS"; \
-      else \
-        echo -n "  FAIL"; \
-      fi; \
-      echo "     $$file"; ./$$file; \
-    done; \
-    echo; \
-    echo "Tests executed: $$count  Tests failed: $$rc"
-
-clean:
-	-@$(RM) $(wildcard $(OBJFILES) $(BINFILES) $(TSTFILES) \
-    $(DEPFILES) $(BINDEPFILES) $(TSTDEPFILES) $(LIB))
-
-dist: $(DIST)
-
-distclean: clean
-	-@$(RM) $(wildcard $(DIST))
-
-todolist:
-	-@for file in $(ALLFILES:Makefile=); do \
-    fgrep -H -e TODO -e FIXME $$file; \
-    done; \
-    true
+ 
+# Include the dependency files (generated by GCC's -MMD option)
+-include $(sort $(DEPFILES))
 #}}}1
 
 
@@ -177,7 +117,23 @@ todolist:
 # SPECIAL TARGETS
 #-------------------------------------------------------------------------------
 #{{{1
-.PHONY: check clean dist distclean todolist
+# Make all modules programs and libraries
+all: \
+  $(foreach mod, $(MODULES), $(if $(strip $($(mod)_LIBRARIES)),\
+    lib/$($(mod)_LIBRARIES))) \
+  $(foreach mod, $(MODULES), $(if $(strip $($(mod)_PROGRAMS)),\
+    bin/$($(mod)_PROGRAMS)))
+ 
+
+# Remove object (*.o) and dependency (*.d) files
+clean:
+	$(RM) $(foreach mod,$(MODULES),obj/$(mod)/*.o) \
+    $(foreach mod,$(MODULES),dep/$(mod)/*.d)
+
+
+# Make clean and remove executables and libraries 
+realclean: clean
+	$(RM) bin/* include/* lib/*
 #}}}1
 
 

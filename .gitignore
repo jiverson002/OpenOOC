@@ -33,3 +33,6 @@
 
 # Dependency files
 *.d
+
+# Build directory
+build
