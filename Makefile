@@ -35,7 +35,7 @@ WARNING  := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
             -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
             -Wuninitialized -Wconversion -Wstrict-prototypes
 OPTIMIZE := -O0 -g
-CFLAGS   := $(OPTIMIZE) $(WARNING)
+CFLAGS   := $(OPTIMIZE) $(WARNING) -D_GNU_SOURCE
 LDFLAGS  :=
 #}}}1
 

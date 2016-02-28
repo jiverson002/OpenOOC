@@ -20,36 +20,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+
 /* assert */
 #include <assert.h>
 
 /* SIGSEGV */
 #include <errno.h>
 
-/* uintptr_t */
-#include <inttypes.h>
-
 /* __WORDSIZE */
 #include <limits.h>
 
-/* setjmp, longjmp */
+/* longjmp */
 #include <setjmp.h>
-
-/* sigaction */
-#include <signal.h>
-
-/* printf */
-#include <stdio.h>
-
-/* NULL, EXIT_SUCCESS, EXIT_FAILURE */
-#include <stdlib.h>
 
 /* ucontext_t */
 #include <ucontext.h>
-
-
-/* Helper macro to suppress unused variable/parameter warnings. */
-#define UNUSED(var) (void)(var)
 
 
 /* The stack environment to return to via longjmp. */
@@ -60,14 +45,13 @@ static __thread void * segv_addr;
 
 
 /*******************************************************************************
- * Function to return to from SIGSEGV handler instead of back to the instruction
- * which raised the fault.
+ * Function to post asynchronous I/O requests.
  ******************************************************************************/
 static void
 ooc_async(void)
 {
-  printf("received SIGSEGV at address: %p.\n", segv_addr);
-
+  /* Jump back to the stack environment which resulted in this function being
+   * called. */
   longjmp(ret_env, 1);
 }
 
@@ -78,25 +62,37 @@ ooc_async(void)
 static void
 ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 {
-  ucontext_t * uc;
-
   assert(SIGSEGV == _sig);
 
-  uc = (ucontext_t*)_uc;
-
+  /* Save the memory location which caused the fault. */
   segv_addr = _si->si_addr;
-  
-#if 64 == __WORDSIZE
-  uc->uc_mcontext.gregs[REG_RIP] = (greg_t)&ooc_async;
-#else
-  uc->uc_mcontext.gregs[REG_EIP] = (greg_t)&ooc_async;
-#endif
 
-  UNUSED(_si);
+  /* Hijack instruction pointer and point it towards a new address that the
+   * kernel signal handling mechanism should return to instead of the
+   * instruction which originally generated the signal. */
+#if 64 == __WORDSIZE
+  ((ucontext_t*)_uc)->uc_mcontext.gregs[REG_RIP] = (greg_t)&ooc_async;
+#else
+  ((ucontext_t*)_uc)->uc_mcontext.gregs[REG_EIP] = (greg_t)&ooc_async;
+#endif
 }
 
 
 #ifdef TEST
+/* assert */
+#include <assert.h>
+
+/* NULL, EXIT_SUCCESS, EXIT_FAILURE */
+#include <stdlib.h>
+
+/* setjmp */
+#include <setjmp.h>
+
+/* sigaction */
+#include <signal.h>
+
+#define SEGV_ADDR (void*)(0x1)
+
 int
 main(int argc, char * argv[])
 {
@@ -110,15 +106,15 @@ main(int argc, char * argv[])
 
   ret = setjmp(ret_env);
   if (!ret) {
-    *(int*)0x1 = 1; /* Raise a SIGSEGV. */
+    *(int*)SEGV_ADDR = 1; /* Raise a SIGSEGV. */
     return EXIT_FAILURE;
   }
 
-  printf("setjmp returned with code: %d.\n", ret);
+  assert(1 == ret);
+  assert(SEGV_ADDR == segv_addr);
 
   return EXIT_SUCCESS;
 
-  UNUSED(argc);
-  UNUSED(argv);
+  if (argc || argv) {}
 }
 #endif
