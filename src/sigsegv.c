@@ -30,15 +30,21 @@ THE SOFTWARE.
 /* __WORDSIZE */
 #include <limits.h>
 
-/* longjmp */
+/* jmp_buf, longjmp */
 #include <setjmp.h>
+
+/* memcpy */
+#include <string.h>
 
 /* ucontext_t */
 #include <ucontext.h>
 
 
 /* The stack environment to return to via longjmp. */
-static __thread jmp_buf ret_env;
+__thread jmp_buf ooc_ret_env;
+
+/* The thread context at the point SIGSEGV was raised. */
+__thread ucontext_t ooc_ret_uc;
 
 /* Memory location which caused fault */
 static __thread void * segv_addr;
@@ -52,7 +58,7 @@ ooc_async(void)
 {
   /* Jump back to the stack environment which resulted in this function being
    * called. */
-  longjmp(ret_env, 1);
+  longjmp(ooc_ret_env, 1);
 }
 
 
@@ -66,6 +72,9 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 
   /* Save the memory location which caused the fault. */
   segv_addr = _si->si_addr;
+
+  /* Save the thread context at the point SIGSEGV was raised. */
+  memcpy(&ooc_ret_uc, _uc, sizeof(ooc_ret_uc));
 
   /* Hijack instruction pointer and point it towards a new address that the
    * kernel signal handling mechanism should return to instead of the
@@ -104,7 +113,7 @@ main(int argc, char * argv[])
   ret = sigaction(SIGSEGV, &act, NULL);
   assert(!ret);
 
-  ret = setjmp(ret_env);
+  ret = setjmp(ooc_ret_env);
   if (!ret) {
     *(int*)SEGV_ADDR = 1; /* Raise a SIGSEGV. */
     return EXIT_FAILURE;

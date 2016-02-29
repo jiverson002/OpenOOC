@@ -1,3 +1,3 @@
-src_LIBRARIES := libopenooc.a
+src_LIBRARIES := libooc.a
 
-libopenooc.a_SOURCES := sigsegv.c
+libooc.a_SOURCES := sigsegv.c

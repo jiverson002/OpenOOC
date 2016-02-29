@@ -1,7 +1,7 @@
 # Modules in the project (you could 'find' these, but stating them explicitly
 # allows for subdirectories like 'tmp' or 'doc' without upsetting the build
 # process.
-MODULES := apps bench src
+MODULES := apps src
 
 
 # List of all non-source files/directories that are part of the distribution
@@ -75,6 +75,7 @@ obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
     (test -d dep/$(1) || mkdir -p dep/$(1)) && \
     $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/`basename $$(@F) .o`.d \
       -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
+
 endef
 
 
@@ -91,23 +92,23 @@ test/$(1)/%_t: $(ROOTDIR)$(1)/%.c $(foreach lib,$($(1)_LIBRARIES),lib/$(lib))
     (test -d dep/$(1) || mkdir -p dep/$(1)) && \
     $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/$$(@F).d \
       -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ -o $$@
+
 endef
  
  
 # Setting a module's build rules for executable targets.
 # (Depending on its sources' object files and any libraries.)
 # Also adds a module's dependency files to the global list.
-# FIXME Need to add LDADD files to the target
-# FIXME Need to add include directory to compilation
 define PROGRAM_template
 DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
 
-bin/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES))) \
+bin/$(1): $(ROOTDIR)$(2)/$(1).c \
           $(foreach lib,$($(1)_LDADD),lib/$(lib)) \
           $(foreach lib,$($(2)_LDADD),lib/$(lib))
 	@$(ECHO) "  LD       $$@"
 	@(test -d bin || mkdir -p bin) && \
-    $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) $$^ -o $$@
+    $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) -I include $$^ -o $$@
+
 endef
 
  
@@ -120,6 +121,7 @@ DEPFILES += $(patsubst %,dep/$(2)/%_t.d,$(basename $($(1)_SOURCES)))
 lib/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES)))
 	@$(ECHO) "  AR       $$@"
 	@(test -d lib || mkdir -p lib) && $$(AR) $$(ARFLAGS) $$@ $$?
+
 endef
 
  

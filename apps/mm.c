@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 
-extern void
+static void
 mm(
   size_t const m,
   size_t const n,
@@ -12,7 +12,7 @@ mm(
 );
 
 
-extern void
+static void
 mm(
   size_t const m,
   size_t const n,
