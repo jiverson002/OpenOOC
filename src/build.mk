@@ -1,3 +1,3 @@
 src_LIBRARIES := libooc.a
 
-libooc.a_SOURCES := sigsegv.c
+libooc.a_SOURCES := fiber.c sigsegv.c
