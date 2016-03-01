@@ -107,7 +107,7 @@ extern __thread int ooc_me;
          * resources available for more fibers, then jump to OOC_NEW_FIBER label
          * and create a new fiber. Otherwise, jump to the OOC_SEARCH_AGAIN label
          * to search again. */\
-        if (_i == ooc_cur_fibers && ooc_cur_fibers < OOC_NUM_FIBERS) {\
+        if (ooc_cur_fibers < OOC_NUM_FIBERS) {\
           goto OOC_NEW_FIBER;\
         }\
         goto OOC_SEARCH_AGAIN;\
