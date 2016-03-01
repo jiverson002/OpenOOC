@@ -59,29 +59,15 @@ mm(
 #define b(R,C) b[R*p+C]
 #define c(R,C) c[R*p+C]
 
-  for (i=0; i<m; ++i) {
-    /* Set SIGSEGV return point. */
-    ret = setjmp(ooc_ret_env);
-
-    /* If we arrived here via longjmp. */
-    if (ret) {
-      /* Save my pre-sigsegv context. */
-      //  memcpy(&(fiber[me].uc), &ooc_ret_uc, sizeof(ooc_ret_uc));
-
-      /* Find a fiber which is runnable */
-      //  ???
-
-      /* Switch to the runnable fiber */
-      //  setcontext(&(fiber[run].uc));
-    }
-
+  OOC_FOR(i=0; i<m; ++i)
+  OOC_DO
     for (j=0; j<n; ++j) {
       c(i,j) = a(i,0)*b(0,j);
       for (k=1; k<p; ++k) {
         c(i,j) += a(i,k)*b(k,j);
       }
     }
-  }
+  OOC_DONE
 
 #undef a
 #undef b
