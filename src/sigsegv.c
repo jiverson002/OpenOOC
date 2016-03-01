@@ -50,6 +50,11 @@ __thread ucontext_t ooc_ret_uc;
 static __thread void * segv_addr;
 
 
+/* Function prototype */
+void
+ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
+
+
 /*******************************************************************************
  * Function to post asynchronous I/O requests.
  ******************************************************************************/
@@ -65,7 +70,7 @@ ooc_async(void)
 /*******************************************************************************
  *  SIGSEGV handler.
  ******************************************************************************/
-static void
+void
 ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 {
   assert(SIGSEGV == _sig);

@@ -1,6 +1,9 @@
 #include <stdlib.h>
 
 
+#define restrict
+
+
 static void
 mm(
   size_t const m,

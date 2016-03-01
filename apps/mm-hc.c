@@ -31,6 +31,9 @@ THE SOFTWARE.
 #include "src/ooc.h"
 
 
+#define restrict
+
+
 static void
 mm(
   size_t const m,
