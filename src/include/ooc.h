@@ -131,6 +131,8 @@ extern __thread int ooc_me;
        * continue to the next iteration of the OOC_FOR loop. This has the effect
        * of creating a new fiber. */\
       OOC_NEW_FIBER:\
+      /* TODO Need to change my ooc_me value -- this is what actually makes me a
+       * new fiber. */
       continue;\
     }
 #define OOC_DO \
