@@ -144,7 +144,7 @@ int main(int argc, char * argv[])
   fprintf(stderr, "  Git commit   = %9s\n", STR(COMMIT));
   fprintf(stderr, "  Library      =      %s\n", impl_name());
   fprintf(stderr, "  Datatype     = %9s\n", STR(DATATYPE));
-  fprintf(stderr, "  MiB I/O      = %9.0f\n", NUM_MEM/1000000.0);
+  fprintf(stderr, "  MiB I/O      = %9.0f\n", (double)NUM_MEM/1000000.0);
   fprintf(stderr, "  SysPages I/O = %9lu\n", NUM_MEM/pgsize);
   fprintf(stderr, "  SysPage mult = %9lu\n", (unsigned long)NUM_SYS);
   fprintf(stderr, "  Options      = ");
@@ -181,7 +181,7 @@ int main(int argc, char * argv[])
   /* ===== Generate random array ===== */
 {
   for (i=0; i<elem; ++i)
-    rnum[i] = i;
+    rnum[i] = (unsigned int)i;
   for (i=0; i<elem-1; ++i) {
     j = (size_t)rand()%((elem-1)-i)+i;
     tmp = rnum[j];

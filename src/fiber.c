@@ -33,3 +33,17 @@ __thread int ooc_cur_fibers=1;
 
 /* My fiber id. */
 __thread int ooc_me=0;
+
+
+#ifdef TEST
+/* EXIT_SUCCESS */
+#include <stdlib.h>
+
+int
+main(int argc, char * argv[])
+{
+  return EXIT_SUCCESS;
+
+  if (argc || argv) {}
+}
+#endif

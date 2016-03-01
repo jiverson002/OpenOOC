@@ -55,7 +55,6 @@ mm(
   double * const restrict c
 )
 {
-  int ret;
   size_t i, j, k;
 
 #define a(R,C) a[R*n+C]
