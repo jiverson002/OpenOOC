@@ -99,6 +99,7 @@ endef
 # Setting a module's build rules for executable targets.
 # (Depending on its sources' object files and any libraries.)
 # Also adds a module's dependency files to the global list.
+# FIXME I don't think LDFLAGS should go at the end?
 define PROGRAM_template
 DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
 
@@ -107,7 +108,7 @@ bin/$(1): $(ROOTDIR)$(2)/$(1).c \
           $(foreach lib,$($(2)_LDADD),lib/$(lib))
 	@$(ECHO) "  LD       $$@"
 	@(test -d bin || mkdir -p bin) && \
-    $$(LD) $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS) -I include $$^ -o $$@
+    $$(LD) -I include $$^ -o $$@ $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS)
 
 endef
 

@@ -27,3 +27,9 @@ THE SOFTWARE.
 
 /* The fibers. */
 __thread ooc_fiber_t ooc_fiber[OOC_NUM_FIBERS];
+
+/* Number of active fibers. */
+__thread int ooc_cur_fibers=1;
+
+/* My fiber id. */
+__thread int ooc_me=0;
