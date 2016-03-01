@@ -66,6 +66,9 @@ extern __thread int ooc_me;
   for (loops) {\
     int _ret, _i;\
 \
+    /* Initialize myself. */\
+    ooc_fiber[ooc_me].state = OOC_RUNNABLE;\
+\
     /* Set SIGSEGV return point. */\
     _ret = setjmp(ooc_ret_env);\
 \
@@ -101,9 +104,9 @@ extern __thread int ooc_me;
         }\
 \
         /* If we arrive here, then no runnable fiber was found. If there are
-         * more available fiber slots, then jump to OOC_NEW_FIBER label and
-         * create a new fiber. Otherwise, jump to the OOC_SEARCH_AGAIN label to
-         * search again. */\
+         * resources available for more fibers, then jump to OOC_NEW_FIBER label
+         * and create a new fiber. Otherwise, jump to the OOC_SEARCH_AGAIN label
+         * to search again. */\
         if (_i == ooc_cur_fibers && ooc_cur_fibers < OOC_NUM_FIBERS) {\
           goto OOC_NEW_FIBER;\
         }\
