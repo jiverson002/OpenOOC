@@ -1,4 +1,4 @@
 bench_PROGRAMS := micro
 
-micro_SOURCES  := io.c libc.c micro.c sbma.c
-micro_HEADERS  := impl.h
+micro_SOURCES  := impl/io.c impl/libc.c impl/sbma.c micro.c
+micro_HEADERS  := impl/impl.h
