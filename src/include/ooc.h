@@ -66,9 +66,6 @@ extern __thread int ooc_me;
   for (loops) {\
     int _ret, _i;\
 \
-    /* Initialize myself. */\
-    ooc_fiber[ooc_me].state = OOC_RUNNABLE;\
-\
     /* Set SIGSEGV return point. */\
     _ret = setjmp(ooc_ret_env);\
 \
