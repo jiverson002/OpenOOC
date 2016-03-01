@@ -91,9 +91,6 @@ DIST := $(PROJECT)-$(VERSION).tar.gz
 # TEMPLATES
 #-------------------------------------------------------------------------------
 #{{{1
-DEPFILES :=
-
-
 # Including a module's build.mk
 define MK_template
 #{{{2
