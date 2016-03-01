@@ -1,3 +1,8 @@
+# User supplied information about this project
+PROJECT := openooc
+VERSION := 0.0.0-pre
+
+
 # Modules in the project (you could 'find' these, but stating them explicitly
 # allows for subdirectories like 'tmp' or 'doc' without upsetting the build
 # process.
@@ -6,22 +11,44 @@ MODULES := apps bench src
 
 # List of all non-source files/directories that are part of the distribution
 AUXFILES := AUTHORS ChangeLog COPYING Makefile NEWS README.md
- 
+
 
 # Default target
 default: all
 
 
 #-------------------------------------------------------------------------------
-# DEFAULT PROGRAMS
+# DEFAULT VARIABLES AND PROGRAMS
 #-------------------------------------------------------------------------------
 #{{{1
+# Verbosity level
+V := 0
+
 # Program variables
-AR   := ar
-RM   := rm -f
-CC   := cc
-LD   := cc
-ECHO := echo
+AR := ar crsP
+RM := rm -vf
+CC := cc
+LD := cc
+
+AT_0 = @
+AT_1 =
+AT   = $(AT_$(V))
+
+AR_0 = @echo "  AR       $$@"; $(AR)
+AR_1 = $(AR)
+ATAR = $(AR_$(V))
+
+CC_0 = @echo "  CC       $(1)/$$*.o"; $(CC)
+CC_1 = $(CC)
+ATCC = $(CC_$(V))
+
+LD_0 = @echo "  LD       $$@"; $(LD)
+LD_1 = $(LD)
+ATLD = $(LD_$(V))
+
+CCLD_0 = @echo "  CCLD     $$@"; $(CC)
+CCLD_1 = $(CC)
+ATCCLD = $(CCLD_$(V))
 #}}}1
 
 
@@ -29,7 +56,6 @@ ECHO := echo
 # DEFAULT FLAGS
 #-------------------------------------------------------------------------------
 #{{{1
-ARFLAGS  := crsP
 WARNING  := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
             -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
             -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
@@ -46,10 +72,18 @@ LDFLAGS  :=
 #{{{1
 # Root directory where Makefile is located
 ROOTDIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
 # Date of compilation
-DATE    := $(shell date)
+DATE := $(shell date)
+
 # Git commit of compilation
-COMMIT  := $(shell cd $(ROOTDIR) && git rev-parse --short HEAD)
+COMMIT := $(shell cd $(ROOTDIR) && git rev-parse --short HEAD)
+
+# Aggregation of all files
+ALLFILES := $(addprefix $(ROOTDIR),$(MODULES) $(AUXFILES))
+
+# Name for distribution archive
+DIST := $(PROJECT)-$(VERSION).tar.gz
 #}}}1
 
 
@@ -62,75 +96,76 @@ DEPFILES :=
 
 # Including a module's build.mk
 define MK_template
+#{{{2
 include $(ROOTDIR)$(1)/build.mk
+#}}}2
 endef
 
  
-# Setting a module's build rules for object files in <module>/obj.
+# Setting a module's build rules for object files in obj/<module>.
+# Also links a module's global includes into the global include directory
+# (where they will be available as <module>/filename.h).
+# TODO Should module specified flags override command-line or vice-versa?
 define RULES_template
-# FIXME Need to allow subdirectories in module directories somehow
+#{{{2
 obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
-	@$(ECHO) "  CC       $(1)/$$(@F)"
-	@(test -d obj/$(1) || mkdir -p obj/$(1)) && \
-    (test -d dep/$(1) || mkdir -p dep/$(1)) && \
-    $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/`basename $$(@F) .o`.d \
-      -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
-
+	$(AT)(test -d include || mkdir -p include)
+	$(AT)(test -h include/$(1) || ln -s ../$(ROOTDIR)$(1)/include include/$(1))
+	$(AT)(test -d obj/`dirname $(1)/$$*` || mkdir -p obj/`dirname $(1)/$$*`) &&\
+    (test -d dep/`dirname $(1)/$$*` || mkdir -p dep/`dirname $(1)/$$*`)
+	$(ATCC) $$($(1)_CFLAGS) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/$$*.d\
+    -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
+#}}}2
 endef
 
 
-# Setting a module's build rules for object files in <module>/obj.
+# Setting a module's build rules for test files in test/<module>.
+# TODO Should module specified flags override command-line or vice-versa?
 define TESTS_template
-# This will rebuild on Makefile or $(1)/build.mk changes, since the library
-# associted with the corresponding object file will rebuild on changes to those
-# files.
-# FIXME Need to allow subdirectories in module directories somehow
-# FIXME Need to add LDADD files to the target
-test/$(1)/%_t: $(ROOTDIR)$(1)/%.c $(foreach lib,$($(1)_LIBRARIES),lib/$(lib))
-	@$(ECHO) "  CC       $(1)/$$(@F)"
-	@(test -d test/$(1) || mkdir -p test/$(1)) && \
-    (test -d dep/$(1) || mkdir -p dep/$(1)) && \
-    $$(CC) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/$$(@F).d \
-      -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ -o $$@
-
+#{{{2
+test/$(1)/%: $(ROOTDIR)$(1)/%.c\
+             $(addprefix lib/,$($(1)_LIBRARIES))
+	$(AT)(test -d test/$(1) || mkdir -p test/$(1)) && \
+    (test -d dep/$(1)/test || mkdir -p dep/$(1)/test)
+	$(ATCCLD) $$($(1)_CFLAGS) $$(CFLAGS) $$($(1)_LDFLAGS) $$(LDFLAGS)\
+    -I include -MMD -MP -MF dep/$(1)/test/$$*.d\
+    -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ $$($(1)_LDLIBS) $$(LDLIBS)\
+    -o $$@
+#}}}2
 endef
  
  
 # Setting a module's build rules for executable targets.
 # (Depending on its sources' object files and any libraries.)
-# Also adds a module's dependency files to the global list.
-# FIXME I don't think LDFLAGS should go at the end?
+# Also adds a module's object and dependency files to the global lists.
+# TODO Should module specified flags override command-line or vice-versa?
 define PROGRAM_template
-DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
+#{{{2
+OBJFILES += $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))
+DEPFILES += $(patsubst %.c,dep/$(1)/%.d,$($(2)_SOURCES))
 
-bin/$(1): $(addprefix $(ROOTDIR)$(2)/,$($(1)_SOURCES)) \
-          $(foreach lib,$($(1)_LDADD),lib/$(lib)) \
-          $(foreach lib,$($(2)_LDADD),lib/$(lib))
-	@$(ECHO) "  LD       $$@"
-	(test -d bin || mkdir -p bin) && \
-    $$(LD) -I include $$^ -o $$@ $$($(1)_LDFLAGS) $$($(2)_LDFLAGS) $$(LDFLAGS)
-
+bin/$(2): $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))\
+          $(addprefix lib/,$($(2)_LDADD) $($(1)_LDADD))
+	$(AT)(test -d bin || mkdir -p bin)
+	$(ATLD) $$($(2)_LDFLAGS) $$($(1)_LDFLAGS) $$(LDFLAGS)\
+    $$^ $$($(2)_LDLIBS) $$($(1)_LDLIBS) $$(LDLIBS) -o $$@
+#}}}2
 endef
 
  
 # Setting a module's build rules for library targets.
 # (Depending on its sources' object files.)
+# Also adds a module's object and dependency files to the global lists.
 define LIBRARY_template
-DEPFILES += $(patsubst %,dep/$(2)/%.d,$(basename $($(1)_SOURCES)))
-DEPFILES += $(patsubst %,dep/$(2)/%_t.d,$(basename $($(1)_SOURCES)))
+#{{{2
+OBJFILES += $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))
+DEPFILES += $(patsubst %.c,dep/$(1)/%.d,$($(2)_SOURCES))
+DEPFILES += $(patsubst %.c,dep/$(1)/test/%.d,$($(2)_SOURCES))
 
-lib/$(1): $(patsubst %,obj/$(2)/%.o,$(basename $($(1)_SOURCES)))
-	@$(ECHO) "  AR       $$@"
-	@(test -d lib || mkdir -p lib) && $$(AR) $$(ARFLAGS) $$@ $$?
-
-endef
-
- 
-# Linking a module's global includes into the global include directory
-# (where they will be available as <module>/filename.h).
-define INCLUDE_template
-$$(shell (test -d include || mkdir -p include))
-$$(shell (test -h include/$(1) || ln -s ../$(ROOTDIR)$(1)/include include/$(1)))
+lib/$(2): $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))
+	$(AT)(test -d lib || mkdir -p lib)
+	$(ATAR) $$@ $$?
+#}}}2
 endef
 #}}}1
 
@@ -140,23 +175,17 @@ endef
 #-------------------------------------------------------------------------------
 #{{{1
 # Now, instantiating the templates for each module.
-$(foreach mod, $(MODULES),$(eval $(call MK_template,$(mod))))
-#$(foreach mod, $(MODULES),$(eval $(call RULES_template,$(mod))))
+$(foreach mod,$(MODULES),$(eval $(call MK_template,$(mod))))
+$(foreach mod,$(MODULES),$(eval $(call RULES_template,$(mod))))
+$(foreach mod,$(MODULES),$(foreach bin,$($(mod)_PROGRAMS),\
+  $(eval $(call PROGRAM_template,$(mod),$(bin)))))
+$(foreach mod,$(MODULES),$(foreach lib,$($(mod)_LIBRARIES),\
+  $(eval $(call LIBRARY_template,$(mod),$(lib)))))
+$(foreach mod,$(MODULES),$(eval $(call INCLUDE_template,$(mod))))
+$(foreach mod,$(MODULES),$(eval $(call TESTS_template,$(mod))))
 
-$(foreach mod,$(MODULES),\
-  $(foreach submod,$(sort $(foreach src,$($(mod)_SOURCES),$(dir $(src)))),\
-    $(eval $(call RULES_template,$(submod)))))
-
-#$(foreach mod, $(MODULES),$(eval $(call TESTS_template,$(mod))))
-#$(foreach mod, $(MODULES),$(eval $(foreach bin,$($(mod)_PROGRAMS),\
-  $(call PROGRAM_template,$(bin),$(mod)))))
-#$(foreach mod, $(MODULES),$(eval $(foreach lib,$($(mod)_LIBRARIES),\
-  $(call LIBRARY_template,$(lib),$(mod)))))
-#$(foreach mod, $(MODULES),$(eval $(call INCLUDE_template,$(mod))))
-
- 
 # Include the dependency files (generated by GCC's -MMD option)
-#-include $(sort $(DEPFILES))
+-include $(sort $(DEPFILES))
 #}}}1
 
 
@@ -166,17 +195,15 @@ $(foreach mod,$(MODULES),\
 #{{{1
 # Make all modules programs and libraries
 all: \
-  $(foreach mod, $(MODULES), $(if $(strip $($(mod)_LIBRARIES)),\
-    $(addprefix lib/,$($(mod)_LIBRARIES)))) \
-  $(foreach mod, $(MODULES), $(if $(strip $($(mod)_PROGRAMS)),\
-    $(addprefix bin/,$($(mod)_PROGRAMS))))
+  $(foreach mod,$(MODULES),$(addprefix lib/,$($(mod)_LIBRARIES)))\
+  $(foreach mod,$(MODULES),$(addprefix bin/,$($(mod)_PROGRAMS)))
 
 
 # Check build
-#check: \
-	$(foreach mod, $(MODULES), $(foreach lib, $($(mod)_LIBRARIES), \
-    $(patsubst %.c,test/$(mod)/%_t,$($(lib)_SOURCES))))
-#	-@rc=0; count=0; \
+check: \
+	$(foreach mod,$(MODULES),$(foreach lib,$($(mod)_LIBRARIES), \
+    $(patsubst %.c,test/$(mod)/%,$($(lib)_SOURCES))))
+	-@rc=0; count=0; \
     for file in $^; do \
       ./$$file; \
       ret=$$?; \
@@ -193,33 +220,28 @@ all: \
  
 
 # Remove object (*.o) and dependency (*.d) files
-#clean:
-#	$(RM) $(foreach mod,$(MODULES),obj/$(mod)/*.o) \
-    $(foreach mod,$(MODULES),test/$(mod)/*_t) \
-    $(foreach mod,$(MODULES),dep/$(mod)/*.d)
+clean:
+	$(AT)$(RM) $(OBJFILES) $(DEPFILES)
+
+
+# Create archive for distribution
+dist:
+	-$(AT)tar czf $(DIST) $(ALLFILES)
 
 
 # Make clean and remove executables and libraries 
-#realclean: clean
-#	$(RM) bin/* include/* lib/*
+realclean: clean
+	$(AT)$(RM) bin/* include/* lib/* $(DIST)
 
 
-# Aggregation of all files
-#SRCFILES := $(foreach mod, $(MODULES), $(foreach lib, $($(mod)_LIBRARIES), \
-  $(addprefix $(mod)/,$($(lib)_SOURCES))))
-#HDRFILES := $(foreach mod, $(MODULES), $(foreach lib, $($(mod)_LIBRARIES), \
-  $(addprefix $(mod)/,$($(lib)_HEADERS))))
-#SRCFILES += $(foreach mod, $(MODULES), $(foreach bin, $($(mod)_PROGRAMS), \
-  $(addprefix $(mod)/,$($(bin)_SOURCES))))
-#HDRFILES += $(foreach mod, $(MODULES), $(foreach bin, $($(mod)_PROGRAMS), \
-  $(addprefix $(mod)/,$($(bin)_HEADERS))))
-#BLDFILES := $(foreach mod, $(MODULES), $(mod)/build.mk)
-#ALLFILES := $(addprefix $(ROOTDIR), $(SRCFILES) $(HDRFILES) $(AUXFILES) $(BLDFILES))
+# Make realclean and remove distribution archive
+distclean: realclean
+	$(AT)$(RM) $(DIST)
 
 
 # Print out any TODO or FIXME notations
-#todolist:
-#	-@for file in $(ALLFILES:$(ROOTDIR)Makefile=); do \
+todolist:
+	-@for file in $(ALLFILES:$(ROOTDIR)Makefile=); do \
     fgrep -H -e TODO -e FIXME $$file; \
   done; \
   true
@@ -230,8 +252,7 @@ all: \
 # SPECIAL TARGETS
 #-------------------------------------------------------------------------------
 #{{{1
-#.PHONY: all check clean realclean todolist
-.PHONY: all
+.PHONY: all check clean dist distclean realclean todolist
 #}}}1
 
 
