@@ -24,17 +24,8 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
-/* setjmp */
-#include <setjmp.h>
-
-/* sigaction */
-#include <signal.h>
-
 /* EXIT_SUCCESS */
 #include <stdlib.h>
-
-/* memset */
-#include <string.h>
 
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
@@ -79,10 +70,7 @@ mm(
   OOC_FOR(i=0; i<m; ++i)
   OOC_DO
     for (j=0; j<n; ++j) {
-      printf("[%2d] step started\n", ooc_me);
-      getcontext(&ooc_tmp_uc);
       c(i,j) = a(i,0)*b(0,j);
-      printf("[%2d] step completed\n", ooc_me);
       for (k=1; k<p; ++k) {
         c(i,j) += a(i,k)*b(k,j);
       }
@@ -101,16 +89,8 @@ main(
   char * argv[]
 )
 {
-  int ret;
   size_t m, n, p;
-  struct sigaction act;
   double * a, * b, * c;
-
-  memset(&act, 0, sizeof(act));
-  act.sa_sigaction = &ooc_sigsegv;
-  act.sa_flags = SA_SIGINFO;
-  ret = sigaction(SIGSEGV, &act, NULL);
-  assert(!ret);
 
   m = 100;
   n = 100;
