@@ -39,7 +39,7 @@ THE SOFTWARE.
 /* memcpy */
 #include <string.h>
 
-/* mprotect, PROT_NONE, PROT_READ, PROT_WRITE */
+/* mprotect, PROT_READ, PROT_WRITE */
 #include <sys/mman.h>
 
 /* ucontext_t */
@@ -47,6 +47,11 @@ THE SOFTWARE.
 
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
+
+
+/* Function prototype */
+void
+ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 
 
 /* The stack environment to return to via longjmp. */
@@ -57,11 +62,6 @@ __thread ucontext_t ooc_ret_uc;
 
 /* Memory location which caused fault */
 static __thread void * segv_addr;
-
-
-/* Function prototype */
-void
-ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 
 
 /*******************************************************************************
@@ -113,17 +113,20 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 /* assert */
 #include <assert.h>
 
-/* mmap, munmap */
-#include <sys/mman.h>
-
-/* NULL, EXIT_SUCCESS, EXIT_FAILURE */
-#include <stdlib.h>
-
 /* setjmp */
 #include <setjmp.h>
 
 /* sigaction */
 #include <signal.h>
+
+/* NULL, EXIT_SUCCESS, EXIT_FAILURE */
+#include <stdlib.h>
+
+/* memset */
+#include <string.h>
+
+/* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
+#include <sys/mman.h>
 
 #define SEGV_ADDR (void*)(0x1)
 
@@ -134,6 +137,7 @@ main(int argc, char * argv[])
   struct sigaction act;
   char * mem;
 
+  memset(&act, 0, sizeof(act));
   act.sa_sigaction = &ooc_sigsegv;
   act.sa_flags = SA_SIGINFO;
   ret = sigaction(SIGSEGV, &act, NULL);

@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-/* ooc_fiber_t */
+/* ooc_fiber_t, OOC_NUM_FIBERS */
 #include "src/ooc.h"
 
 

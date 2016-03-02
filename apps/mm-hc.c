@@ -21,17 +21,34 @@ THE SOFTWARE.
 */
 
 
+/* assert */
+#include <assert.h>
+
 /* setjmp */
 #include <setjmp.h>
 
+/* sigaction */
+#include <signal.h>
+
 /* EXIT_SUCCESS */
 #include <stdlib.h>
+
+/* memset */
+#include <string.h>
+
+/* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
+#include <sys/mman.h>
 
 /* OOC library */
 #include "src/ooc.h"
 
 
 #define restrict
+
+
+/* Function prototype */
+void
+ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 
 
 static void
@@ -83,6 +100,34 @@ main(
   char * argv[]
 )
 {
+  int ret;
+  size_t m, n, p;
+  struct sigaction act;
+  double * a, * b, * c;
+
+  memset(&act, 0, sizeof(act));
+  act.sa_sigaction = &ooc_sigsegv;
+  act.sa_flags = SA_SIGINFO;
+  ret = sigaction(SIGSEGV, &act, NULL);
+  assert(!ret);
+
+  m = 100;
+  n = 100;
+  p = 100;
+
+  a = mmap(NULL, m*n*sizeof(*a), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(a);
+  b = mmap(NULL, n*p*sizeof(*b), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(b);
+  c = mmap(NULL, m*p*sizeof(*c), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(c);
+
+  mm(m, n, p, a, b, c);
+
+  munmap(a, m*n*sizeof(*a));
+  munmap(b, n*p*sizeof(*b));
+  munmap(c, m*p*sizeof(*c));
+
   return EXIT_SUCCESS;
 
   if (argc || argv) {}
