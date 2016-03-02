@@ -46,11 +46,6 @@ THE SOFTWARE.
 #define restrict
 
 
-/* Function prototype */
-void
-ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
-
-
 static void
 mm(
   size_t const m,

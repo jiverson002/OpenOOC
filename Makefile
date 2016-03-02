@@ -110,8 +110,9 @@ obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
 	$(AT)(test -h include/$(1) || ln -s ../$(ROOTDIR)$(1)/include include/$(1))
 	$(AT)(test -d obj/`dirname $(1)/$$*` || mkdir -p obj/`dirname $(1)/$$*`) &&\
     (test -d dep/`dirname $(1)/$$*` || mkdir -p dep/`dirname $(1)/$$*`)
-	$(ATCC) $$($(1)_CFLAGS) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/$$*.d\
-    -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
+	$(ATCC) $$($(1)_CFLAGS) $$(CFLAGS) -I include -I $(ROOTDIR)\
+    -MMD -MP -MF dep/$(1)/$$*.d -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)"\
+    -c $$< -o $$@
 #}}}2
 endef
 
@@ -125,7 +126,7 @@ test/$(1)/%: $(ROOTDIR)$(1)/%.c\
 	$(AT)(test -d test/$(1) || mkdir -p test/$(1)) && \
     (test -d dep/$(1)/test || mkdir -p dep/$(1)/test)
 	$(ATCCLD) $$($(1)_CFLAGS) $$(CFLAGS) $$($(1)_LDFLAGS) $$(LDFLAGS)\
-    -I include -MMD -MP -MF dep/$(1)/test/$$*.d\
+    -I include -I $(ROOTDIR) -MMD -MP -MF dep/$(1)/test/$$*.d\
     -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ $$($(1)_LDLIBS) $$(LDLIBS)\
     -o $$@
 #}}}2

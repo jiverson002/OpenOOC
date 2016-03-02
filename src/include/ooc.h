@@ -31,8 +31,24 @@ THE SOFTWARE.
 #define OPENOOC_RCAND -pre
 
 
-/* struct aiocb */
+#ifdef WITH_NATIVE_AIO
+/* aio_context_t, struct iocb, struct io_event */
+#include <linux/aio_abi.h>
+
+/* struct timespec */
+#include <linux/time.h>
+
+typedef aio_context_t ooc_aioctx_t;
+typedef struct iocb ooc_aioreq_t;
+typedef struct io_event ooc_aioevnt_t;
+#else
+/* struct aiocb, struct timespec */
 #include <aio.h>
+
+typedef void * ooc_aioctx_t; /* unused */
+typedef struct aiocb ooc_aioreq_t;
+typedef void * ooc_aioevnt_t; /* unused */
+#endif
 
 /* EINPROGRESS, ECANCELED */
 #include <errno.h>
@@ -46,7 +62,13 @@ THE SOFTWARE.
 /* jmp_buf */
 #include <setjmp.h>
 
-/* ucontext_t */
+/* siginfo_t */
+#include <signal.h>
+
+/* off_t, ssize_t */
+#include <sys/types.h>
+
+/* ucontext_t, setcontext */
 #include <ucontext.h>
 
 
@@ -66,7 +88,7 @@ enum ooc_state_flags
 typedef struct ooc_fiber
 {
   unsigned int state;
-  struct aiocb aio;
+  ooc_aioreq_t aioreq;
   ucontext_t uc;
 } ooc_fiber_t;
 
@@ -85,6 +107,24 @@ extern __thread int ooc_cur_fibers;
 
 /* My fiber id. */
 extern __thread int ooc_me;
+
+
+/* aio function prototypes. */
+int ooc_aio_setup(unsigned int const nr, ooc_aioctx_t * const ctx);
+int ooc_aio_destroy(ooc_aioctx_t ctx);
+int ooc_aio_read(int const fd, void * const buf, size_t const count,
+                  off_t const off, ooc_aioreq_t * const aioreq);
+int ooc_aio_write(int const fd, void const * const buf, size_t const count,
+                  off_t const off, ooc_aioreq_t * const aioreq);
+int ooc_aio_error(ooc_aioreq_t * const aioreq);
+ssize_t ooc_aio_return(ooc_aioreq_t * const aioreq);
+int ooc_aio_cancel(ooc_aioreq_t * const aioreq);
+int ooc_aio_suspend(ooc_aioreq_t const ** const aioreq_list,
+                    unsigned int const nr,
+                    struct timespec const * const timeout);
+
+/*  sigsegv function prototypes. */
+void ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 
 
 /* The OOC black magic. */
@@ -115,12 +155,12 @@ extern __thread int ooc_me;
           /* Search existing fibers for one whose async-io is finished. */\
           for (_i=0; _i<ooc_cur_fibers; ++_i) {\
             if (OOC_AIO_INPROGRESS == ooc_fiber[_i].state) {\
-              _ret = aio_error(&(ooc_fiber[_i].aio));\
+              _ret = ooc_aio_error(&(ooc_fiber[_i].aioreq));\
 \
               switch (_ret) {\
                 case 0:\
-                /* TODO Need to check aio_return(&(ooc_fiber[_i].aio)) to see if
-                 * all bytes were successfully read. */\
+                /* TODO Need to check aio_return(&(ooc_fiber[_i].aioreq)) to see
+                 * if all bytes were successfully read. */\
                 goto OOC_SEARCH_DONE;\
 \
                 case EINPROGRESS:\
