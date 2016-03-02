@@ -71,6 +71,9 @@ typedef void * ooc_aioevnt_t; /* unused */
 /* ucontext_t, setcontext */
 #include <ucontext.h>
 
+/* TEMPORARY */
+#include <stdio.h>
+
 
 /* Maximum number of fibers per thread. */
 #define OOC_NUM_FIBERS 10
@@ -97,7 +100,8 @@ typedef struct ooc_fiber
 extern __thread jmp_buf ooc_ret_env;
 
 /* The thread context at the point SIGSEGV was raised. */
-extern __thread ucontext_t ooc_ret_uc;
+extern __thread volatile ucontext_t ooc_ret_uc;
+extern __thread ucontext_t ooc_tmp_uc;
 
 /* The fibers. */
 extern __thread ooc_fiber_t ooc_fiber[OOC_NUM_FIBERS];
@@ -134,12 +138,14 @@ void ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 \
     /* Initialize myself. */\
     ooc_fiber[ooc_me].state = OOC_RUNNING;\
+    printf("[%2d] initialized myself\n", ooc_me);\
 \
     /* Set SIGSEGV return point. */\
     _ret = setjmp(ooc_ret_env);\
 \
     /* If we arrived here via longjmp. */\
     if (_ret) {\
+      printf("[%2d] returned via longjmp from SIGSEGV\n", ooc_me);\
       /* If this fiber has async-io in progress upon arriving here via longjmp,
        * then we need to search the other existing fibers to see if any of their
        * in async-io has completed. If not and if resources are available, then
@@ -148,7 +154,7 @@ void ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
        * async-io completes. */\
       if (OOC_AIO_INPROGRESS == ooc_fiber[ooc_me].state) {\
         /* Save my pre-sigsegv context. */\
-        memcpy(&(ooc_fiber[ooc_me].uc), &ooc_ret_uc, sizeof(ooc_ret_uc));\
+        memcpy(&(ooc_fiber[ooc_me].uc), (void*)&ooc_ret_uc, sizeof(ooc_ret_uc));\
 \
         /* Find a fiber that is runnable */\
         for (;;) {\
@@ -209,13 +215,29 @@ void ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
         ooc_me = ooc_cur_fibers++;\
         continue;\
       }\
+      else {\
+        printf("[%2d] no outstanding async-io\n", ooc_me);\
+      }\
 \
       /* If we arrive here, it is because this fiber had no async-io in progress
        * upon arriving here via longjmp. In this case, we should switch to the
        * pre-sigsegv context of this fiber. */\
-      setcontext(&ooc_ret_uc);\
+      printf("[%2d] setting context to pre-sigsegv context (%zu,%d)\n", ooc_me,\
+        sizeof(ooc_ret_uc), memcmp(&ooc_tmp_uc, (void*)&ooc_ret_uc, sizeof(ooc_ret_uc)));\
+      int j;\
+      char * b=(char*)&ooc_ret_uc;\
+      for (j=0; j<sizeof(ooc_ret_uc); ++j) {\
+        printf("%2x ", b[j]);\
+      }\
+      printf("\n------------\n");\
+      b=(char*)&ooc_tmp_uc;\
+      for (j=0; j<sizeof(ooc_ret_uc); ++j) {\
+        printf("%2x ", b[j]);\
+      }\
+      setcontext((ucontext_t*)&ooc_ret_uc);\
     }\
     else {\
+      printf("[%2d] set SIGSEGV return point\n", ooc_me);\
     }
 #define OOC_DO \
     {

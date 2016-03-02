@@ -49,6 +49,9 @@ THE SOFTWARE.
 #include <unistd.h>
 
 
+#include <stdio.h>
+
+
 /* Function prototype */
 void
 ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
@@ -58,10 +61,11 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 __thread jmp_buf ooc_ret_env;
 
 /* The thread context at the point SIGSEGV was raised. */
-__thread ucontext_t ooc_ret_uc;
+__thread volatile ucontext_t ooc_ret_uc;
+__thread ucontext_t ooc_tmp_uc;
 
 /* Memory location which caused fault */
-static __thread void * segv_addr;
+static __thread volatile void * segv_addr;
 
 
 /*******************************************************************************
@@ -70,11 +74,17 @@ static __thread void * segv_addr;
 static void
 ooc_async(void)
 {
+  printf("     successfully changed instruction pointer\n");
+
   /* TEMPORARY: Update memory protection of offending system page. */
   {
     size_t pgsize = (size_t)sysconf(_SC_PAGESIZE);
     uintptr_t addr = (uintptr_t)segv_addr & ~((uintptr_t)pgsize-1);
     int ret = mprotect((void*)addr, pgsize, PROT_READ|PROT_WRITE);
+    if (ret) {
+      perror("error***");
+      fprintf(stderr, "  %p\n", (void*)addr);
+    }
     assert(!ret);
   }
 
@@ -92,11 +102,19 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 {
   assert(SIGSEGV == _sig);
 
+  printf("     received SIGSEGV\n");
+
   /* Save the memory location which caused the fault. */
   segv_addr = _si->si_addr;
 
   /* Save the thread context at the point SIGSEGV was raised. */
-  memcpy(&ooc_ret_uc, _uc, sizeof(ooc_ret_uc));
+  /* FIXME According to the setcontext manpage:
+   *  If the context was obtained by a call to a signal handler, then old
+   *  standard text says that "program execution continues with the program
+   *  instruction following the instruction interrupted by the signal". However,
+   *  this sentence was removed in SUSv2, and the present verdict is "the result
+   *  is unspecified". */
+  memcpy((void*)&ooc_ret_uc, _uc, sizeof(ooc_ret_uc));
 
   /* Hijack instruction pointer and point it towards a new address that the
    * kernel signal handling mechanism should return to instead of the

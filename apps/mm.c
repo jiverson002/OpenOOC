@@ -36,6 +36,9 @@ THE SOFTWARE.
 /* memset */
 #include <string.h>
 
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
+
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
@@ -76,7 +79,10 @@ mm(
   OOC_FOR(i=0; i<m; ++i)
   OOC_DO
     for (j=0; j<n; ++j) {
+      printf("[%2d] step started\n", ooc_me);
+      getcontext(&ooc_tmp_uc);
       c(i,j) = a(i,0)*b(0,j);
+      printf("[%2d] step completed\n", ooc_me);
       for (k=1; k<p; ++k) {
         c(i,j) += a(i,k)*b(k,j);
       }
@@ -110,12 +116,17 @@ main(
   n = 100;
   p = 100;
 
-  a = mmap(NULL, m*n*sizeof(*a), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+#define SZ(X,Y,S) \
+  ((X*Y*S+(size_t)sysconf(_SC_PAGESIZE)-1)&(~((size_t)sysconf(_SC_PAGESIZE)-1)))
+
+  a = mmap(NULL, SZ(m,n,sizeof(*a)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(a);
-  b = mmap(NULL, n*p*sizeof(*b), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  b = mmap(NULL, SZ(n,p,sizeof(*b)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(b);
-  c = mmap(NULL, m*p*sizeof(*c), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  c = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(c);
+
+#undef SZ
 
   mm(m, n, p, a, b, c);
 
