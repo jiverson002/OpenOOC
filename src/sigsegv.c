@@ -27,6 +27,9 @@ THE SOFTWARE.
 /* SIGSEGV */
 #include <errno.h>
 
+/* uintptr_t */
+#include <inttypes.h>
+
 /* __WORDSIZE */
 #include <limits.h>
 
@@ -36,8 +39,14 @@ THE SOFTWARE.
 /* memcpy */
 #include <string.h>
 
+/* mprotect, PROT_NONE, PROT_READ, PROT_WRITE */
+#include <sys/mman.h>
+
 /* ucontext_t */
 #include <ucontext.h>
+
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
 
 
 /* The stack environment to return to via longjmp. */
@@ -61,6 +70,14 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc);
 static void
 ooc_async(void)
 {
+  /* TEMPORARY: Update memory protection of offending system page. */
+  {
+    size_t pgsize = (size_t)sysconf(_SC_PAGESIZE);
+    uintptr_t addr = (uintptr_t)segv_addr & ~((uintptr_t)pgsize-1);
+    int ret = mprotect((void*)addr, pgsize, PROT_READ|PROT_WRITE);
+    assert(!ret);
+  }
+
   /* Jump back to the stack environment which resulted in this function being
    * called. */
   longjmp(ooc_ret_env, 1);
@@ -96,6 +113,9 @@ ooc_sigsegv(int const _sig, siginfo_t * const _si, void * const _uc)
 /* assert */
 #include <assert.h>
 
+/* mmap, munmap */
+#include <sys/mman.h>
+
 /* NULL, EXIT_SUCCESS, EXIT_FAILURE */
 #include <stdlib.h>
 
@@ -112,20 +132,29 @@ main(int argc, char * argv[])
 {
   int ret;
   struct sigaction act;
+  char * mem;
 
   act.sa_sigaction = &ooc_sigsegv;
   act.sa_flags = SA_SIGINFO;
   ret = sigaction(SIGSEGV, &act, NULL);
   assert(!ret);
 
+  mem = mmap(NULL, 1<<16, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(mem);
+
   ret = setjmp(ooc_ret_env);
   if (!ret) {
-    *(int*)SEGV_ADDR = 1; /* Raise a SIGSEGV. */
+    mem[0] = (char)1; /* Raise a SIGSEGV. */
     return EXIT_FAILURE;
   }
 
   assert(1 == ret);
-  assert(SEGV_ADDR == segv_addr);
+  assert(mem == segv_addr);
+
+  mem[1] = (char)1; /* Should not raise SIGSEGV. */
+
+  ret = munmap(mem, 1<<16);
+  assert(!ret);
 
   return EXIT_SUCCESS;
 
