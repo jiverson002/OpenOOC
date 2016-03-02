@@ -10,7 +10,7 @@ MODULES := apps bench src
 
 
 # List of all non-source files/directories that are part of the distribution
-AUXFILES := AUTHORS ChangeLog COPYING Makefile NEWS README.md
+AUXFILES := AUTHORS ChangeLog COPYING doc Makefile NEWS README.md
 
 
 # Default target
