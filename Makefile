@@ -26,7 +26,7 @@ V := 0
 
 # Program variables
 AR := ar crsP
-RM := rm -vf
+RM := rm -rvf
 CC := cc
 LD := cc
 
@@ -228,7 +228,7 @@ dist:
 
 # Make clean and remove executables and libraries 
 realclean: clean
-	$(AT)$(RM) bin/* include/* lib/* $(DIST)
+	$(AT)$(RM) bin/* include/* lib/* test/* $(DIST)
 
 
 # Make realclean and remove distribution archive
