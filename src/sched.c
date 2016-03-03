@@ -66,6 +66,7 @@ enum ooc_state_flags
 struct ooc_fiber
 {
   unsigned int state;
+  uintptr_t addr;
   ucontext_t uc;
 };
 
@@ -87,28 +88,22 @@ static void
 _sigsegv_handler(void)
 {
   int ret, i;
+  size_t ps;
+  uintptr_t addr;
 
-  /* TEMPORARY: Update memory protection of offending system page. */
-  {
-    size_t pgsize = (size_t)sysconf(_SC_PAGESIZE);
-    uintptr_t addr = (uintptr_t)_addr & ~((uintptr_t)pgsize-1);
-    int ret_ = mprotect((void*)addr, pgsize, PROT_READ|PROT_WRITE);
-    assert(!ret_);
-  }
+  /* TODO Need to post an async-io request. */
+  ooc_fiber[ooc_me].addr = (uintptr_t)_addr;
 
   /* TEMPORARY */
   ret = 0;
 
-  /* TODO This should go somewhere else */
-  /* Initialize myself. */
-  //ooc_fiber[ooc_me].state = OOC_RUNNING;
-
-  /* If this fiber has async-io in progress upon arriving here, then we need to
-   * search the other existing fibers to see if any of their async-io has
-   * completed. If not and if resources are available, then we can create a new
-   * fiber to continue execution. If no resources are available, then we must
-   * just wait until one of the existing fibers' async-io completes. */
   if (OOC_AIO_INPROGRESS == ooc_fiber[ooc_me].state) {
+    /* If this fiber has async-io in progress upon arriving here, then we need
+     * to search the other existing fibers to see if any of their async-io has
+     * completed. If not and if resources are available, then we can create a
+     * new fiber to continue execution. If no resources are available, then we
+     * must just wait until one of the existing fibers' async-io completes. */
+
     /* Find a fiber that is runnable */
     for (;;) {
       /* Search existing fibers for one whose async-io is finished. */
@@ -120,6 +115,7 @@ _sigsegv_handler(void)
             case 0:
             /* TODO Need to check aio_return(&(ooc_fiber[i].aioreq)) to see
              * if all bytes were successfully read. */
+            ooc_fiber[i].state = 0;
             goto OOC_SEARCH_DONE;
 
             case EINPROGRESS:
@@ -144,12 +140,13 @@ _sigsegv_handler(void)
       goto OOC_SEARCH_AGAIN;
 
       /* If we arrive at this label it is because a runnable fiber was found
-       * and we jumped out of the search to here, in which case, i holds the
-       * id of the runnable fiber. Switch to the trampoline context for fiber i
-       * and allow the kernel handler for that fiber to return. */
+       * and we jumped out of the search to here. In this case, i holds the
+       * id of the runnable fiber. Set ooc_me to i and break from the search so
+       * that post-processing can be done for that fiber before returning to its
+       * trampoline context. */
       OOC_SEARCH_DONE:
-      ooc_fiber[i].state = OOC_RUNNING;
-      setcontext(&(ooc_fiber[i].uc));
+      ooc_me = i;
+      break;
 
       /* If we arrive here, then no runnable fiber was found, but there are
        * enough resources to create a new fiber. To do this, we will simply
@@ -171,12 +168,22 @@ _sigsegv_handler(void)
       continue;
     }
   }
-  /* If we arrive here, it is because this fiber had no async-io in progress
-   * upon arriving here. In this case, we should switch back to the trampoline
-   * context and allow the kernel handler to return. */
-  else {
-    setcontext(&(ooc_fiber[ooc_me].uc));
-  }
+
+  /* If we arrive here, it is because a fiber was found (could be the original
+   * fiber) that had no async-io in progress upon arriving here. In this case,
+   * we should update that fiber's memory protections and switch back to its
+   * trampoline context and allow its kernel handler to return. */
+
+  /* Update memory protections for fiber's the pending address. */
+  /* FIXME Should not be PROT_READ|PROT_WRITE unconditionally. */
+  /* FIXME ps should be assigned once, not everytime this function is called. */
+  ps = (size_t)sysconf(_SC_PAGESIZE);
+  addr = (ooc_fiber[ooc_me].addr)&(~(uintptr_t)(ps-1));
+  ret = mprotect((void*)addr, ps, PROT_READ|PROT_WRITE);
+  assert(!ret);
+
+  /* Switch to trampoline context. */
+  setcontext(&(ooc_fiber[ooc_me].uc));
 }
 
 
