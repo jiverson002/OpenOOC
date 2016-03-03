@@ -25,7 +25,7 @@ default: all
 V := 0
 
 # Program variables
-AR := ar crsP
+AR := ar crs
 RM := rm -rvf
 CC := cc
 LD := cc
