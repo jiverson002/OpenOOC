@@ -62,3 +62,8 @@ ooc_for (i=0; i<m; ++i)
   mm(n, p, a, b, c);
 }
 ooc_rof
+
+
+#define ooc _Pragma("omp parallel for num_threads(1)")
+
+ooc
