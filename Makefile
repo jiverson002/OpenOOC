@@ -205,10 +205,11 @@ check: \
     for file in $^; do \
       ./$$file; \
       ret=$$?; \
-      rc=`expr $$rc + $$ret`; count=`expr $$count + 1`; \
+      count=`expr $$count + 1`; \
       if [ $$ret -eq 0 ] ; then \
         echo -n "  PASS"; \
       else \
+        rc=`expr $$rc + 1`; \
         echo -n "  FAIL"; \
       fi; \
       echo "     $$file"; ./$$file; \
