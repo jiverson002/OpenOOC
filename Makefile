@@ -212,7 +212,7 @@ check: \
         rc=`expr $$rc + 1`; \
         echo -n "  FAIL"; \
       fi; \
-      echo "     $$file"; ./$$file; \
+      echo "     $$file"; \
     done; \
     echo; \
     echo "Tests executed: $$count  Tests failed: $$rc"
