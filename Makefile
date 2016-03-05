@@ -241,7 +241,7 @@ distclean: realclean
 # Print out any TODO or FIXME notations
 todolist:
 	-@for file in $(ALLFILES:$(ROOTDIR)Makefile=); do \
-    fgrep -H -e TODO -e FIXME $$file; \
+    find $$file -type f -exec fgrep -H -e TODO -e FIXME {} \; ; \
   done; \
   true
 #}}}1

@@ -30,186 +30,238 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <inttypes.h>
 
-/* printf */
-#include <stdio.h>
+/* struct sigaction, sigaction */
+#include <signal.h>
 
 /* abort */
 #include <stdlib.h>
 
+/* memcpy, memset */
+#include <string.h>
+
 /* mprotect, PROT_READ, PROT_WRITE */
 #include <sys/mman.h>
 
-/* ucontext_t */
+/* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
 
-/* */
+/* OOC_NUM_FIBERS */
 #include "src/ooc.h"
 
 
-/* Maximum number of fibers per thread. */
-#define OOC_NUM_FIBERS 10
+/******************************************************************************/
+/*
+ *  Page flag bits flow chart for _sigsegv_handler
+ *    - Each page has two bits designated [xy] as flags
+ *
+ *         _sigsegv_handler                             _async_flush
+ *         ================                             ============
+ *
+ *            resident
+ *            --------
+ *  +-----+      yes     +---------+            +-----+
+ *  | y=1 |------------->| set x=1 |            | y=1 |
+ *  +-----+              +---------+            +-----+
+ *     |                                           |
+ *     | swapped                                   | resident
+ *     | -------                                   | --------
+ *     |   no                                      |    yes
+ *     |                                           V
+ *     |      on disk                           +-----+          +-------------+
+ *     V      -------                           | x=1 |--------->| async write |
+ *  +-----+     yes      +------------+         +-----+  dirty   +-------------+
+ *  | x=1 |------------->| async read |            |     -----          |
+ *  +-----+              +------------+      clean |      yes           |
+ *     |                     |               ----- |                    |
+ *     | zero fill           |                no   |                    |
+ *     | ---------           |                     V                    |
+ *     |    no               |                  +---------+            /
+ *     V                     |                  | set y=0 |<----------
+ *  +---------+             /                   +---------+
+ *  | set y=1 |<-----------
+ *  +---------+
+ */
+/******************************************************************************/
 
 
-/* State flags for an OOC fiber. */
-enum ooc_state_flags
-{
-  OOC_RUNNING,
-  OOC_WAITING,
-  OOC_AIO_INPROGRESS
-};
-
-
-/* An execution context, henceforth known as a fiber. */
-struct ooc_fiber
-{
-  unsigned int state;
-  uintptr_t addr;
-  ucontext_t uc;
-};
-
-
-/* The fibers. */
-static __thread struct ooc_fiber ooc_fiber[OOC_NUM_FIBERS];
-
-/* Number of active fibers. */
-static __thread int ooc_cur_fibers=1;
+/* Together these arrays make up an out-of-core execution context, henceforth
+ * known simply as a fiber. Multiple arrays are used instead of a struct with
+ * the various fields to simplify things like passing all fibers' async-io
+ * requests to library functions, i.e., aio_suspend(). */
+static __thread size_t _iter[OOC_NUM_FIBERS];
+static __thread uintptr_t _addr[OOC_NUM_FIBERS];
+static __thread ucontext_t _handler[OOC_NUM_FIBERS];
+static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
+static __thread ucontext_t _kern[OOC_NUM_FIBERS];
+static __thread char _stack[OOC_NUM_FIBERS][SIGSTKSZ];
 
 /* My fiber id. */
-static __thread int ooc_me=0;
+/* FIXME _me should not be initialized. */
+static __thread int _me=0;
 
-/* Memory location which caused fault */
-static __thread void * _addr;
+/* The main context, i.e., the context which spawned all of the fibers. */
+static __thread ucontext_t _main;
+
+/* The old sigaction to be replaced when we are done. */
+static __thread struct sigaction _old_act;
+
+/* System page size. */
+static __thread uintptr_t _ps;
 
 
 static void
 _sigsegv_handler(void)
 {
-  int ret, i;
-  size_t ps;
+  int ret, prot;
   uintptr_t addr;
 
-  /* TODO Need to post an async-io request. */
-  ooc_fiber[ooc_me].addr = (uintptr_t)_addr;
+  if (/* FIXME flags = none */0) {
+    /* TODO Post an async-io request. */
+    //aio_read(...);
 
-  /* TEMPORARY */
-  ret = 0;
-
-  if (OOC_AIO_INPROGRESS == ooc_fiber[ooc_me].state) {
-    /* If this fiber has async-io in progress upon arriving here, then we need
-     * to search the other existing fibers to see if any of their async-io has
-     * completed. If not and if resources are available, then we can create a
-     * new fiber to continue execution. If no resources are available, then we
-     * must just wait until one of the existing fibers' async-io completes. */
-
-    /* Find a fiber that is runnable */
-    for (;;) {
-      /* Search existing fibers for one whose async-io is finished. */
-      for (i=0; i<ooc_cur_fibers; ++i) {
-        if (OOC_AIO_INPROGRESS == ooc_fiber[i].state) {
-          //ret = ooc_aio_error(&(ooc_fiber[i].aioreq));
-
-          switch (ret) {
-            case 0:
-            /* TODO Need to check aio_return(&(ooc_fiber[i].aioreq)) to see
-             * if all bytes were successfully read. */
-            ooc_fiber[i].state = 0;
-            goto OOC_SEARCH_DONE;
-
-            case EINPROGRESS:
-            break;
-
-            case ECANCELED:
-            default:
-            /* TODO Arriving here is erroneous, act accordingly. */
-            abort();
-            break;
-          }
-        }
-      }
-
-      /* If we arrive here, then no runnable fiber was found. If there are
-       * resources available for more fibers, then jump to OOC_NEW_FIBER label
-       * and create a new fiber. Otherwise, jump to the OOC_SEARCH_AGAIN label
-       * to search again. */
-      if (ooc_cur_fibers < OOC_NUM_FIBERS) {
-        goto OOC_NEW_FIBER;
-      }
-      goto OOC_SEARCH_AGAIN;
-
-      /* If we arrive at this label it is because a runnable fiber was found
-       * and we jumped out of the search to here. In this case, i holds the
-       * id of the runnable fiber. Set ooc_me to i and break from the search so
-       * that post-processing can be done for that fiber before returning to its
-       * trampoline context. */
-      OOC_SEARCH_DONE:
-      ooc_me = i;
-      break;
-
-      /* If we arrive here, then no runnable fiber was found, but there are
-       * enough resources to create a new fiber. To do this, we will simply
-       * continue to the next iteration of the OOC_FOR loop. This has the effect
-       * of creating a new fiber. */
-      OOC_NEW_FIBER:
-      /* TODO continue is not correct here!! */
-      /* Change ooc_me value -- this is what actually makes me a new fiber. */
-      //ooc_me = ooc_cur_fibers++;
-      //continue;
-
-      /* If we arrive here, then no runnable fiber was found and there are
-       * not enough resources to create more. So, just go re-execute the
-       * search for a runnable fiber. It is possible that by now, one of the
-       * outstanding async-io requests has completed. */
-      /* TODO We should be able to use aio_suspend somehow to do non-busy wait
-       * for an async-io request to finish. */
-      OOC_SEARCH_AGAIN:
-      continue;
+    if (/* FIXME async-io has not finished */0) {
+      ret = swapcontext(&(_handler[_me]), &_main);
+      assert(!ret);
     }
+
+    /* Grant read protection to page containing offending address. */
+    prot = PROT_READ;
+  }
+  else if (/* FIXME flags = read */0) {
+    /* Grant write protection to page containing offending address. */
+    prot = PROT_READ|PROT_WRITE;
+  }
+  else {
+    /* error */
+    abort();
   }
 
-  /* If we arrive here, it is because a fiber was found (could be the original
-   * fiber) that had no async-io in progress upon arriving here. In this case,
-   * we should update that fiber's memory protections and switch back to its
-   * trampoline context and allow its kernel handler to return. */
-
-  /* Update memory protections for fiber's the pending address. */
-  /* FIXME Should not be PROT_READ|PROT_WRITE unconditionally. */
-  /* FIXME ps should be assigned once, not everytime this function is called. */
-  ps = (size_t)sysconf(_SC_PAGESIZE);
-  addr = (ooc_fiber[ooc_me].addr)&(~(uintptr_t)(ps-1));
-  ret = mprotect((void*)addr, ps, PROT_READ|PROT_WRITE);
+  /* Apply updates to page containing offending address. */
+  addr = _addr[_me]&(~(_ps-1)); /* page align */
+  ret = mprotect((void*)addr, _ps, prot);
   assert(!ret);
 
-  /* Switch to trampoline context. */
-  setcontext(&(ooc_fiber[ooc_me].uc));
+  /* Switch back to trampoline context, so that it may return. */
+  setcontext(&(_trampoline[_me]));
+
+  /* It is erroneous to reach this point. */
+  abort();
 }
 
 
-void
-ooc_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
+static void
+_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 {
   /* Signal handler context. */
-  static __thread ucontext_t _uc;
+  static __thread ucontext_t tmp_uc;
   /* Alternate stack for signal handler context. */
-  static __thread char _stack[SIGSTKSZ];
+  static __thread char tmp_stack[SIGSTKSZ];
+  int ret;
 
   assert(SIGSEGV == sig);
 
-  _addr = si->si_addr;
+  _addr[_me] = (uintptr_t)si->si_addr;
 
-  getcontext(&_uc);
-  _uc.uc_stack.ss_sp = _stack;
-  _uc.uc_stack.ss_size = SIGSTKSZ;
-  _uc.uc_stack.ss_flags = 0;
-  sigemptyset(&(_uc.uc_sigmask));
+  ret = getcontext(&tmp_uc);
+  assert(!ret);
+  tmp_uc.uc_stack.ss_sp = tmp_stack;
+  tmp_uc.uc_stack.ss_size = SIGSTKSZ;
+  tmp_uc.uc_stack.ss_flags = 0;
+  memcpy(&(tmp_uc.uc_sigmask), &(_main.uc_sigmask), sizeof(_main.uc_sigmask));
 
-  makecontext(&_uc, (void (*)(void))_sigsegv_handler, 0);
+  makecontext(&tmp_uc, (void (*)(void))_sigsegv_handler, 0);
 
-  swapcontext(&(ooc_fiber[ooc_me].uc), &_uc);
+  swapcontext(&(_trampoline[_me]), &tmp_uc);
 
   if (uc) {}
+}
+
+
+int
+ooc_init(void (*kern)(size_t const))
+{
+  int ret, i;
+  struct sigaction act;
+
+  _ps = (uintptr_t)sysconf(_SC_PAGESIZE);
+
+  memset(&act, 0, sizeof(act));
+  act.sa_sigaction = &_sigsegv_trampoline;
+  act.sa_flags = SA_SIGINFO;
+  ret = sigaction(SIGSEGV, &act, &_old_act);
+
+  for (i=0; i<OOC_NUM_FIBERS; ++i) {
+    ret = getcontext(&(_kern[i]));
+    assert(!ret);
+    _kern[i].uc_stack.ss_sp = _stack[i];
+    _kern[i].uc_stack.ss_size = SIGSTKSZ;
+    _kern[i].uc_stack.ss_flags = 0;
+
+    makecontext(&(_kern[i]), (void (*)(void))kern, 1, i);
+  }
+
+  return ret;
+}
+
+
+int
+ooc_finalize(void)
+{
+  int ret;
+
+  ret = sigaction(SIGSEGV, &_old_act, NULL);
+
+  return ret;
+}
+
+
+int
+ooc_sched(size_t const i)
+{
+  int ret, j, run=-1, idle=-1;
+
+  /* Search for a fiber that is either blocked or idle. */
+  for (j=0; j<OOC_NUM_FIBERS; ++j) {
+    if (/* FIXME is runnable */0) {
+      run = j;
+      break;
+    }
+    else if (/* FIXME is idle */0) {
+      idle = j;
+      break;
+    }
+  }
+
+  for (;;) {
+    if (-1 != run) {
+      _me = run;
+      ret = swapcontext(&_main, &(_handler[_me]));
+      assert(!ret);
+    }
+    else if (-1 != idle) {
+      _iter[idle] = i;
+
+      _me = idle;
+      ret = swapcontext(&_main, &(_kern[_me]));
+      assert(!ret);
+
+      /* This is the only place we can safely break from this loop, since this
+       * is the only point that we know that iteration i has been assigned to a
+       * fiber. */
+      break;
+    }
+    else {
+      /* TODO Wait for a fiber to become runnable. Since we are in the `main`
+       * context, no fibers can make progress towards completing their kernel,
+       * thus no fiber will become idle, so we just wait on async-io. */
+      //aio_suspend(...);
+    }
+  }
+
+  return ret;
 }
 
 
@@ -217,50 +269,48 @@ ooc_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 /* assert */
 #include <assert.h>
 
-/* setjmp */
-#include <setjmp.h>
-
-/* sigaction */
-#include <signal.h>
-
-/* NULL, EXIT_SUCCESS, EXIT_FAILURE */
+/* NULL, EXIT_SUCCESS */
 #include <stdlib.h>
-
-/* memset */
-#include <string.h>
 
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
 #define SEGV_ADDR (void*)(0x1)
 
+static void
+test_kern(size_t const i)
+{
+  return;
+
+  if (i) {}
+}
+
 int
-main(int argc, char * argv[])
+main(void)
 {
   int ret;
-  struct sigaction act;
   char * mem;
 
-  memset(&act, 0, sizeof(act));
-  act.sa_sigaction = &ooc_sigsegv_trampoline;
-  act.sa_flags = SA_SIGINFO;
-  ret = sigaction(SIGSEGV, &act, NULL);
+  ret = ooc_init(&test_kern);
   assert(!ret);
 
   mem = mmap(NULL, 1<<16, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(mem);
 
-  mem[0] = (char)1; /* Raise a SIGSEGV. */
-  assert(mem == _addr);
+  //mem[0] = (char)1; /* Raise a SIGSEGV. */
+  //assert(mem == _addr);
 
+#if 0
   mem[1] = (char)1; /* Should not raise SIGSEGV. */
   assert(mem == _addr);
+#endif
 
   ret = munmap(mem, 1<<16);
   assert(!ret);
 
-  return EXIT_SUCCESS;
+  ret = ooc_finalize();
+  assert(!ret);
 
-  if (argc || argv) {}
+  return EXIT_SUCCESS;
 }
 #endif

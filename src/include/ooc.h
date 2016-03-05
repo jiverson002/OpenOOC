@@ -31,43 +31,52 @@ THE SOFTWARE.
 #define OPENOOC_RCAND -pre
 
 
-/* assert */
-#include <assert.h>
+/* size_t */
+#include <stddef.h>
 
-/* SIGSEGV */
-#include <errno.h>
-
-/* siginfo_t, sigaction */
-#include <signal.h>
-
-/* memset */
-#include <string.h>
+/* ucontext_t, getcontext, makecontext */
+#include <ucontext.h>
 
 
-/*  sigsegv function prototypes. */
-void ooc_sigsegv_trampoline(int const, siginfo_t * const, void * const);
+/* Maximum number of fibers per thread. */
+#define OOC_NUM_FIBERS 10
 
 
-/* The OOC black magic. */
-#define OOC_FOR(loops) \
+#define ooc_for(loops) \
   {\
     int _ret;\
-    struct sigaction _new, _old;\
+    /* FIXME How to programmatically fill in XXX, i.e., determine which kernel
+     * should be called?? */\
+    _ret = ooc_init(XXX);\
+    assert(!_ret);\
+  }\
 \
-    memset(&_new, 0, sizeof(_new));\
-    _new.sa_sigaction = &ooc_sigsegv_trampoline;\
-    _new.sa_flags = SA_SIGINFO;\
-    _ret = sigaction(SIGSEGV, &_new, &_old);\
+  for (loops)
+
+#define ooc1(iter) \
+  {\
+    int _ret;\
+    _ret = ooc_sched(iter);\
     assert(!_ret);\
-    for (loops) {
-#define OOC_DO \
-      {
-#define OOC_DONE \
-      }\
-    }\
-    _ret = sigaction(SIGSEGV, &_old, NULL);\
-    assert(!_ret);\
+    /* TODO flush */\
   }
+
+#define ooc(kern)   ooc1
+
+/* TODO How do we insert ooc_finalize() after all iterations have completed? */
+
+
+/*
+ooc_for (i=0; i<10; ++i) {
+  ooc(mykernel)(i);
+}
+*/
+
+
+/*  sched.c */
+int ooc_init(void (*kern)(size_t const));
+int ooc_finalize(void);
+int ooc_sched(size_t const i);
 
 
 #endif /* OPENOOC_H */

@@ -33,9 +33,6 @@ THE SOFTWARE.
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
-/* OOC library */
-#include "src/ooc.h"
-
 
 #define restrict
 
@@ -67,15 +64,14 @@ mm(
 #define b(R,C) b[R*p+C]
 #define c(R,C) c[R*p+C]
 
-  OOC_FOR(i=0; i<m; ++i)
-  OOC_DO
+  for (i=0; i<m; ++i) {
     for (j=0; j<n; ++j) {
       c(i,j) = a(i,0)*b(0,j);
       for (k=1; k<p; ++k) {
         c(i,j) += a(i,k)*b(k,j);
       }
     }
-  OOC_DONE
+  }
 
 #undef a
 #undef b
@@ -89,6 +85,7 @@ main(
   char * argv[]
 )
 {
+  int ret;
   size_t m, n, p;
   double * a, * b, * c;
 
@@ -105,6 +102,13 @@ main(
   assert(b);
   c = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(c);
+
+  ret = mprotect(a, SZ(m,n,sizeof(*a)), PROT_READ);
+  assert(!ret);
+  ret = mprotect(b, SZ(n,p,sizeof(*b)), PROT_READ);
+  assert(!ret);
+  ret = mprotect(c, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
+  assert(!ret);
 
 #undef SZ
 
