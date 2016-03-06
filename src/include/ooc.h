@@ -60,10 +60,9 @@ THE SOFTWARE.
 
 #define ooc(kern)   ooc1
 
-/* TODO How do we pass arguments to the kernel, since ooc_sched only takes one
- * argument, namely, the iteration number. Maybe, we have each fiber have some
- * type of args struct like pthread_create with is stored statically in sched.c
- * */
+/* TODO How do we pass arguments to the kernel, since kern only takes one int
+ * argument, namely, the fiber number. Maybe, we have each fiber have some type
+ * of args struct like pthread_create with is stored statically in sched.c */
 /* TODO How do we insert ooc_finalize() after all iterations have completed? */
 
 
@@ -75,9 +74,9 @@ ooc_for (i=0; i<10; ++i) {
 
 
 /* sched.c */
-int ooc_init(void (*kern)(size_t const));
+int ooc_init(void (*kern)(int const));
 int ooc_finalize(void);
-int ooc_sched(size_t const i, void * const args);
+int ooc_sched(size_t const i);
 
 
 #endif /* OPENOOC_H */

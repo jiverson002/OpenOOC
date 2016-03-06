@@ -115,7 +115,7 @@ THE SOFTWARE.
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
 static __thread size_t _iter[OOC_NUM_FIBERS];
-static __thread void * _args[OOC_NUM_FIBERS];
+//static __thread void * _args[OOC_NUM_FIBERS];
 static __thread uintptr_t _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
@@ -221,7 +221,7 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
 
 int
-ooc_init(void (*kern)(size_t const))
+ooc_init(void (*kern)(int const))
 {
   int ret, i;
   struct sigaction act;
@@ -276,7 +276,7 @@ ooc_finalize(void)
 
 
 int
-ooc_sched(size_t const i, void * const args)
+ooc_sched(size_t const i)
 {
   int ret, j, run=-1, idle=-1;
 
@@ -300,7 +300,6 @@ ooc_sched(size_t const i, void * const args)
     }
     else if (-1 != idle) {
       _iter[idle] = i;
-      _args[idle] = args;
 
       _me = idle;
       ret = swapcontext(&_main, &(_kern[_me]));
@@ -334,7 +333,7 @@ ooc_sched(size_t const i, void * const args)
 #include <sys/mman.h>
 
 static void
-test_kern(size_t const i)
+test_kern(int const i)
 {
   return;
 

@@ -48,6 +48,8 @@ static void mm_kern(size_t const i);
 static void mm(void);
 
 
+/* FIXME this should take an int arg, which would be fiber number, no iter
+ * number. */
 static void
 mm_kern(size_t const i)
 {
@@ -75,7 +77,7 @@ mm(void)
 {
   size_t i;
 
-  ooc_init(&mm_kern);
+  ooc_init((void(*)(int const))&mm_kern);
   for (i=0; i<m; ++i) {
     mm_kern(i);
   }
