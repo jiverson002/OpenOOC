@@ -161,6 +161,7 @@ _sigsegv_handler(void)
 
     /* Update page flags. */
     PTBL_SET(page, 0);
+    assert(PTBL_GET(page, 0));
 
     /* Grant read protection to page containing offending address. */
     prot = PROT_READ;
@@ -168,6 +169,7 @@ _sigsegv_handler(void)
   else if (PTBL_GET(page, 0)) {
     /* Update page flags. */
     PTBL_SET(page, 1);
+    assert(PTBL_GET(page, 1));
 
     /* Grant write protection to page containing offending address. */
     prot = PROT_READ|PROT_WRITE;
@@ -223,13 +225,21 @@ ooc_init(void (*kern)(size_t const))
   int ret, i;
   struct sigaction act;
 
+#if __WORDSIZE == 64
   /* FIXME Must use HUGE (1MiB) pages until a sparse data structure for storing
    * page flags is implemented. */
-  //_ps = (uintptr_t)sysconf(_SC_PAGESIZE);
   _ps = 1<<20;
+#else
+  _ps = (uintptr_t)sysconf(_SC_PAGESIZE);
+#endif
   if (!_ptbl) {
+#if __WORDSIZE == 64
     _ptbl = mmap(NULL, (1lu<<48)/_ps/PTBL_PPB, PROT_READ|PROT_WRITE,\
       MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+#else
+    _ptbl = mmap(NULL, (size_t)(((uint64_t)1<<32)-1)/_ps/PTBL_PPB,\
+      PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+#endif
     assert(MAP_FAILED != _ptbl);
   }
 

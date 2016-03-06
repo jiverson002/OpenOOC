@@ -33,49 +33,53 @@ THE SOFTWARE.
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
+/* OOC library */
+#include "src/ooc.h"
+
 
 #define restrict
 
 
-static void
-mm(
-  size_t const m,
-  size_t const n,
-  size_t const p,
-  double const * const restrict a,
-  double const * const restrict b,
-  double * const restrict c
-);
+static size_t m, n, p;
+static double * a, * b, * c;
+
+
+static void mm_kern(size_t const i);
+static void mm(void);
 
 
 static void
-mm(
-  size_t const m,
-  size_t const n,
-  size_t const p,
-  double const * const restrict a,
-  double const * const restrict b,
-  double * const restrict c
-)
+mm_kern(size_t const i)
 {
-  size_t i, j, k;
+  size_t j, k;
 
 #define a(R,C) a[R*n+C]
 #define b(R,C) b[R*p+C]
 #define c(R,C) c[R*p+C]
 
-  for (i=0; i<m; ++i) {
-    for (j=0; j<n; ++j) {
-      c(i,j) = a(i,0)*b(0,j);
-      for (k=1; k<p; ++k) {
-        c(i,j) += a(i,k)*b(k,j);
-      }
+  for (j=0; j<n; ++j) {
+    c(i,j) = a(i,0)*b(0,j);
+    for (k=1; k<p; ++k) {
+      c(i,j) += a(i,k)*b(k,j);
     }
   }
 
 #undef a
 #undef b
 #undef c
+}
+
+
+static void
+mm(void)
+{
+  size_t i;
+
+  ooc_init(&mm_kern);
+  for (i=0; i<m; ++i) {
+    mm_kern(i);
+  }
+  ooc_finalize();
 }
 
 
@@ -86,8 +90,6 @@ main(
 )
 {
   int ret;
-  size_t m, n, p;
-  double * a, * b, * c;
 
   m = 100;
   n = 100;
@@ -103,16 +105,16 @@ main(
   c = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(c);
 
-  ret = mprotect(a, SZ(m,n,sizeof(*a)), PROT_READ);
+  /*ret = mprotect(a, SZ(m,n,sizeof(*a)), PROT_READ);
   assert(!ret);
   ret = mprotect(b, SZ(n,p,sizeof(*b)), PROT_READ);
   assert(!ret);
   ret = mprotect(c, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
-  assert(!ret);
+  assert(!ret);*/
 
 #undef SZ
 
-  mm(m, n, p, a, b, c);
+  mm();
 
   munmap(a, m*n*sizeof(*a));
   munmap(b, n*p*sizeof(*b));
