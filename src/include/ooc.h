@@ -34,9 +34,6 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
-/* ucontext_t, getcontext, makecontext */
-#include <ucontext.h>
-
 
 /* Maximum number of fibers per thread. */
 #define OOC_NUM_FIBERS 10
@@ -45,7 +42,7 @@ THE SOFTWARE.
 #define ooc_for(loops) \
   {\
     int _ret;\
-    /* FIXME How to programmatically fill in XXX, i.e., determine which kernel
+    /* TODO How to programmatically fill in XXX, i.e., determine which kernel
      * should be called?? */\
     _ret = ooc_init(XXX);\
     assert(!_ret);\
@@ -63,6 +60,10 @@ THE SOFTWARE.
 
 #define ooc(kern)   ooc1
 
+/* TODO How do we pass arguments to the kernel, since ooc_sched only takes one
+ * argument, namely, the iteration number. Maybe, we have each fiber have some
+ * type of args struct like pthread_create with is stored statically in sched.c
+ * */
 /* TODO How do we insert ooc_finalize() after all iterations have completed? */
 
 
@@ -73,10 +74,10 @@ ooc_for (i=0; i<10; ++i) {
 */
 
 
-/*  sched.c */
+/* sched.c */
 int ooc_init(void (*kern)(size_t const));
 int ooc_finalize(void);
-int ooc_sched(size_t const i);
+int ooc_sched(size_t const i, void * const args);
 
 
 #endif /* OPENOOC_H */

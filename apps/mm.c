@@ -89,8 +89,6 @@ main(
   char * argv[]
 )
 {
-  int ret;
-
   m = 100;
   n = 100;
   p = 100;

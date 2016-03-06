@@ -115,6 +115,7 @@ THE SOFTWARE.
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
 static __thread size_t _iter[OOC_NUM_FIBERS];
+static __thread void * _args[OOC_NUM_FIBERS];
 static __thread uintptr_t _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
@@ -275,7 +276,7 @@ ooc_finalize(void)
 
 
 int
-ooc_sched(size_t const i)
+ooc_sched(size_t const i, void * const args)
 {
   int ret, j, run=-1, idle=-1;
 
@@ -299,6 +300,7 @@ ooc_sched(size_t const i)
     }
     else if (-1 != idle) {
       _iter[idle] = i;
+      _args[idle] = args;
 
       _me = idle;
       ret = swapcontext(&_main, &(_kern[_me]));
