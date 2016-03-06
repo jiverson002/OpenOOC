@@ -80,20 +80,26 @@ ooc
     int _ret;\
     _ret = ooc_init();\
     assert(!_ret);\
-  }\
 \
-  for (loops)
+    for (loops) {
 
 #define ooc(kern) \
-  {\
-    int _ret;\
-    _ret = ooc_sched(&mykernel, ooc1
+      _ret = ooc_sched(&mykernel, ooc1
 
 #define ooc1(i, args) \
-    i, args);\
-    assert(!_ret);\
+      i, args);\
+      assert(!_ret);\
+    }\
+  }\
+  {\
+    int __ret;\
+    __ret = ooc_finalize();\
+    assert(!__ret);\
   }
 
 ooc_for (i=0; i<10; ++i) {
   ooc(mykernel)(i, args);
 }
+
+ooc_for (i=0; i<10; ++i)
+  ooc(mykernel)(i, args);
