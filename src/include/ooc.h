@@ -42,41 +42,35 @@ THE SOFTWARE.
 #define ooc_for(loops) \
   {\
     int _ret;\
-    /* TODO How to programmatically fill in XXX, i.e., determine which kernel
-     * should be called?? */\
-    _ret = ooc_init(XXX);\
+    _ret = ooc_init();\
     assert(!_ret);\
   }\
 \
   for (loops)
 
-#define ooc1(iter) \
+#define ooc(kern) \
   {\
     int _ret;\
-    _ret = ooc_sched(iter);\
+    _ret = ooc_sched(&mykernel, ooc1
+
+#define ooc1(i, args) \
+    i, args);\
     assert(!_ret);\
-    /* TODO flush */\
   }
 
-#define ooc(kern)   ooc1
-
-/* TODO How do we pass arguments to the kernel, since kern only takes one int
- * argument, namely, the fiber number. Maybe, we have each fiber have some type
- * of args struct like pthread_create with is stored statically in sched.c */
 /* TODO How do we insert ooc_finalize() after all iterations have completed? */
 
-
-/*
+/* Example invocation --
 ooc_for (i=0; i<10; ++i) {
-  ooc(mykernel)(i);
+  ooc(mykernel)(i, args);
 }
 */
 
 
 /* sched.c */
-int ooc_init(void (*kern)(int const));
+int ooc_init(void);
 int ooc_finalize(void);
-int ooc_sched(size_t const i);
+int ooc_sched(void (*kern)(void * const), size_t const i, void * const args);
 
 
 #endif /* OPENOOC_H */

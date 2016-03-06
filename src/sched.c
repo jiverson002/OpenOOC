@@ -115,7 +115,8 @@ THE SOFTWARE.
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
 static __thread size_t _iter[OOC_NUM_FIBERS];
-//static __thread void * _args[OOC_NUM_FIBERS];
+static __thread void * _args[OOC_NUM_FIBERS];
+static __thread void (*_kernel[OOC_NUM_FIBERS])(void * const);
 static __thread uintptr_t _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
@@ -220,8 +221,15 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 }
 
 
+static void
+_kernel_trampoline(int const i)
+{
+  _kernel[i](_args[i]);
+}
+
+
 int
-ooc_init(void (*kern)(int const))
+ooc_init(void)
 {
   int ret, i;
   struct sigaction act;
@@ -256,8 +264,11 @@ ooc_init(void (*kern)(int const))
     _kern[i].uc_stack.ss_sp = _stack[i];
     _kern[i].uc_stack.ss_size = SIGSTKSZ;
     _kern[i].uc_stack.ss_flags = 0;
+    /* TODO When this context returns, it should return to a `flush context`
+     * where the data it accessed is flushed to disk. The `flush context` should
+     * return to the main context. */
 
-    makecontext(&(_kern[i]), (void (*)(void))kern, 1, i);
+    makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
   }
 
   return ret;
@@ -276,7 +287,7 @@ ooc_finalize(void)
 
 
 int
-ooc_sched(size_t const i)
+ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
 {
   int ret, j, run=-1, idle=-1;
 
@@ -300,6 +311,8 @@ ooc_sched(size_t const i)
     }
     else if (-1 != idle) {
       _iter[idle] = i;
+      _kernel[idle] = kern;
+      _args[idle] = args;
 
       _me = idle;
       ret = swapcontext(&_main, &(_kern[_me]));
@@ -332,14 +345,6 @@ ooc_sched(size_t const i)
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
-static void
-test_kern(int const i)
-{
-  return;
-
-  if (i) {}
-}
-
 int
 main(void)
 {
@@ -347,7 +352,7 @@ main(void)
   char var;
   char * base, * mem;
 
-  ret = ooc_init(&test_kern);
+  ret = ooc_init();
   assert(!ret);
 
   base = mmap(NULL, _ps<<1, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);

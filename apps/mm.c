@@ -44,21 +44,22 @@ static size_t m, n, p;
 static double * a, * b, * c;
 
 
-static void mm_kern(size_t const i);
+static void mm_kern(void *);
 static void mm(void);
 
 
 /* FIXME this should take an int arg, which would be fiber number, no iter
  * number. */
 static void
-mm_kern(size_t const i)
+mm_kern(void * const args)
 {
-  size_t j, k;
+  size_t i, j, k;
 
 #define a(R,C) a[R*n+C]
 #define b(R,C) b[R*p+C]
 #define c(R,C) c[R*p+C]
 
+  i = (size_t)args;
   for (j=0; j<n; ++j) {
     c(i,j) = a(i,0)*b(0,j);
     for (k=1; k<p; ++k) {
@@ -77,9 +78,9 @@ mm(void)
 {
   size_t i;
 
-  ooc_init((void(*)(int const))&mm_kern);
+  ooc_init();
   for (i=0; i<m; ++i) {
-    mm_kern(i);
+    mm_kern((void*)i);
   }
   ooc_finalize();
 }
