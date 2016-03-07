@@ -225,6 +225,10 @@ static void
 _kernel_trampoline(int const i)
 {
   _kernel[i](_args[i]);
+
+  /* TODO Before this context returns, it should call a `flush function` where
+   * the data it accessed is flushed to disk. The `flush fucntion` should return
+   * to the main context. */
 }
 
 
@@ -264,9 +268,6 @@ ooc_init(void)
     _kern[i].uc_stack.ss_sp = _stack[i];
     _kern[i].uc_stack.ss_size = SIGSTKSZ;
     _kern[i].uc_stack.ss_flags = 0;
-    /* TODO When this context returns, it should return to a `flush context`
-     * where the data it accessed is flushed to disk. The `flush context` should
-     * return to the main context. */
 
     makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
   }
@@ -327,7 +328,8 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
       /* TODO Wait for a fiber to become runnable. Since we are in the `main`
        * context, no fibers can make progress towards completing their kernel,
        * thus no fiber will become idle, so we just wait on async-io. */
-      //aio_suspend(...);
+      //ret = aio_suspend(_aiocb, OOC_NUM_FIBERS, NULL);
+      //assert(!ret);
     }
   }
 
