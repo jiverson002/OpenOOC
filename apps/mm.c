@@ -45,27 +45,42 @@ THE SOFTWARE.
 
 #define restrict
 
+struct args
+{
+  size_t n, p, i;
+  double const * a, * b;
+  double * c;
+};
 
-static size_t m, n, p;
-static double * a, * b, * c;
 
-
-static void mm_kern(void *);
-static void mm(void);
+static void mm_kern(void * const);
+static void mm(size_t const m, size_t const n, size_t const p,
+               double const * const restrict a,
+               double const * const restrict b, double * const restrict c);
 
 
 /* FIXME this should take an int arg, which would be fiber number, no iter
  * number. */
 static void
-mm_kern(void * const args)
+mm_kern(void * const state)
 {
-  size_t i, j, k;
+  size_t n, p, i, j, k;
+  double const * a, * b;
+  double * c;
+  struct args * args;
+
+  args = (struct args*)state;
+  n = args->n;
+  p = args->p;
+  i = args->i;
+  a = args->a;
+  b = args->b;
+  c = args->c;
 
 #define a(R,C) a[R*n+C]
 #define b(R,C) b[R*p+C]
 #define c(R,C) c[R*p+C]
 
-  i = (size_t)args;
   for (j=0; j<n; ++j) {
     c(i,j) = a(i,0)*b(0,j);
     for (k=1; k<p; ++k) {
@@ -80,13 +95,23 @@ mm_kern(void * const args)
 
 
 static void
-mm(void)
+mm(size_t const m, size_t const n, size_t const p,
+   double const * const restrict a, double const * const restrict b,
+   double * const restrict c)
 {
   size_t i;
+  struct args args;
+
+  args.n = n;
+  args.p = p;
+  args.a = a;
+  args.b = b;
+  args.c = c;
 
   ooc_init();
   for (i=0; i<m; ++i) {
-    mm_kern((void*)i);
+    args.i = i;
+    mm_kern(&args);
   }
   ooc_finalize();
 }
@@ -98,7 +123,8 @@ main(
   char * argv[]
 )
 {
-  double * a_base, * b_base, * c_base;
+  size_t m, n, p;
+  double * a_base, * b_base, * c_base, * a, * b, * c;
 
   m = 100;
   n = 100;
@@ -127,7 +153,7 @@ main(
   ret = mprotect(c_base, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
   assert(!ret);*/
 
-  mm();
+  mm(m, n, p, a, b, c);
 
   munmap(a_base, SZ(m,n,sizeof(*a)));
   munmap(b_base, SZ(n,p,sizeof(*b)));
