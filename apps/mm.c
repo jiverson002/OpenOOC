@@ -24,6 +24,12 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* uintptr_t */
+#include <inttypes.h>
+
+/* TEMPORARY */
+#include <stdio.h>
+
 /* EXIT_SUCCESS */
 #include <stdlib.h>
 
@@ -92,34 +98,42 @@ main(
   char * argv[]
 )
 {
+  double * a_base, * b_base, * c_base;
+
   m = 100;
   n = 100;
   p = 100;
 
-#define SZ(X,Y,S) \
-  ((X*Y*S+(size_t)sysconf(_SC_PAGESIZE)-1)&(~((size_t)sysconf(_SC_PAGESIZE)-1)))
+#define SZ(X,Y,S) (((X*Y*S+OOC_PAGE_SIZE-1)&(~(OOC_PAGE_SIZE-1)))<<1)
+#define PA(M)     (((uintptr_t)M+OOC_PAGE_SIZE-1)&(~(OOC_PAGE_SIZE-1)))
 
-  a = mmap(NULL, SZ(m,n,sizeof(*a)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(a);
-  b = mmap(NULL, SZ(n,p,sizeof(*b)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(b);
-  c = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(c);
+  a_base = mmap(NULL, SZ(m,n,sizeof(*a)), PROT_NONE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != a_base);
+  a = (double*)PA(a_base);
+  b_base = mmap(NULL, SZ(n,p,sizeof(*b)), PROT_NONE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != b_base);
+  b = (double*)PA(b_base);
+  c_base = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != c_base);
+  c = (double*)PA(c_base);
 
-  /*ret = mprotect(a, SZ(m,n,sizeof(*a)), PROT_READ);
+  /*ret = mprotect(a_base, SZ(m,n,sizeof(*a)), PROT_READ);
   assert(!ret);
-  ret = mprotect(b, SZ(n,p,sizeof(*b)), PROT_READ);
+  ret = mprotect(b_base, SZ(n,p,sizeof(*b)), PROT_READ);
   assert(!ret);
-  ret = mprotect(c, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
+  ret = mprotect(c_base, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
   assert(!ret);*/
-
-#undef SZ
 
   mm();
 
-  munmap(a, m*n*sizeof(*a));
-  munmap(b, n*p*sizeof(*b));
-  munmap(c, m*p*sizeof(*c));
+  munmap(a_base, SZ(m,n,sizeof(*a)));
+  munmap(b_base, SZ(n,p,sizeof(*b)));
+  munmap(c_base, SZ(m,p,sizeof(*c)));
+
+#undef SZ
 
   return EXIT_SUCCESS;
 

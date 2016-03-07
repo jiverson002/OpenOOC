@@ -238,13 +238,8 @@ ooc_init(void)
   int ret, i;
   struct sigaction act;
 
-#if __WORDSIZE == 64
-  /* FIXME Must use HUGE (1MiB) pages until a sparse data structure for storing
-   * page flags is implemented. */
-  _ps = 1<<20;
-#else
-  _ps = (uintptr_t)sysconf(_SC_PAGESIZE);
-#endif
+  _ps = OOC_PAGE_SIZE;
+
   if (!_ptbl) {
 #if __WORDSIZE == 64
     _ptbl = mmap(NULL, (1lu<<48)/_ps/PTBL_PPB, PROT_READ|PROT_WRITE,\
