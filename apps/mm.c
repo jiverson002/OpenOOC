@@ -57,8 +57,6 @@ struct args
 static void mm_kern(size_t const, void * const);
 
 
-/* FIXME this should take an int arg, which would be fiber number, no iter
- * number. */
 static void
 mm_kern(size_t const i, void * const state)
 {
