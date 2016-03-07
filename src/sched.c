@@ -328,7 +328,7 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
       /* TODO Wait for a fiber to become runnable. Since we are in the `main`
        * context, no fibers can make progress towards completing their kernel,
        * thus no fiber will become idle, so we just wait on async-io. */
-      //ret = aio_suspend(_aiocb, OOC_NUM_FIBERS, NULL);
+      //ret = aio_suspend(_aiolist, OOC_NUM_FIBERS, NULL);
       //assert(!ret);
     }
   }
