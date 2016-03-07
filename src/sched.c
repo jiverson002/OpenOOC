@@ -114,21 +114,20 @@ THE SOFTWARE.
  * known simply as a fiber. Multiple arrays are used instead of a struct with
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
+/* TODO Do we need to store a main context for each fiber? */
 static __thread size_t _iter[OOC_NUM_FIBERS];
 static __thread void * _args[OOC_NUM_FIBERS];
-static __thread void (*_kernel[OOC_NUM_FIBERS])(void * const);
+static __thread void (*_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
 static __thread uintptr_t _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
 static __thread ucontext_t _kern[OOC_NUM_FIBERS];
+static __thread ucontext_t _main[OOC_NUM_FIBERS];
 static __thread char _stack[OOC_NUM_FIBERS][SIGSTKSZ];
 
 /* My fiber id. */
 /* FIXME _me should not be initialized. */
 static __thread int _me=0;
-
-/* The main context, i.e., the context which spawned all of the fibers. */
-static __thread ucontext_t _main;
 
 /* The old sigaction to be replaced when we are done. */
 static __thread struct sigaction _old_act;
@@ -153,10 +152,10 @@ _sigsegv_handler(void)
   if (!PTBL_GET(page, 0)) {
     if (PTBL_GET(page, 1)) {
       /* TODO Post an async-io request. */
-      //aio_read(...);
+      /*aio_read(...);*/
 
       if (/* FIXME async-io has not finished */0) {
-        ret = swapcontext(&(_handler[_me]), &_main);
+        ret = swapcontext(&(_handler[_me]), &(_main[_me]));
         assert(!ret);
       }
     }
@@ -211,7 +210,8 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   tmp_uc.uc_stack.ss_sp = tmp_stack;
   tmp_uc.uc_stack.ss_size = SIGSTKSZ;
   tmp_uc.uc_stack.ss_flags = 0;
-  memcpy(&(tmp_uc.uc_sigmask), &(_main.uc_sigmask), sizeof(_main.uc_sigmask));
+  memcpy(&(tmp_uc.uc_sigmask), &(_main[_me].uc_sigmask),\
+    sizeof(_main[_me].uc_sigmask));
 
   makecontext(&tmp_uc, (void (*)(void))_sigsegv_handler, 0);
 
@@ -224,11 +224,17 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 static void
 _kernel_trampoline(int const i)
 {
-  _kernel[i](_args[i]);
+  _kernel[i](_iter[i], _args[i]);
 
   /* TODO Before this context returns, it should call a `flush function` where
    * the data it accessed is flushed to disk. The `flush fucntion` should return
    * to the main context. */
+
+  /* Switch back to main context, so that a new fiber gets scheduled. */
+  setcontext(&(_main[i]));
+
+  /* It is erroneous to reach this point. */
+  abort();
 }
 
 
@@ -283,7 +289,8 @@ ooc_finalize(void)
 
 
 int
-ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
+ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
+          void * const args)
 {
   int ret, j, run=-1, idle=-1;
 
@@ -293,7 +300,7 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
       run = j;
       break;
     }
-    else if (/* FIXME is idle */0) {
+    else if (/* FIXME is idle */1) {
       idle = j;
       break;
     }
@@ -302,7 +309,7 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
   for (;;) {
     if (-1 != run) {
       _me = run;
-      ret = swapcontext(&_main, &(_handler[_me]));
+      ret = swapcontext(&(_main[_me]), &(_handler[_me]));
       assert(!ret);
     }
     else if (-1 != idle) {
@@ -311,7 +318,7 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
       _args[idle] = args;
 
       _me = idle;
-      ret = swapcontext(&_main, &(_kern[_me]));
+      ret = swapcontext(&(_main[_me]), &(_kern[_me]));
       assert(!ret);
 
       /* This is the only place we can safely break from this loop, since this
@@ -323,8 +330,8 @@ ooc_sched(void (*kern)(void * const), size_t const i, void * const args)
       /* TODO Wait for a fiber to become runnable. Since we are in the `main`
        * context, no fibers can make progress towards completing their kernel,
        * thus no fiber will become idle, so we just wait on async-io. */
-      //ret = aio_suspend(_aiolist, OOC_NUM_FIBERS, NULL);
-      //assert(!ret);
+      /*ret = aio_suspend(_aiolist, OOC_NUM_FIBERS, NULL);
+      assert(!ret);*/
     }
   }
 

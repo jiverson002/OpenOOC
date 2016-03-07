@@ -57,7 +57,7 @@ THE SOFTWARE.
     for (loops) {
 
 #define ooc(kern) \
-      _ret = ooc_sched(&mykernel, ooc1
+      _ret = ooc_sched(&kern, ooc1
 
 #define ooc1(i, args) \
       i, args);\
@@ -83,7 +83,8 @@ ooc_for (i=0; i<10; ++i)
 /* sched.c */
 int ooc_init(void);
 int ooc_finalize(void);
-int ooc_sched(void (*kern)(void * const), size_t const i, void * const args);
+int ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
+              void * const args);
 
 
 #endif /* OPENOOC_H */
