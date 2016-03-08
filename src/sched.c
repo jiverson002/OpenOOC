@@ -113,7 +113,7 @@ static __thread struct sigaction _old_act;
 static __thread uintptr_t _ps;
 
 /* The main context, i.e., the context which spawned all of the fibers. */
-/* TODO Need to convince myself that we don't need a maiin context for each
+/* TODO Need to convince myself that we don't need a main context for each
  * fiber? */
 static __thread ucontext_t _main;
 
@@ -204,13 +204,20 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
 
 static void
+_flush(void)
+{
+}
+
+
+static void
 _kernel_trampoline(int const i)
 {
   _kernel[i](_iter[i], _args[i]);
 
   /* TODO Before this context returns, it should call a `flush function` where
-   * the data it accessed is flushed to disk. The `flush fucntion` should return
+   * the data it accessed is flushed to disk. The `flush function` should return
    * to the main context. */
+  _flush();
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
   setcontext(&_main);
