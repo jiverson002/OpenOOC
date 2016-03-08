@@ -44,6 +44,8 @@ THE SOFTWARE.
    * page flags is implemented. */
 # define OOC_PAGE_SIZE (1lu<<20)
 #else
+/* sysconf, _SC_PAGESIZE */
+# include <unistd.h>
 # define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 #endif
 

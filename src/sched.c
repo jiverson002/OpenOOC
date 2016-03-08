@@ -48,9 +48,6 @@ THE SOFTWARE.
 /* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
-/* sysconf, _SC_PAGESIZE */
-#include <unistd.h>
-
 /* OOC_NUM_FIBERS */
 #include "src/ooc.h"
 
@@ -114,7 +111,6 @@ THE SOFTWARE.
  * known simply as a fiber. Multiple arrays are used instead of a struct with
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
-/* TODO Do we need to store a main context for each fiber? */
 static __thread size_t _iter[OOC_NUM_FIBERS];
 static __thread void * _args[OOC_NUM_FIBERS];
 static __thread void (*_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
@@ -122,7 +118,6 @@ static __thread uintptr_t _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
 static __thread ucontext_t _kern[OOC_NUM_FIBERS];
-static __thread ucontext_t _main[OOC_NUM_FIBERS];
 static __thread char _stack[OOC_NUM_FIBERS][SIGSTKSZ];
 
 /* My fiber id. */
@@ -134,6 +129,11 @@ static __thread struct sigaction _old_act;
 
 /* System page size. */
 static __thread uintptr_t _ps;
+
+/* The main context, i.e., the context which spawned all of the fibers. */
+/* TODO Need to convince myself that we don't need a maiin context for each
+ * fiber? */
+static __thread ucontext_t _main;
 
 /* System page table. */
 static char * _ptbl=NULL;
@@ -155,7 +155,7 @@ _sigsegv_handler(void)
       /*aio_read(...);*/
 
       if (/* FIXME async-io has not finished */0) {
-        ret = swapcontext(&(_handler[_me]), &(_main[_me]));
+        ret = swapcontext(&(_handler[_me]), &_main);
         assert(!ret);
       }
     }
@@ -210,8 +210,7 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   tmp_uc.uc_stack.ss_sp = tmp_stack;
   tmp_uc.uc_stack.ss_size = SIGSTKSZ;
   tmp_uc.uc_stack.ss_flags = 0;
-  memcpy(&(tmp_uc.uc_sigmask), &(_main[_me].uc_sigmask),\
-    sizeof(_main[_me].uc_sigmask));
+  memcpy(&(tmp_uc.uc_sigmask), &(_main.uc_sigmask), sizeof(_main.uc_sigmask));
 
   makecontext(&tmp_uc, (void (*)(void))_sigsegv_handler, 0);
 
@@ -231,7 +230,7 @@ _kernel_trampoline(int const i)
    * to the main context. */
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
-  setcontext(&(_main[i]));
+  setcontext(&_main);
 
   /* It is erroneous to reach this point. */
   abort();
@@ -309,7 +308,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
   for (;;) {
     if (-1 != run) {
       _me = run;
-      ret = swapcontext(&(_main[_me]), &(_handler[_me]));
+      ret = swapcontext(&_main, &(_handler[_me]));
       assert(!ret);
     }
     else if (-1 != idle) {
@@ -318,7 +317,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       _args[idle] = args;
 
       _me = idle;
-      ret = swapcontext(&(_main[_me]), &(_kern[_me]));
+      ret = swapcontext(&_main, &(_kern[_me]));
       assert(!ret);
 
       /* This is the only place we can safely break from this loop, since this
