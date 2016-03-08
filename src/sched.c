@@ -36,6 +36,9 @@ THE SOFTWARE.
 /* struct sigaction, sigaction */
 #include <signal.h>
 
+/* size_t */
+#include <stddef.h>
+
 /* NULL, abort */
 #include <stdlib.h>
 
