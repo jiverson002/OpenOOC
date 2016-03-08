@@ -39,15 +39,9 @@ THE SOFTWARE.
 #define OOC_NUM_FIBERS 10
 
 /* OOC page size. */
-#if __WORDSIZE == 64
-  /* FIXME Must use HUGE (1MiB) pages until a sparse data structure for storing
-   * page flags is implemented. */
-# define OOC_PAGE_SIZE (1lu<<20)
-#else
 /* sysconf, _SC_PAGESIZE */
-# include <unistd.h>
-# define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
-#endif
+#include <unistd.h>
+#define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 
 #define ooc_for(loops) \

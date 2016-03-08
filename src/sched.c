@@ -27,7 +27,7 @@ THE SOFTWARE.
 /* SIGSEGV */
 #include <errno.h>
 
-/* uintptr_t */
+/* uintptr_t, uint8_t */
 #include <inttypes.h>
 
 /* CHAR_BIT */
@@ -53,6 +53,9 @@ THE SOFTWARE.
 
 /* OOC_NUM_FIBERS */
 #include "src/ooc.h"
+
+/* ooc page table */
+#include "splay.h"
 
 
 /******************************************************************************/
@@ -89,26 +92,6 @@ THE SOFTWARE.
  */
 /******************************************************************************/
 
-/* Number of bits per page flag. */
-#define PTBL_BITS 2
-
-/* Number of pages per byte (convenience macro). */
-#define PTBL_PPB (sizeof(*_ptbl)*CHAR_BIT/PTBL_BITS)
-
-/* Byte index of a given bit BIT in page PAGE in the page table _ptbl. */
-#define PTBL_BYT(PAGE,BIT) (PAGE/PTBL_PPB)
-
-/* Offset into byte PTBL_BYT(PAGE,BIT) for bit BIT in the page table _ptbl. */
-#define PTBL_OFF(PAGE,BIT) ((PAGE%PTBL_PPB)*PTBL_BITS+BIT)
-
-/* Set bit BIT in page PAGE in the page table _ptbl. */
-#define PTBL_SET(PAGE,BIT) \
-  (_ptbl[PTBL_BYT(PAGE,BIT)] |= (char)(0x1<<PTBL_OFF(PAGE,BIT)))
-
-/* Get bit BIT in page PAGE in the page table _ptbl. */
-#define PTBL_GET(PAGE,BIT) \
-  ((_ptbl[PTBL_BYT(PAGE,BIT)]>>PTBL_OFF(PAGE,BIT))&0x1)
-
 
 /* Together these arrays make up an out-of-core execution context, henceforth
  * known simply as a fiber. Multiple arrays are used instead of a struct with
@@ -139,7 +122,13 @@ static __thread uintptr_t _ps;
 static __thread ucontext_t _main;
 
 /* System page table. */
-static char * _ptbl=NULL;
+static sp_t _sp;
+
+
+struct vma {
+  sp_nd_t nd;
+  uint8_t * pflags;
+};
 
 
 static void
@@ -148,12 +137,19 @@ _sigsegv_handler(void)
   int ret, prot;
   size_t page;
   uintptr_t addr;
+  sp_nd_t * nd;
+  struct vma * vma;
+
+  /* Find the node corresponding to the offending address. */
+  ret = ooc_sp_find(&_sp, _addr[_me], &nd);
+  assert(!ret);
+  vma = (struct vma*)nd;
 
   addr = _addr[_me]&(~(_ps-1)); /* page align */
-  page = addr/_ps;
+  page = (addr-nd->b)/_ps;
 
-  if (!PTBL_GET(page, 0)) {
-    if (PTBL_GET(page, 1)) {
+  if (!(vma->pflags[page]&0x1)) {
+    if (vma->pflags[page]&0x10) {
       /* TODO Post an async-io request. */
       /*aio_read(...);*/
 
@@ -164,23 +160,17 @@ _sigsegv_handler(void)
     }
 
     /* Update page flags. */
-    PTBL_SET(page, 0);
-    assert(PTBL_GET(page, 0));
+    vma->pflags[page] |= 0x1;
 
     /* Grant read protection to page containing offending address. */
     prot = PROT_READ;
   }
-  else if (PTBL_GET(page, 0)) {
+  else {
     /* Update page flags. */
-    PTBL_SET(page, 1);
-    assert(PTBL_GET(page, 1));
+    vma->pflags[page] |= 0x10;
 
     /* Grant write protection to page containing offending address. */
     prot = PROT_READ|PROT_WRITE;
-  }
-  else {
-    /* error */
-    abort();
   }
 
   /* Apply updates to page containing offending address. */
@@ -246,18 +236,7 @@ ooc_init(void)
   int ret, i;
   struct sigaction act;
 
-  _ps = OOC_PAGE_SIZE;
-
-  if (!_ptbl) {
-#if __WORDSIZE == 64
-    _ptbl = mmap(NULL, (1lu<<48)/_ps/PTBL_PPB, PROT_READ|PROT_WRITE,\
-      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-#else
-    _ptbl = mmap(NULL, (size_t)(((uint64_t)1<<32)-1)/_ps/PTBL_PPB,\
-      PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-#endif
-    assert(MAP_FAILED != _ptbl);
-  }
+  _ps = (uintptr_t)OOC_PAGE_SIZE;
 
   memset(&act, 0, sizeof(act));
   act.sa_sigaction = &_sigsegv_trampoline;
@@ -356,25 +335,45 @@ main(void)
 {
   int ret;
   char var;
-  char * base, * mem;
+  size_t ps;
+  struct vma * vma;
+
+  ps = (size_t)sysconf(_SC_PAGESIZE);
+  assert((size_t)-1 != ps);
+
+  ret = ooc_sp_init(&_sp);
+  assert(!ret);
+
+  vma = mmap(NULL, 2*ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != vma);
+  ret = mprotect(vma, ps, PROT_READ|PROT_WRITE);
+  assert(!ret);
+
+  /* Setup vma struct. */
+  vma->pflags = (uint8_t*)((char*)vma)+sizeof(sp_nd_t);
 
   ret = ooc_init();
   assert(!ret);
 
-  base = mmap(NULL, _ps<<1, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != base);
-  mem = (char*)(((uintptr_t)base+_ps-1)&(~(_ps-1)));
-
-  var = mem[0]; /* Raise a SIGSEGV. */
-  assert(&(mem[0]) == (void*)_addr[_me]);
-
-  var = mem[1]; /* Should not raise SIGSEGV. */
-  assert(&(mem[0]) == (void*)_addr[_me]);
-
-  ret = munmap(base, _ps<<1);
+  ret = ooc_sp_insert(&_sp, &(vma->nd), (uintptr_t)((char*)vma+ps), ps);
   assert(!ret);
 
+  var = ((char*)vma->nd.b)[0]; /* Raise a SIGSEGV. */
+  assert(&(((char*)vma->nd.b)[0]) == (void*)_addr[_me]);
+
+  var = ((char*)vma->nd.b)[1]; /* Should not raise SIGSEGV. */
+  assert(&(((char*)vma->nd.b)[0]) == (void*)_addr[_me]);
+
   ret = ooc_finalize();
+  assert(!ret);
+
+  ret = ooc_sp_remove(&_sp, vma->nd.b);
+  assert(!ret);
+
+  ret = munmap(vma, 2*ps);
+  assert(!ret);
+
+  ret = ooc_sp_free(&_sp);
   assert(!ret);
 
   return EXIT_SUCCESS;
