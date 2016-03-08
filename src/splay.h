@@ -25,7 +25,7 @@ THE SOFTWARE.
 #define OOC_SPLAY_H
 
 
-/* uintptr_t */
+/* uintptr_t, uint8_t */
 #include <inttypes.h>
 
 /* size_t */
@@ -50,6 +50,14 @@ typedef struct sp {
   sp_nd_t * root;
   sp_nd_t * next;
 } sp_t;
+
+/*------------------------------------------------------------------------------
+  Virtual memory allocation
+------------------------------------------------------------------------------*/
+struct vma {
+  sp_nd_t nd;
+  uint8_t * pflags;
+};
 
 
 int ooc_sp_init(sp_t * const sp);

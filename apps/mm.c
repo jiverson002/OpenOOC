@@ -81,10 +81,7 @@ mm_kern(size_t const i, void * const state)
 
 
 int
-main(
-  int argc,
-  char * argv[]
-)
+main(int argc, char * argv[])
 {
   size_t m, n, p, i;
   struct args args;

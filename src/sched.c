@@ -27,11 +27,8 @@ THE SOFTWARE.
 /* SIGSEGV */
 #include <errno.h>
 
-/* uintptr_t, uint8_t */
+/* uintptr_t */
 #include <inttypes.h>
-
-/* CHAR_BIT */
-#include <limits.h>
 
 /* struct sigaction, sigaction */
 #include <signal.h>
@@ -52,7 +49,7 @@ THE SOFTWARE.
 #include <ucontext.h>
 
 /* OOC_NUM_FIBERS */
-#include "src/ooc.h"
+#include "include/ooc.h"
 
 /* ooc page table */
 #include "splay.h"
@@ -107,8 +104,7 @@ static __thread ucontext_t _kern[OOC_NUM_FIBERS];
 static __thread char _stack[OOC_NUM_FIBERS][SIGSTKSZ];
 
 /* My fiber id. */
-/* FIXME _me should not be initialized. */
-static __thread int _me=0;
+static __thread int _me;
 
 /* The old sigaction to be replaced when we are done. */
 static __thread struct sigaction _old_act;
@@ -122,13 +118,9 @@ static __thread uintptr_t _ps;
 static __thread ucontext_t _main;
 
 /* System page table. */
+/* TODO Since this is not thread local, it must be access protected to prevent
+ * race conditions between threads. */
 static sp_t _sp;
-
-
-struct vma {
-  sp_nd_t nd;
-  uint8_t * pflags;
-};
 
 
 static void
@@ -137,16 +129,14 @@ _sigsegv_handler(void)
   int ret, prot;
   size_t page;
   uintptr_t addr;
-  sp_nd_t * nd;
   struct vma * vma;
 
   /* Find the node corresponding to the offending address. */
-  ret = ooc_sp_find(&_sp, _addr[_me], &nd);
+  ret = ooc_sp_find(&_sp, _addr[_me], (void*)&vma);
   assert(!ret);
-  vma = (struct vma*)nd;
 
   addr = _addr[_me]&(~(_ps-1)); /* page align */
-  page = (addr-nd->b)/_ps;
+  page = (addr-vma->nd.b)/_ps;
 
   if (!(vma->pflags[page]&0x1)) {
     if (vma->pflags[page]&0x10) {
@@ -323,6 +313,9 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
 #ifdef TEST
 /* assert */
 #include <assert.h>
+
+/* uintptr_t, uint8_t */
+#include <inttypes.h>
 
 /* NULL, EXIT_SUCCESS */
 #include <stdlib.h>
