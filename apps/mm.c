@@ -27,23 +27,14 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <inttypes.h>
 
-/* TEMPORARY */
-#include <stdio.h>
-
 /* EXIT_SUCCESS */
 #include <stdlib.h>
-
-/* sysconf, _SC_PAGESIZE */
-#include <unistd.h>
 
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
 /* OOC library */
 #include "src/ooc.h"
-
-
-#define restrict
 
 
 struct args
@@ -118,6 +109,8 @@ main(
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c_base);
   c = (double*)PA(c_base);
+
+#undef PA
 
   /*ret = mprotect(a_base, SZ(m,n,sizeof(*a)), PROT_READ);
   assert(!ret);
