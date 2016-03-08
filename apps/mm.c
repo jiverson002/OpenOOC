@@ -81,40 +81,25 @@ mm_kern(size_t const i, void * const state)
 
 
 int
-main(int argc, char * argv[])
+main(void)
 {
   size_t m, n, p, i;
   struct args args;
-  double * a_base, * b_base, * c_base, * a, * b, * c;
+  double * a, * b, * c;
 
   m = 100;
   n = 100;
   p = 100;
 
-#define SZ(X,Y,S) (((X*Y*S+OOC_PAGE_SIZE-1)&(~(OOC_PAGE_SIZE-1)))<<1)
-#define PA(M)     (((uintptr_t)M+OOC_PAGE_SIZE-1)&(~(OOC_PAGE_SIZE-1)))
-
-  a_base = mmap(NULL, SZ(m,n,sizeof(*a)), PROT_NONE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != a_base);
-  a = (double*)PA(a_base);
-  b_base = mmap(NULL, SZ(n,p,sizeof(*b)), PROT_NONE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != b_base);
-  b = (double*)PA(b_base);
-  c_base = mmap(NULL, SZ(m,p,sizeof(*c)), PROT_NONE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != c_base);
-  c = (double*)PA(c_base);
-
-#undef PA
-
-  /*ret = mprotect(a_base, SZ(m,n,sizeof(*a)), PROT_READ);
-  assert(!ret);
-  ret = mprotect(b_base, SZ(n,p,sizeof(*b)), PROT_READ);
-  assert(!ret);
-  ret = mprotect(c_base, SZ(m,p,sizeof(*c)), PROT_READ|PROT_WRITE);
-  assert(!ret);*/
+  a = ooc_malloc(m*n*sizeof(*a));
+  assert(a);
+  printf("allocated a %p-%p\n", (void*)a, (void*)(a+m*n));
+  b = malloc(n*p*sizeof(*b));
+  assert(b);
+  printf("allocated b %p-%p\n", (void*)b, (void*)(b+n*p));
+  c = malloc(m*p*sizeof(*c));
+  assert(c);
+  printf("allocated c %p-%p\n", (void*)c, (void*)(c+m*p));
 
   args.n = n;
   args.p = p;
@@ -126,13 +111,9 @@ main(int argc, char * argv[])
     ooc(mm_kern)(i, &args);
   }
 
-  munmap(a_base, SZ(m,n,sizeof(*a)));
+  /*munmap(a_base, SZ(m,n,sizeof(*a)));
   munmap(b_base, SZ(n,p,sizeof(*b)));
-  munmap(c_base, SZ(m,p,sizeof(*c)));
-
-#undef SZ
+  munmap(c_base, SZ(m,p,sizeof(*c)));*/
 
   return EXIT_SUCCESS;
-
-  if (argc || argv) {}
 }

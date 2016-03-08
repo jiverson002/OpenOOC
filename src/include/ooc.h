@@ -76,6 +76,10 @@ ooc_for (i=0; i<10; ++i)
 */
 
 
+/* malloc.c */
+void * ooc_malloc(size_t const size);
+
+
 /* sched.c */
 int ooc_init(void);
 int ooc_finalize(void);

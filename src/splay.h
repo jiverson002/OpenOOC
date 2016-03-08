@@ -60,6 +60,12 @@ struct vma {
 };
 
 
+/* System page table. */
+/* TODO Since this is not thread local, it must be access protected to prevent
+ * race conditions between threads. */
+extern sp_t _sp;
+
+
 int ooc_sp_init(sp_t * const sp);
 int ooc_sp_free(sp_t * const sp);
 int ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
