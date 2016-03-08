@@ -24,26 +24,16 @@ THE SOFTWARE.
 /*
  *  TODO
  *    Implement a unified API wrapper around POSIX AIO (<aio.h>), native kernel
- *    AIO (<libaio.h>), and non-blocking i/o implementations, so that the
- *    desired library can be chosen at compile time.
- *
- *    In this case, non-blocking i/o means using blocking read()/write() in
- *    non-blocking mode.
+ *    AIO (<libaio.h>), so that the desired library can be chosen at compile
+ *    time.
  */
 
-#ifdef WITH_POSIX_AIO
+#ifdef WITH_NATIVE_AIO
+/* syscall, __NR_* */
+# include <sys/syscall.h>
+#else
 /* aio_read, aio_write, aio_return, aio_error, aio_cancel */
 # include <aio.h>
-#else
-# ifdef WITH_NATIVE_AIO
-/* syscall, __NR_* */
-#   include <sys/syscall.h>
-# else
-/* select */
-#   include <sys/select.h>
-/* read, write, select, poll */
-#   include <unistd.h>
-# endif
 #endif
 
 /* memset */
