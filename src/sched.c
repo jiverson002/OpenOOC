@@ -216,8 +216,7 @@ _kernel_trampoline(int const i)
   _kernel[i](_iter[i], _args[i]);
 
   /* TODO Before this context returns, it should call a `flush function` where
-   * the data it accessed is flushed to disk. The `flush function` should return
-   * to the main context. */
+   * the data it accessed is flushed to disk. */
   _flush();
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
@@ -317,8 +316,8 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     }
     else {
       /* TODO Wait for a fiber to become runnable. Since we are in the `main`
-       * context, no fibers can make progress towards completing their kernel,
-       * thus no fiber will become idle, so we just wait on async-io. */
+       * context, all fibers must be blocked on async-io, thus no fiber will
+       * become idle, so we just wait on async-io. */
       /*ret = aio_suspend(_aiolist, OOC_NUM_FIBERS, NULL);
       assert(!ret);*/
     }
