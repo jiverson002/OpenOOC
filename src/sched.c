@@ -117,6 +117,9 @@ static __thread uintptr_t _ps;
  * fiber? */
 static __thread ucontext_t _main;
 
+/* Indicator variable for library initialization. */
+static __thread int _is_init=0;
+
 /* System page table. */
 sp_t _sp;
 
@@ -225,8 +228,8 @@ _kernel_trampoline(int const i)
 }
 
 
-int
-ooc_init(void)
+static int
+_init(void)
 {
   int ret, i;
   struct sigaction act;
@@ -249,6 +252,8 @@ ooc_init(void)
     makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
   }
 
+  _is_init = 1;
+
   return ret;
 }
 
@@ -260,15 +265,23 @@ ooc_finalize(void)
 
   ret = sigaction(SIGSEGV, &_old_act, NULL);
 
+  _is_init = 0;
+
   return ret;
 }
 
 
-int
+void
 ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
           void * const args)
 {
   int ret, j, run=-1, idle=-1;
+
+  /* Make sure that library has been initialized. */
+  if (!_is_init) {
+    ret = _init();
+    assert(!ret);
+  }
 
   /* Search for a fiber that is either blocked or idle. */
   for (j=0; j<OOC_NUM_FIBERS; ++j) {
@@ -310,8 +323,6 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       assert(!ret);*/
     }
   }
-
-  return ret;
 }
 
 
@@ -350,7 +361,7 @@ main(void)
   /* Setup vma struct. */
   vma->pflags = (uint8_t*)((char*)vma)+sizeof(sp_nd_t);
 
-  ret = ooc_init();
+  ret = _init();
   assert(!ret);
 
   ret = ooc_sp_insert(&_sp, &(vma->nd), (uintptr_t)((char*)vma+ps), ps);
