@@ -104,8 +104,16 @@ main(void)
   args.b = b;
   args.c = c;
 
-  ooc_for (i=0; i<m; ++i) {
-    ooc(mm_kern)(i, &args);
+# pragma omp parallel num_threads(1)
+  {
+    OOC_INIT
+
+#   pragma omp for
+    for (i=0; i<m; ++i) {
+      OOC_CALL(mm_kern)(i, &args);
+    }
+
+    OOC_FINAL
   }
 
   ooc_free(a);

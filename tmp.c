@@ -103,3 +103,25 @@ ooc_for (i=0; i<10; ++i) {
 
 ooc_for (i=0; i<10; ++i)
   ooc(mykernel)(i, args);
+
+
+/*----------------------------------------------------------------------------*/
+
+
+  args.n = n;
+  args.p = p;
+  args.a = a;
+  args.b = b;
+  args.c = c;
+
+# pragma omp parallel
+  {
+    OOC_INIT
+
+#   pragma omp for
+    for (i=0; i<10; ++i) {
+      OOC_CALL(mykernel)(i, args);
+    }
+
+    OOC_FINAL
+  }

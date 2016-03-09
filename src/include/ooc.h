@@ -45,36 +45,29 @@ THE SOFTWARE.
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 
-#define ooc_for(loops) \
+#define OOC_INIT \
   {\
     int _ret;\
     _ret = ooc_init();\
     assert(!_ret);\
-\
-    for (loops) {
-
-#define ooc(kern) \
-      _ret = ooc_sched(&kern, ooc1
-
-#define ooc1(i, args) \
-      i, args);\
-      assert(!_ret);\
-    }\
-  }\
-  {\
-    int __ret;\
-    __ret = ooc_finalize();\
-    assert(!__ret);\
   }
 
-/* Example invocations --
-ooc_for (i=0; i<10; ++i) {
-  ooc(mykernel)(i, args);
-}
+#define OOC_FINAL \
+  {\
+    int _ret;\
+    _ret = ooc_finalize();\
+    assert(!_ret);\
+  }
 
-ooc_for (i=0; i<10; ++i)
-  ooc(mykernel)(i, args);
-*/
+#define OOC_CALL(kern) \
+  {\
+    int _ret;\
+    _ret = ooc_sched(&kern, OOC_CALL1
+
+#define OOC_CALL1(i, args) \
+    i, args);\
+    assert(!_ret);\
+  }
 
 
 /* malloc.c */
