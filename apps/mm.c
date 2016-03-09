@@ -93,13 +93,10 @@ main(void)
 
   a = ooc_malloc(m*n*sizeof(*a));
   assert(a);
-  printf("allocated a %p-%p\n", (void*)a, (void*)(a+m*n));
-  b = malloc(n*p*sizeof(*b));
+  b = ooc_malloc(n*p*sizeof(*b));
   assert(b);
-  printf("allocated b %p-%p\n", (void*)b, (void*)(b+n*p));
-  c = malloc(m*p*sizeof(*c));
+  c = ooc_malloc(m*p*sizeof(*c));
   assert(c);
-  printf("allocated c %p-%p\n", (void*)c, (void*)(c+m*p));
 
   args.n = n;
   args.p = p;
@@ -111,9 +108,9 @@ main(void)
     ooc(mm_kern)(i, &args);
   }
 
-  /*munmap(a_base, SZ(m,n,sizeof(*a)));
-  munmap(b_base, SZ(n,p,sizeof(*b)));
-  munmap(c_base, SZ(m,p,sizeof(*c)));*/
+  ooc_free(a);
+  ooc_free(b);
+  ooc_free(c);
 
   return EXIT_SUCCESS;
 }

@@ -130,20 +130,13 @@ _sigsegv_handler(void)
   struct vma * vma;
 
   /* Find the node corresponding to the offending address. */
-  printf("searching for %p\n", (void*)_addr[_me]);
   ret = ooc_sp_find(&_sp, _addr[_me], (void*)&vma);
-  if (ret) {
-    printf("could not find %p\n", (void*)_addr[_me]);
-  }
   assert(!ret);
 
   addr = _addr[_me]&(~(_ps-1)); /* page align */
   page = (addr-vma->nd.b)/_ps;
 
-  printf("handling for  %p (%zu)\n", (void*)_addr[_me], page);
-
   if (!(vma->pflags[page]&0x1)) {
-    printf("reading for   %p\n", (void*)_addr[_me]);
     if (vma->pflags[page]&0x10) {
       /* TODO Post an async-io request. */
       /*aio_read(...);*/
@@ -161,7 +154,6 @@ _sigsegv_handler(void)
     prot = PROT_READ;
   }
   else {
-    printf("writing for   %p\n", (void*)_addr[_me]);
     /* Update page flags. */
     vma->pflags[page] |= 0x10;
 
@@ -169,13 +161,9 @@ _sigsegv_handler(void)
     prot = PROT_READ|PROT_WRITE;
   }
 
-  printf("protecting    %p\n", (void*)_addr[_me]);
-
   /* Apply updates to page containing offending address. */
   ret = mprotect((void*)addr, _ps, prot);
   assert(!ret);
-
-  printf("returning for %p\n", (void*)_addr[_me]);
 
   /* Switch back to trampoline context, so that it may return. */
   setcontext(&(_trampoline[_me]));

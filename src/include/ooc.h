@@ -34,13 +34,14 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
+
 
 /* Maximum number of fibers per thread. */
 #define OOC_NUM_FIBERS 10
 
 /* OOC page size. */
-/* sysconf, _SC_PAGESIZE */
-#include <unistd.h>
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 
@@ -78,6 +79,7 @@ ooc_for (i=0; i<10; ++i)
 
 /* malloc.c */
 void * ooc_malloc(size_t const size);
+void ooc_free(void * ptr);
 
 
 /* sched.c */

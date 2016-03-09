@@ -53,20 +53,14 @@ ooc_malloc(size_t const size)
 
   /* Compute segment sizes. */
   data_sz = ALIGN(size);
-  info_sz = ALIGN(sizeof(sp_nd_t)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
+  info_sz = ALIGN(sizeof(struct vma)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
   mmap_sz = info_sz+data_sz;
-  printf("data_sz = %zu\n", data_sz);
-  printf("n_pages = %zu\n", RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
-  printf("node_sz = %zu\n", sizeof(sp_nd_t));
-  printf("info_sz = %zu\n", info_sz);
-  printf("mmap_sz = %zu\n", mmap_sz);
 
   /* Allocate memory for new vma. */
   vma = mmap(NULL, mmap_sz, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (MAP_FAILED == vma) {
     goto fn_fail;
   }
-  printf("allocated vma %p-%p\n", (void*)vma, (void*)((char*)vma+mmap_sz));
 
   /* Make info segment readable and writeable. */
   ret = mprotect(vma, info_sz, PROT_READ|PROT_WRITE);
@@ -75,15 +69,13 @@ ooc_malloc(size_t const size)
   }
 
   /* Setup vma struct. */
-  vma->pflags = (uint8_t*)((char*)vma)+sizeof(sp_nd_t);
+  vma->pflags = (uint8_t*)((char*)vma+sizeof(struct vma));
 
   /* Insert new vma into page table. */
   ret = ooc_sp_insert(&_sp, &(vma->nd), (uintptr_t)((char*)vma+info_sz), size);
   if (ret) {
     goto fn_cleanup;
   }
-  printf("  check %p-%p\n", (void*)((char*)vma->nd.b),\
-    (void*)((char*)vma->nd.b+size));
 
   /* Return pointer to data segment. */
   return (void*)(vma->nd.b);
@@ -99,12 +91,35 @@ ooc_malloc(size_t const size)
 }
 
 
-#if 0
 void
 ooc_free(void * ptr)
 {
+  int ret;
+  size_t info_sz, data_sz, mmap_sz;
+  struct vma * vma;
+
+  /* Find the node corresponding to the offending address. */
+  /* FIXME If we structure a vma differently, this could be a constant time
+   * address manipulation instead of a splay tree lookup. However, since this is
+   * the free function, it may not be that performance critical. */
+  ret = ooc_sp_find(&_sp, (uintptr_t)ptr, (void*)&vma);
+  assert(!ret);
+
+  /* Remove from splay tree. This will be fast, since ooc_sp_find will splay vma
+   * to top of tree. */
+  ret = ooc_sp_remove(&_sp, vma->nd.b);
+  assert(!ret);
+
+  /* Deallocate memory. */
+  /* Compute segment sizes. */
+  data_sz = ALIGN(vma->nd.s);
+  info_sz = ALIGN(sizeof(struct vma)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
+  mmap_sz = info_sz+data_sz;
+
+  /* Allocate memory for new vma. */
+  ret = munmap(vma, mmap_sz);
+  assert(!ret);
 }
-#endif
 
 
 #ifdef TEST
