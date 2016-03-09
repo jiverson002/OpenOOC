@@ -45,13 +45,6 @@ THE SOFTWARE.
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 
-#define OOC_INIT \
-  {\
-    int _ret;\
-    _ret = ooc_init();\
-    assert(!_ret);\
-  }
-
 #define OOC_FINAL \
   {\
     int _ret;\
@@ -59,15 +52,37 @@ THE SOFTWARE.
     assert(!_ret);\
   }
 
-#define OOC_CALL(kern) \
-  {\
-    int _ret;\
-    _ret = ooc_sched(&kern, OOC_CALL1
 
-#define OOC_CALL1(i, args) \
-    i, args);\
-    assert(!_ret);\
-  }
+/* Black magic. */
+#define __ooc_defn_make(scope,kern) \
+  static void __ooc_kern_ ## kern(size_t const, void * const);\
+  static /* inline */ void __ooc_sched_ ## kern(size_t const, void * const);\
+  static /* inline */ void\
+  __ooc_sched_ ## kern(size_t const i, void * const args) {\
+    ooc_sched(&__ooc_kern_ ## kern, i, args);\
+  }\
+  scope void (*kern)(size_t const, void * const)= &__ooc_sched_ ## kern;\
+  static void __ooc_kern_ ## kern
+#define __ooc_defn_args(scope,kern) __ooc_defn_make(scope,kern)
+#define __ooc_defn_kern(rest)       rest
+#define __ooc_defn_void             __ooc_defn_args( ,__ooc_defn_kern(
+#define __ooc_defn_xvoid            __ooc_defn_kern(
+#define __ooc_defn_type(rest)       __ooc_defn_x ## rest)
+/*#define __ooc_defn_extern           __ooc_defn_args(extern, __ooc_defn_type(*/
+#define __ooc_defn_static           __ooc_defn_args(static, __ooc_defn_type(
+#define __ooc_defn_scope(rest)      __ooc_defn_ ## rest))
+#define __ooc_defn                  __ooc_defn_scope
+
+#define __ooc_decl_make(scope,kern) scope void (*kern)
+#define __ooc_decl_args(scope,kern) __ooc_decl_make(scope,kern)
+#define __ooc_decl_kern(rest)       rest
+#define __ooc_decl_void             __ooc_decl_args( ,__ooc_decl_kern(
+#define __ooc_decl_xvoid            __ooc_decl_kern(
+#define __ooc_decl_type(rest)       __ooc_decl_x ## rest)
+/*#define __ooc_decl_extern           __ooc_decl_args(extern, __ooc_decl_type(*/
+#define __ooc_decl_static           __ooc_decl_args(static, __ooc_decl_type(
+#define __ooc_decl_scope(rest)      __ooc_decl_ ## rest))
+#define __ooc_decl                  __ooc_decl_scope
 
 
 /* malloc.c */
@@ -78,8 +93,8 @@ void ooc_free(void * ptr);
 /* sched.c */
 int ooc_init(void);
 int ooc_finalize(void);
-int ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
-              void * const args);
+void ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
+               void * const args);
 
 
 #endif /* OPENOOC_H */

@@ -45,11 +45,10 @@ struct args
 };
 
 
-static void mm_kern(size_t const, void * const);
+__ooc_decl ( static void mm )(size_t const i, void * const state);
 
 
-static void
-mm_kern(size_t const i, void * const state)
+__ooc_defn ( static void mm )(size_t const i, void * const state)
 {
   size_t n, p, j, k;
   double const * a, * b;
@@ -104,17 +103,11 @@ main(void)
   args.b = b;
   args.c = c;
 
-  #pragma omp parallel num_threads(1)
-  {
-    OOC_INIT
-
-    #pragma omp for
-    for (i=0; i<m; ++i) {
-      OOC_CALL(mm_kern)(i, &args);
-    }
-
-    OOC_FINAL
+  #pragma omp parallel for num_threads(1)
+  for (i=0; i<m; ++i) {
+    mm(i, &args);
   }
+  OOC_FINAL /* Only need this if we want to remove the signal handler. */
 
   ooc_free(a);
   ooc_free(b);
