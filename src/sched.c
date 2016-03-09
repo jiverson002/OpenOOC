@@ -51,6 +51,9 @@ THE SOFTWARE.
 /* OOC_NUM_FIBERS */
 #include "include/ooc.h"
 
+/* lock_let */
+#include "lock/lock.h"
+
 /* ooc page table */
 #include "splay/splay.h"
 
