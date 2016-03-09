@@ -104,11 +104,11 @@ main(void)
   args.b = b;
   args.c = c;
 
-# pragma omp parallel num_threads(1)
+  #pragma omp parallel num_threads(1)
   {
     OOC_INIT
 
-#   pragma omp for
+    #pragma omp for
     for (i=0; i<m; ++i) {
       OOC_CALL(mm_kern)(i, &args);
     }

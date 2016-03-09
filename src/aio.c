@@ -29,11 +29,11 @@ THE SOFTWARE.
  */
 
 #ifdef WITH_NATIVE_AIO
-/* syscall, __NR_* */
-# include <sys/syscall.h>
+  /* syscall, __NR_* */
+  #include <sys/syscall.h>
 #else
-/* aio_read, aio_write, aio_return, aio_error, aio_cancel */
-# include <aio.h>
+  /* aio_read, aio_write, aio_return, aio_error, aio_cancel */
+  #include <aio.h>
 #endif
 
 /* memset */
