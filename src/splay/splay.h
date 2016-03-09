@@ -31,6 +31,9 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
+/* omp_lock_t */
+#include "../lock/lock.h"
+
 
 /*------------------------------------------------------------------------------
   Splay tree node
@@ -41,6 +44,7 @@ typedef struct sp_nd {
   struct sp_nd * r;
   uintptr_t b;
   size_t s;
+  omp_lock_t lock;
 } sp_nd_t;
 
 /*------------------------------------------------------------------------------
@@ -49,6 +53,7 @@ typedef struct sp_nd {
 typedef struct sp {
   sp_nd_t * root;
   sp_nd_t * next;
+  omp_lock_t lock;
 } sp_t;
 
 /*------------------------------------------------------------------------------
@@ -70,7 +75,8 @@ int ooc_sp_init(sp_t * const sp);
 int ooc_sp_free(sp_t * const sp);
 int ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
                   size_t const s);
-int ooc_sp_find(sp_t * const sp, uintptr_t const d, sp_nd_t ** const sp_nd_p);
+int ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
+                         sp_nd_t ** const sp_nd_p);
 int ooc_sp_remove(sp_t * const sp, uintptr_t const d);
 int ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p);
 int ooc_sp_empty(sp_t * const sp);

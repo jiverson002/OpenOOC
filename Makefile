@@ -61,7 +61,7 @@ WARNING  := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
             -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
             -Wuninitialized -Wconversion -Wstrict-prototypes
 OPTIMIZE := -O0 -g
-CFLAGS   := $(OPTIMIZE) $(WARNING) -D_GNU_SOURCE
+CFLAGS   := $(OPTIMIZE) $(WARNING)
 LDFLAGS  :=
 #}}}1
 
@@ -122,10 +122,10 @@ define TESTS_template
 #{{{2
 test/$(1)/%: $(ROOTDIR)$(1)/%.c\
              $(addprefix lib/,$($(1)_LIBRARIES))
-	$(AT)(test -d test/$(1) || mkdir -p test/$(1)) && \
-    (test -d dep/$(1)/test || mkdir -p dep/$(1)/test)
+	$(AT)(test -d test/`dirname $(1)/$$*` || mkdir -p test/`dirname $(1)/$$*`) &&\
+    (test -d dep/test/`dirname $(1)/$$*` || mkdir -p dep/test/`dirname $(1)/$$*`)
 	$(ATCCLD) $$($(1)_CFLAGS) $$(CFLAGS) $$($(1)_LDFLAGS) $$(LDFLAGS)\
-    -I include -MMD -MP -MF dep/$(1)/test/$$*.d\
+    -I include -MMD -MP -MF dep/test/$(1)/$$*.d\
     -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ $$($(1)_LDLIBS) $$(LDLIBS)\
     -o $$@
 #}}}2
@@ -157,7 +157,7 @@ define LIBRARY_template
 #{{{2
 OBJFILES += $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))
 DEPFILES += $(patsubst %.c,dep/$(1)/%.d,$($(2)_SOURCES))
-DEPFILES += $(patsubst %.c,dep/$(1)/test/%.d,$($(2)_SOURCES))
+DEPFILES += $(patsubst %.c,dep/test/$(1)/%.d,$($(2)_SOURCES))
 
 lib/$(2): $(patsubst %.c,obj/$(1)/%.o,$($(2)_SOURCES))
 	$(AT)(test -d lib || mkdir -p lib)

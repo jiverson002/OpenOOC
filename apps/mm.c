@@ -103,7 +103,7 @@ main(void)
   args.b = b;
   args.c = c;
 
-  #pragma omp parallel for num_threads(1)
+  #pragma omp parallel for num_threads(4)
   for (i=0; i<m; ++i) {
     mm(i, &args);
   }

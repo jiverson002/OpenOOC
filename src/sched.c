@@ -52,7 +52,7 @@ THE SOFTWARE.
 #include "include/ooc.h"
 
 /* ooc page table */
-#include "splay.h"
+#include "splay/splay.h"
 
 
 /******************************************************************************/
@@ -132,8 +132,8 @@ _sigsegv_handler(void)
   uintptr_t addr;
   struct vma * vma;
 
-  /* Find the node corresponding to the offending address. */
-  ret = ooc_sp_find(&_sp, _addr[_me], (void*)&vma);
+  /* Find the vma corresponding to the offending address and lock it. */
+  ret = ooc_sp_find_and_lock(&_sp, _addr[_me], (void*)&vma);
   assert(!ret);
 
   addr = _addr[_me]&(~(_ps-1)); /* page align */
@@ -166,6 +166,10 @@ _sigsegv_handler(void)
 
   /* Apply updates to page containing offending address. */
   ret = mprotect((void*)addr, _ps, prot);
+  assert(!ret);
+
+  /* Unlock the vma. */
+  ret = lock_let(&(vma->nd.lock));
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */

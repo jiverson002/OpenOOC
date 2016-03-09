@@ -63,6 +63,9 @@ THE SOFTWARE.
 */
 
 
+/* assert */
+#include <assert.h>
+
 /* uintptr_t */
 #include <inttypes.h>
 
@@ -73,6 +76,7 @@ THE SOFTWARE.
 #include <stdlib.h>
 
 #include "splay.h"
+#include "../lock/lock.h"
 
 
 #define MAKE_CHILD(A, WHICH, B)\
@@ -87,11 +91,17 @@ THE SOFTWARE.
 static void
 _sp_nd_init(sp_nd_t * const n, uintptr_t const b, size_t const s)
 {
+  int ret;
+
   n->p = NULL;
   n->l = NULL;
   n->r = NULL;
   n->b = b;
   n->s = s;
+
+  /* Initialize n's lock. */
+  ret = lock_init(&(n->lock));
+  assert(!ret);
 }
 
 
@@ -165,8 +175,14 @@ _sp_splay(uintptr_t const b, sp_nd_t * t)
 int
 ooc_sp_init(sp_t * const sp)
 {
+  int ret;
+
   sp->root = NULL;
   sp->next = NULL;
+
+  ret = lock_init(&(sp->lock));
+  assert(!ret);
+
   return 0;
 }
 
@@ -177,10 +193,15 @@ ooc_sp_init(sp_t * const sp)
 int
 ooc_sp_free(sp_t * const sp)
 {
+  int ret;
+
   if (sp) {
     while (sp->root) {
       ooc_sp_remove(sp, sp->root->b);
     }
+
+    ret = lock_free(&(sp->lock));
+    assert(!ret);
   }
   return 0;
 }
@@ -194,13 +215,19 @@ int
 ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
               size_t const s)
 {
-  sp_nd_t * t=sp->root;
+  int ret;
+  sp_nd_t * t;
+
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
+
+  t = sp->root;
 
   _sp_nd_init(z, b, s);
 
   if (t == NULL) {
     sp->root = z;
-    return 0;
+    goto fn_return;
   }
 
   t = _sp_splay(b, t);
@@ -210,19 +237,25 @@ ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
     MAKE_CHILD(z, r, t);
     t->l = NULL;
     sp->root = z;
-    return 0;
+    goto fn_return;
   }
   else if (t->b < b) {
     MAKE_CHILD(z, r, t->r);
     MAKE_CHILD(z, l, t);
     t->r = NULL;
     sp->root = z;
-    return 0;
+    goto fn_return;
   }
-  else {             /* We get here if it's already in the tree */
-    /* erroneous */
-    return -1;
-  }
+
+  /* We get here if it's already in the tree */
+  /* erroneous */
+  return -1;
+
+  fn_return:
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  return 0;
 }
 
 
@@ -230,9 +263,14 @@ ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
   Find a datum in the tree, it MUST exist.
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_find(sp_t * const sp, uintptr_t const d, sp_nd_t ** const sp_nd_p)
+ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
+                     sp_nd_t ** const sp_nd_p)
 {
+  int ret;
   sp_nd_t * n;
+
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
 
   /* splay d to root of tree */
   sp->root = _sp_splay(d, sp->root);
@@ -244,16 +282,21 @@ ooc_sp_find(sp_t * const sp, uintptr_t const d, sp_nd_t ** const sp_nd_p)
   if (sp->root) {
     if (sp->root->b <= d) {
       if (d <= sp->root->b+sp->root->s) {
-        *sp_nd_p = sp->root;
-        return 0;
+        if (!ret) {
+          *sp_nd_p = sp->root;
+          goto fn_return;
+        }
       }
     }
     else {
       for (n=sp->root->l; n && n->r; n=n->r);
       if (n->b <= d) {
         if (d <= n->b+n->s) {
-          *sp_nd_p = n;
-          return 0;
+          ret = lock_get(&(n->lock));
+          if (!ret) {
+            *sp_nd_p = n;
+            goto fn_return;
+          }
         }
       }
     }
@@ -261,6 +304,12 @@ ooc_sp_find(sp_t * const sp, uintptr_t const d, sp_nd_t ** const sp_nd_p)
 
   /* erroneous */
   return -1;
+
+  fn_return:
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  return 0;
 }
 
 
@@ -271,29 +320,43 @@ ooc_sp_find(sp_t * const sp, uintptr_t const d, sp_nd_t ** const sp_nd_p)
 int
 ooc_sp_remove(sp_t * const sp, uintptr_t const b)
 {
-  sp_nd_t * z, * t=sp->root;
+  int ret;
+  sp_nd_t * z, * t;
 
-  if (t == NULL) {
-    return -1;
-  }
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
 
-  t = _sp_splay(b, t);
+  t = sp->root;
 
-  if (b == t->b) {            /* found it */
-    if (t->l == NULL) {
-      z = t->r;
+  if (t) {
+    t = _sp_splay(b, t);
+
+    if (b == t->b) {            /* found it */
+      if (t->l == NULL) {
+        z = t->r;
+      }
+      else {
+        z = _sp_splay(b, t->l);
+        z->p = NULL;
+        MAKE_CHILD(z, r, t->r);
+      }
+      sp->root = z;
+
+      ret = lock_free(&(t->lock));
+      assert(!ret);
+
+      goto fn_return;
     }
-    else {
-      z = _sp_splay(b, t->l);
-      z->p = NULL;
-      MAKE_CHILD(z, r, t->r);
-    }
-    sp->root = z;
-    return 0;
   }
 
   /* erroneous */
   return -1;
+
+  fn_return:
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  return 0;
 }
 
 
@@ -303,7 +366,13 @@ ooc_sp_remove(sp_t * const sp, uintptr_t const b)
 int
 ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
 {
-  sp_nd_t * n=sp->next;
+  int ret;
+  sp_nd_t * n;
+
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
+
+  n = sp->next;
 
   if (!n) {
     for (n=sp->root; n && n->l; n=n->l);
@@ -318,6 +387,9 @@ ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
 
   sp->next = n;
 
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
   *sp_nd_p = n;
 
   return 0;
@@ -330,7 +402,17 @@ ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
 int
 ooc_sp_empty(sp_t * const sp)
 {
-  return (NULL == sp->root);
+  int ret, retval;
+
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
+
+  retval = (NULL == sp->root);
+
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  return retval;
 }
 
 
@@ -346,14 +428,14 @@ main(void)
 {
   int ret, i;
   sp_t sp;
-  sp_nd_t sp_nd[100];
-  sp_nd_t * sp_nd_p;
+  struct vma * vma_p;
+  struct vma vma[100];
 
   ret = ooc_sp_init(&sp);
   assert(!ret);
 
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_insert(&sp, &(sp_nd[i]), (uintptr_t)(i*4096), 4096);
+    ret = ooc_sp_insert(&sp, &(vma[i].nd), (uintptr_t)(i*4096), 4096);
     assert(!ret);
     assert((uintptr_t)(i*4096) == sp.root->b);
     assert(4096 == sp.root->s);
@@ -361,17 +443,20 @@ main(void)
 
   sp.next = NULL;
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_next(&sp, &sp_nd_p);
+    ret = ooc_sp_next(&sp, (void*)&vma_p);
     assert(!ret);
-    assert((uintptr_t)(i*4096) == sp_nd_p->b);
-    assert(4096 == sp_nd_p->s);
+    assert((uintptr_t)(i*4096) == vma_p->nd.b);
+    assert(4096 == vma_p->nd.s);
   }
 
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_find(&sp, (uintptr_t)(i*4096+128), &sp_nd_p);
+    ret = ooc_sp_find_and_lock(&sp, (uintptr_t)(i*4096+128), (void*)&vma_p);
     assert(!ret);
-    assert((uintptr_t)(i*4096) == sp_nd_p->b);
-    assert(4096 == sp_nd_p->s);
+    assert((uintptr_t)(i*4096) == vma_p->nd.b);
+    assert(4096 == vma_p->nd.s);
+
+    ret = lock_let(&(vma_p->nd.lock));
+    assert(!ret);
   }
 
   ret = ooc_sp_free(&sp); 
