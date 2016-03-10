@@ -34,24 +34,6 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
-/* sysconf, _SC_PAGESIZE */
-#include <unistd.h>
-
-
-/* Maximum number of fibers per thread. */
-#define OOC_NUM_FIBERS 10
-
-/* OOC page size. */
-#define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
-
-
-#define OOC_FINAL \
-  {\
-    int _ret;\
-    _ret = ooc_finalize();\
-    assert(!_ret);\
-  }
-
 
 /* Black magic. */
 #define __ooc_defn_make(scope,kern) \
@@ -85,16 +67,35 @@ THE SOFTWARE.
 #define __ooc_decl                  __ooc_decl_scope
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* malloc.c */
 void * ooc_malloc(size_t const size);
 void ooc_free(void * ptr);
 
 
 /* sched.c */
-int ooc_init(void);
-int ooc_finalize(void);
 void ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
                void * const args);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+/*----------------------------------------------------------------------------*/
+
+
+/* TODO remove after transparent finalization is implemented. */
+int ooc_finalize(void);
+#define OOC_FINAL \
+  {\
+    int _ret;\
+    _ret = ooc_finalize();\
+    assert(!_ret);\
+  }
 
 
 #endif /* OPENOOC_H */

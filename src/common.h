@@ -25,6 +25,26 @@ THE SOFTWARE.
 #define OOC_COMMON_H
 
 
+/* uintptr_t, uint8_t */
+#include <inttypes.h>
+
+/* size_t */
+#include <stddef.h>
+
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
+
+
+/*----------------------------------------------------------------------------*/
+/* Implementation constants */
+/*----------------------------------------------------------------------------*/
+/* OOC page size. */
+#define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
+
+/* Maximum number of fibers per thread. */
+#define OOC_NUM_FIBERS 10
+
+
 /*----------------------------------------------------------------------------*/
 /* Simple lock implementation */
 /*----------------------------------------------------------------------------*/
@@ -53,9 +73,7 @@ typedef int ooc_lock_t;
 /*----------------------------------------------------------------------------*/
 /* OOC page table */
 /*----------------------------------------------------------------------------*/
-/*------------------------------------------------------------------------------
-  Splay tree node
-------------------------------------------------------------------------------*/
+/* Page table entry - implemented as a splay tree node. */
 struct pte
 {
   struct pte * p;
@@ -66,9 +84,7 @@ struct pte
   ooc_lock_t lock;
 };
 
-/*------------------------------------------------------------------------------
-  Splay tree
-------------------------------------------------------------------------------*/
+/* Splay tree - implemented as a splay tree. */
 struct ptbl
 {
   struct pte * root;
@@ -76,18 +92,12 @@ struct ptbl
   ooc_lock_t lock;
 };
 
-/*------------------------------------------------------------------------------
-  Virtual memory allocation
-------------------------------------------------------------------------------*/
+/* Virtual memory allocation. */
 struct vma
 {
   struct pte pte;
   uint8_t * pflags;
 };
-
-
-/* OOC page table. */
-extern struct ptbl _ptbl;
 
 
 int ptbl_init(struct ptbl * const ptbl);
@@ -99,6 +109,11 @@ int ptbl_find_and_lock(struct ptbl * const ptbl, uintptr_t const d,\
 int ptbl_remove(struct ptbl * const ptbl, uintptr_t const d);
 int ptbl_next(struct ptbl * const ptbl, struct pte ** const pte_p);
 int ptbl_empty(struct ptbl * const ptbl);
+
+
+/* OOC page table - shared by all threads in a process, since said threads all
+ * share the same address space. */
+extern struct ptbl _ptbl;
 
 
 #endif /* OOC_COMMON_H */
