@@ -51,11 +51,8 @@ THE SOFTWARE.
 /* OOC_NUM_FIBERS */
 #include "include/ooc.h"
 
-/* lock_let */
-#include "lock/lock.h"
-
-/* ooc page table */
-#include "splay/splay.h"
+/* */
+#include "common.h"
 
 
 /******************************************************************************/
@@ -124,7 +121,7 @@ static __thread ucontext_t _main;
 static __thread int _is_init=0;
 
 /* System page table. */
-sp_t _sp;
+struct ptbl _ptbl;
 
 
 static void
@@ -136,11 +133,11 @@ _sigsegv_handler(void)
   struct vma * vma;
 
   /* Find the vma corresponding to the offending address and lock it. */
-  ret = ooc_sp_find_and_lock(&_sp, _addr[_me], (void*)&vma);
+  ret = ptbl_find_and_lock(&_ptbl, _addr[_me], (void*)&vma);
   assert(!ret);
 
   addr = _addr[_me]&(~(_ps-1)); /* page align */
-  page = (addr-vma->nd.b)/_ps;
+  page = (addr-vma->pte.b)/_ps;
 
   if (!(vma->pflags[page]&0x1)) {
     if (vma->pflags[page]&0x10) {
@@ -172,7 +169,7 @@ _sigsegv_handler(void)
   assert(!ret);
 
   /* Unlock the vma. */
-  ret = lock_let(&(vma->nd.lock));
+  ret = lock_let(&(vma->pte.lock));
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */
@@ -356,7 +353,7 @@ main(void)
   ps = (size_t)sysconf(_SC_PAGESIZE);
   assert((size_t)-1 != ps);
 
-  ret = ooc_sp_init(&_sp);
+  ret = ptbl_init(&_ptbl);
   assert(!ret);
 
   vma = mmap(NULL, 2*ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -365,30 +362,30 @@ main(void)
   assert(!ret);
 
   /* Setup vma struct. */
-  vma->pflags = (uint8_t*)((char*)vma)+sizeof(sp_nd_t);
+  vma->pflags = (uint8_t*)((char*)vma)+sizeof(struct pte);
 
   ret = _init();
   assert(!ret);
 
-  ret = ooc_sp_insert(&_sp, &(vma->nd), (uintptr_t)((char*)vma+ps), ps);
+  ret = ptbl_insert(&_ptbl, &(vma->pte), (uintptr_t)((char*)vma+ps), ps);
   assert(!ret);
 
-  var = ((char*)vma->nd.b)[0]; /* Raise a SIGSEGV. */
-  assert(&(((char*)vma->nd.b)[0]) == (void*)_addr[_me]);
+  var = ((char*)vma->pte.b)[0]; /* Raise a SIGSEGV. */
+  assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
 
-  var = ((char*)vma->nd.b)[1]; /* Should not raise SIGSEGV. */
-  assert(&(((char*)vma->nd.b)[0]) == (void*)_addr[_me]);
+  var = ((char*)vma->pte.b)[1]; /* Should not raise SIGSEGV. */
+  assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
 
   ret = ooc_finalize();
   assert(!ret);
 
-  ret = ooc_sp_remove(&_sp, vma->nd.b);
+  ret = ptbl_remove(&_ptbl, vma->pte.b);
   assert(!ret);
 
   ret = munmap(vma, 2*ps);
   assert(!ret);
 
-  ret = ooc_sp_free(&_sp);
+  ret = ptbl_free(&_ptbl);
   assert(!ret);
 
   return EXIT_SUCCESS;

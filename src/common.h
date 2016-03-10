@@ -21,65 +21,84 @@ THE SOFTWARE.
 */
 
 
-#ifndef OOC_SPLAY_H
-#define OOC_SPLAY_H
+#ifndef OOC_COMMON_H
+#define OOC_COMMON_H
 
 
-/* uintptr_t, uint8_t */
-#include <inttypes.h>
-
-/* size_t */
-#include <stddef.h>
-
+/*----------------------------------------------------------------------------*/
+/* Simple lock implementation */
+/*----------------------------------------------------------------------------*/
+#ifdef _OPENMP
 /* omp_lock_t */
-#include "../lock/lock.h"
+#include <omp.h>
+
+typedef omp_lock_t ooc_lock_t;
+
+#define lock_init(lock) (omp_init_lock(lock), 0)
+#define lock_free(lock) (omp_destroy_lock(lock), 0)
+#define lock_get(lock)  (omp_set_lock(lock), 0)
+#define lock_let(lock)  (omp_unset_lock(lock), 0)
+
+#else
+
+typedef int ooc_lock_t;
+
+#define lock_init(lock) 0
+#define lock_free(lock) 0
+#define lock_get(lock)  0
+#define lock_let(lock)  0
+#endif
 
 
+/*----------------------------------------------------------------------------*/
+/* OOC page table */
+/*----------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------------
   Splay tree node
 ------------------------------------------------------------------------------*/
-typedef struct sp_nd {
-  struct sp_nd * p;
-  struct sp_nd * l;
-  struct sp_nd * r;
+struct pte
+{
+  struct pte * p;
+  struct pte * l;
+  struct pte * r;
   uintptr_t b;
   size_t s;
-  omp_lock_t lock;
-} sp_nd_t;
+  ooc_lock_t lock;
+};
 
 /*------------------------------------------------------------------------------
   Splay tree
 ------------------------------------------------------------------------------*/
-typedef struct sp {
-  sp_nd_t * root;
-  sp_nd_t * next;
-  omp_lock_t lock;
-} sp_t;
+struct ptbl
+{
+  struct pte * root;
+  struct pte * next;
+  ooc_lock_t lock;
+};
 
 /*------------------------------------------------------------------------------
   Virtual memory allocation
 ------------------------------------------------------------------------------*/
-struct vma {
-  sp_nd_t nd;
+struct vma
+{
+  struct pte pte;
   uint8_t * pflags;
 };
 
 
-/* System page table. */
-/* TODO Since this is not thread local, it must be access protected to prevent
- * race conditions between threads. */
-extern sp_t _sp;
+/* OOC page table. */
+extern struct ptbl _ptbl;
 
 
-int ooc_sp_init(sp_t * const sp);
-int ooc_sp_free(sp_t * const sp);
-int ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
-                  size_t const s);
-int ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
-                         sp_nd_t ** const sp_nd_p);
-int ooc_sp_remove(sp_t * const sp, uintptr_t const d);
-int ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p);
-int ooc_sp_empty(sp_t * const sp);
+int ptbl_init(struct ptbl * const ptbl);
+int ptbl_free(struct ptbl * const ptbl);
+int ptbl_insert(struct ptbl * const ptbl, struct pte * const z,\
+                uintptr_t const b, size_t const s);
+int ptbl_find_and_lock(struct ptbl * const ptbl, uintptr_t const d,\
+                       struct pte ** const pte_p);
+int ptbl_remove(struct ptbl * const ptbl, uintptr_t const d);
+int ptbl_next(struct ptbl * const ptbl, struct pte ** const pte_p);
+int ptbl_empty(struct ptbl * const ptbl);
 
 
-#endif /* OOC_SPLAY_H */
+#endif /* OOC_COMMON_H */

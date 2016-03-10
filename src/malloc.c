@@ -36,11 +36,8 @@ THE SOFTWARE.
 /* OOC_PAGE_SIZE */
 #include "include/ooc.h"
 
-/* ooc page table */
-#include "splay/splay.h"
-
-/* omp_lock_t */
-#include "lock/lock.h"
+/* */
+#include "common.h"
 
 
 #define RNDUP(M,N) (1+(((M)-1)/(N)))
@@ -75,13 +72,13 @@ ooc_malloc(size_t const size)
   vma->pflags = (uint8_t*)((char*)vma+sizeof(struct vma));
 
   /* Insert new vma into page table. */
-  ret = ooc_sp_insert(&_sp, &(vma->nd), (uintptr_t)((char*)vma+info_sz), size);
+  ret = ptbl_insert(&_ptbl, &(vma->pte), (uintptr_t)((char*)vma+info_sz), size);
   if (ret) {
     goto fn_cleanup;
   }
 
   /* Return pointer to data segment. */
-  return (void*)(vma->nd.b);
+  return (void*)(vma->pte.b);
 
   fn_cleanup:
   /* Deallocate memory that was allocated for new vma. */
@@ -105,17 +102,17 @@ ooc_free(void * ptr)
   /* FIXME If we structure a vma differently, this could be a constant time
    * address manipulation instead of a splay tree lookup. However, since this is
    * the free function, it may not be that performance critical. */
-  ret = ooc_sp_find_and_lock(&_sp, (uintptr_t)ptr, (void*)&vma);
+  ret = ptbl_find_and_lock(&_ptbl, (uintptr_t)ptr, (void*)&vma);
   assert(!ret);
 
-  /* Remove from splay tree. This will be fast, since ooc_sp_find_and_lock will
+  /* Remove from splay tree. This will be fast, since ptbl_find_and_lock will
    * splay vma to top of tree. */
-  ret = ooc_sp_remove(&_sp, vma->nd.b);
+  ret = ptbl_remove(&_ptbl, vma->pte.b);
   assert(!ret);
 
   /* Deallocate memory. */
   /* Compute segment sizes. */
-  data_sz = ALIGN(vma->nd.s);
+  data_sz = ALIGN(vma->pte.s);
   info_sz = ALIGN(sizeof(struct vma)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
   mmap_sz = info_sz+data_sz;
 

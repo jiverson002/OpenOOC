@@ -75,8 +75,8 @@ THE SOFTWARE.
 /* NULL */
 #include <stdlib.h>
 
-#include "splay.h"
-#include "../lock/lock.h"
+/* */
+#include "common.h"
 
 
 #define MAKE_CHILD(A, WHICH, B)\
@@ -89,7 +89,7 @@ THE SOFTWARE.
   Create a new node           
 ------------------------------------------------------------------------------*/
 static void
-_sp_nd_init(sp_nd_t * const n, uintptr_t const b, size_t const s)
+_pte_init(struct pte * const n, uintptr_t const b, size_t const s)
 {
   int ret;
 
@@ -106,13 +106,13 @@ _sp_nd_init(sp_nd_t * const n, uintptr_t const b, size_t const s)
 
 
 /*------------------------------------------------------------------------------
-  Simple top down splay, not requiring num to be in the tree t.
-  What it does is described above.
+  Simple top down splay, not requiring num to be in the tree t. What it does is
+  described above.
 ------------------------------------------------------------------------------*/
-static sp_nd_t *
-_sp_splay(uintptr_t const b, sp_nd_t * t)
+static struct pte *
+_ptbl_splay(uintptr_t const b, struct pte * t)
 {
-  sp_nd_t n, * l, * r, * y;
+  struct pte n, * l, * r, * y;
 
   if (NULL == t) {
     return t;
@@ -173,14 +173,14 @@ _sp_splay(uintptr_t const b, sp_nd_t * t)
   Initialize the linked list to an empty list
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_init(sp_t * const sp)
+ptbl_init(struct ptbl * const ptbl)
 {
   int ret;
 
-  sp->root = NULL;
-  sp->next = NULL;
+  ptbl->root = NULL;
+  ptbl->next = NULL;
 
-  ret = lock_init(&(sp->lock));
+  ret = lock_init(&(ptbl->lock));
   assert(!ret);
 
   return 0;
@@ -191,16 +191,16 @@ ooc_sp_init(sp_t * const sp)
   Start from the root and recursively free each subtree of a splay tree
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_free(sp_t * const sp)
+ptbl_free(struct ptbl * const ptbl)
 {
   int ret;
 
-  if (sp) {
-    while (sp->root) {
-      ooc_sp_remove(sp, sp->root->b);
+  if (ptbl) {
+    while (ptbl->root) {
+      ptbl_remove(ptbl, ptbl->root->b);
     }
 
-    ret = lock_free(&(sp->lock));
+    ret = lock_free(&(ptbl->lock));
     assert(!ret);
   }
   return 0;
@@ -208,42 +208,42 @@ ooc_sp_free(sp_t * const sp)
 
 
 /*------------------------------------------------------------------------------
-  Insert item into the tree t, unless it's already there.
-  Set root of sp to the resulting tree.
+  Insert item into the tree t, unless it's already there. Set root of ptbl to
+  the resulting tree.
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
-              size_t const s)
+ptbl_insert(struct ptbl * const ptbl, struct pte * const z, uintptr_t const b,
+            size_t const s)
 {
   int ret;
-  sp_nd_t * t;
+  struct pte * t;
 
-  ret = lock_get(&(sp->lock));
+  ret = lock_get(&(ptbl->lock));
   assert(!ret);
 
-  t = sp->root;
+  t = ptbl->root;
 
-  _sp_nd_init(z, b, s);
+  _pte_init(z, b, s);
 
   if (t == NULL) {
-    sp->root = z;
+    ptbl->root = z;
     goto fn_return;
   }
 
-  t = _sp_splay(b, t);
+  t = _ptbl_splay(b, t);
 
   if (b < t->b) {
     MAKE_CHILD(z, l, t->l);
     MAKE_CHILD(z, r, t);
     t->l = NULL;
-    sp->root = z;
+    ptbl->root = z;
     goto fn_return;
   }
   else if (t->b < b) {
     MAKE_CHILD(z, r, t->r);
     MAKE_CHILD(z, l, t);
     t->r = NULL;
-    sp->root = z;
+    ptbl->root = z;
     goto fn_return;
   }
 
@@ -252,7 +252,7 @@ ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
   return -1;
 
   fn_return:
-  ret = lock_let(&(sp->lock));
+  ret = lock_let(&(ptbl->lock));
   assert(!ret);
 
   return 0;
@@ -263,38 +263,38 @@ ooc_sp_insert(sp_t * const sp, sp_nd_t * const z, uintptr_t const b,
   Find a datum in the tree, it MUST exist.
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
-                     sp_nd_t ** const sp_nd_p)
+ptbl_find_and_lock(struct ptbl * const ptbl, uintptr_t const d,
+                   struct pte ** const pte_p)
 {
   int ret;
-  sp_nd_t * n;
+  struct pte * n;
 
-  ret = lock_get(&(sp->lock));
+  ret = lock_get(&(ptbl->lock));
   assert(!ret);
 
   /* splay d to root of tree */
-  sp->root = _sp_splay(d, sp->root);
+  ptbl->root = _ptbl_splay(d, ptbl->root);
 
   /* if root equals d, then d exists in tree and can be returned. if not, then
    * d does not exist in tree and nothing will be returned, but a neighbor of
    * where d would be in the tree will be made root and the tree will be
    * slightly more balanced. */
-  if (sp->root) {
-    if (sp->root->b <= d) {
-      if (d <= sp->root->b+sp->root->s) {
+  if (ptbl->root) {
+    if (ptbl->root->b <= d) {
+      if (d <= ptbl->root->b+ptbl->root->s) {
         if (!ret) {
-          *sp_nd_p = sp->root;
+          *pte_p = ptbl->root;
           goto fn_return;
         }
       }
     }
     else {
-      for (n=sp->root->l; n && n->r; n=n->r);
+      for (n=ptbl->root->l; n && n->r; n=n->r);
       if (n->b <= d) {
         if (d <= n->b+n->s) {
           ret = lock_get(&(n->lock));
           if (!ret) {
-            *sp_nd_p = n;
+            *pte_p = n;
             goto fn_return;
           }
         }
@@ -306,7 +306,7 @@ ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
   return -1;
 
   fn_return:
-  ret = lock_let(&(sp->lock));
+  ret = lock_let(&(ptbl->lock));
   assert(!ret);
 
   return 0;
@@ -314,33 +314,33 @@ ooc_sp_find_and_lock(sp_t * const sp, uintptr_t const d,
 
 
 /*------------------------------------------------------------------------------
-  Remove node with specified datum in the tree, if MUST exist. Set root of sp to
-  the resulting tree.
+  Remove node with specified datum in the tree, if MUST exist. Set root of ptbl
+  to the resulting tree.
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_remove(sp_t * const sp, uintptr_t const b)
+ptbl_remove(struct ptbl * const ptbl, uintptr_t const b)
 {
   int ret;
-  sp_nd_t * z, * t;
+  struct pte * z, * t;
 
-  ret = lock_get(&(sp->lock));
+  ret = lock_get(&(ptbl->lock));
   assert(!ret);
 
-  t = sp->root;
+  t = ptbl->root;
 
   if (t) {
-    t = _sp_splay(b, t);
+    t = _ptbl_splay(b, t);
 
     if (b == t->b) {            /* found it */
       if (t->l == NULL) {
         z = t->r;
       }
       else {
-        z = _sp_splay(b, t->l);
+        z = _ptbl_splay(b, t->l);
         z->p = NULL;
         MAKE_CHILD(z, r, t->r);
       }
-      sp->root = z;
+      ptbl->root = z;
 
       ret = lock_free(&(t->lock));
       assert(!ret);
@@ -353,7 +353,7 @@ ooc_sp_remove(sp_t * const sp, uintptr_t const b)
   return -1;
 
   fn_return:
-  ret = lock_let(&(sp->lock));
+  ret = lock_let(&(ptbl->lock));
   assert(!ret);
 
   return 0;
@@ -364,18 +364,18 @@ ooc_sp_remove(sp_t * const sp, uintptr_t const b)
   Iterate the nodes of the splay tree in order
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
+ptbl_next(struct ptbl * const ptbl, struct pte ** const pte_p)
 {
   int ret;
-  sp_nd_t * n;
+  struct pte * n;
 
-  ret = lock_get(&(sp->lock));
+  ret = lock_get(&(ptbl->lock));
   assert(!ret);
 
-  n = sp->next;
+  n = ptbl->next;
 
   if (!n) {
-    for (n=sp->root; n && n->l; n=n->l);
+    for (n=ptbl->root; n && n->l; n=n->l);
   }
   else if (!n->r) {
     for (; n->p && n == n->p->r; n=n->p);
@@ -385,12 +385,12 @@ ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
     for (n=n->r; n && n->l; n=n->l);
   }
 
-  sp->next = n;
+  ptbl->next = n;
 
-  ret = lock_let(&(sp->lock));
+  ret = lock_let(&(ptbl->lock));
   assert(!ret);
 
-  *sp_nd_p = n;
+  *pte_p = n;
 
   return 0;
 }
@@ -400,16 +400,16 @@ ooc_sp_next(sp_t * const sp, sp_nd_t ** const sp_nd_p)
   Check if splay tree is empty.
 ------------------------------------------------------------------------------*/
 int
-ooc_sp_empty(sp_t * const sp)
+ptbl_empty(struct ptbl * const ptbl)
 {
   int ret, retval;
 
-  ret = lock_get(&(sp->lock));
+  ret = lock_get(&(ptbl->lock));
   assert(!ret);
 
-  retval = (NULL == sp->root);
+  retval = (NULL == ptbl->root);
 
-  ret = lock_let(&(sp->lock));
+  ret = lock_let(&(ptbl->lock));
   assert(!ret);
 
   return retval;
@@ -427,39 +427,39 @@ int
 main(void)
 {
   int ret, i;
-  sp_t sp;
+  struct ptbl ptbl;
   struct vma * vma_p;
   struct vma vma[100];
 
-  ret = ooc_sp_init(&sp);
+  ret = ptbl_init(&ptbl);
   assert(!ret);
 
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_insert(&sp, &(vma[i].nd), (uintptr_t)(i*4096), 4096);
+    ret = ptbl_insert(&ptbl, &(vma[i].pte), (uintptr_t)(i*4096), 4096);
     assert(!ret);
-    assert((uintptr_t)(i*4096) == sp.root->b);
-    assert(4096 == sp.root->s);
+    assert((uintptr_t)(i*4096) == ptbl.root->b);
+    assert(4096 == ptbl.root->s);
   }
 
-  sp.next = NULL;
+  ptbl.next = NULL;
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_next(&sp, (void*)&vma_p);
+    ret = ptbl_next(&ptbl, (void*)&vma_p);
     assert(!ret);
-    assert((uintptr_t)(i*4096) == vma_p->nd.b);
-    assert(4096 == vma_p->nd.s);
+    assert((uintptr_t)(i*4096) == vma_p->pte.b);
+    assert(4096 == vma_p->pte.s);
   }
 
   for (i=0; i<100; ++i) {
-    ret = ooc_sp_find_and_lock(&sp, (uintptr_t)(i*4096+128), (void*)&vma_p);
+    ret = ptbl_find_and_lock(&ptbl, (uintptr_t)(i*4096+128), (void*)&vma_p);
     assert(!ret);
-    assert((uintptr_t)(i*4096) == vma_p->nd.b);
-    assert(4096 == vma_p->nd.s);
+    assert((uintptr_t)(i*4096) == vma_p->pte.b);
+    assert(4096 == vma_p->pte.s);
 
-    ret = lock_let(&(vma_p->nd.lock));
+    ret = lock_let(&(vma_p->pte.lock));
     assert(!ret);
   }
 
-  ret = ooc_sp_free(&sp); 
+  ret = ptbl_free(&ptbl); 
   assert(!ret);
 
   return EXIT_SUCCESS;
