@@ -33,7 +33,7 @@ THE SOFTWARE.
 /* mmap, mprotect, PROT_READ, PROT_WRITE, MAP_FAILED */
 #include <sys/mman.h>
 
-/* OOC_PAGE_SIZE */
+/* function prototypes */
 #include "include/ooc.h"
 
 /* */
