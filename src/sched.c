@@ -42,13 +42,13 @@ THE SOFTWARE.
 /* memcpy, memset */
 #include <string.h>
 
-/* mmap, mprotect, PROT_READ, PROT_WRITE, MAP_FAILED */
+/* mprotect, PROT_READ, PROT_WRITE */
 #include <sys/mman.h>
 
 /* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
-/* OOC_NUM_FIBERS */
+/* OOC_NUM_FIBERS, function prototypes */
 #include "include/ooc.h"
 
 /* */
