@@ -21,6 +21,25 @@ THE SOFTWARE.
 */
 
 
+#if 0
+  #ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+  #endif
+  /* printf */
+  #include <stdio.h>
+  /* syscall, SYS_gettid */
+  #include <sys/syscall.h>
+  #define DBG_LOG \
+    fprintf(stderr, "[%d] ", (int)syscall(SYS_gettid));\
+    fprintf
+#else
+  #define stderr       NULL
+  #define SYS_gettid   0
+  #define syscall(cmd) 0
+  static inline void noop(void const * const fmt, ...) { if (fmt) {} }
+  #define DBG_LOG noop
+#endif
+
 #if defined(USE_MMAP) && defined(USE_MEMALIGN)
   #undef USE_MMAP
 #endif
@@ -55,7 +74,7 @@ THE SOFTWARE.
   #define SYS_ALLOC_FAIL NULL
   #define SYS_FREE_FAIL  -1
   #define CALL_SYS_ALLOC(P,S) \
-    (0 == posix_memalign((void**)&(P),(size_t)PAGESIZE,S) ? (P) : NULL)
+    (0 == posix_memalign((void**)&(P),(size_t)BLOCK_SIZE,S) ? (P) : NULL)
   #define CALL_SYS_FREE(P,S) (free(P), 0)
 #endif
 
@@ -114,17 +133,39 @@ THE SOFTWARE.
  *
  */
 /******************************************************************************/
-#define BLOCK_SIZE     262144 /* 2^18 */
-#define BLOCK_CTR_FULL ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vma))
+#define BLOCK_SIZE      4096   /* 2^12 */ /* If using mmap, this should be
+                                             alignment required by mmap. */
+#define SUPERBLOCK_SIZE 262144 /* 2^18 */
+#define BLOCK_CTR_FULL \
+  ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vma)+1)
+#define SUPERBLOCK_CTR_FULL \
+  ((SUPERBLOCK_SIZE-sizeof(struct superblock))/sizeof(struct block)+1)
 
+struct superblock;
 
 struct block
 {
-  size_t ctr;
+  size_t vctr;
   struct block * prev;
   struct block * next;
+  struct superblock * superblock;
   struct vma * head;
-  struct vma vma[];
+  struct vma vma[1];
+};
+
+struct superblock
+{
+  struct hdr
+  {
+    size_t bctr;
+    struct superblock * prev;
+    struct superblock * next;
+    struct block * head;
+  } hdr;
+  /* This padding is necessary to ensure that the first block is properly
+   * BLOCK_SIZE aligned. */
+  char _pad[BLOCK_SIZE-sizeof(struct hdr)];
+  struct block block[1];
 };
 
 
@@ -136,57 +177,22 @@ struct block
 /******************************************************************************/
 /* Memory pool data structure */
 /******************************************************************************/
-#define UNDES_BIN_NUM 4
+#define UNDES_BIN_NUM_THREAD 2
+#define UNDES_BIN_NUM_GLOBAL 16
 
 
 /* A per-process instance of a memory pool. */
 __thread struct mpool
 {
-  struct block * head;
-} mpool = {
-  .head = NULL
-};
+  int n_undes;
+  struct block * head_block;
+  struct superblock * head_superblock;
+  struct superblock * undes[UNDES_BIN_NUM_THREAD];
+} mpool = { 0, NULL, NULL, { NULL } };
 
 static int n_undes;
-static struct block * undes[UNDES_BIN_NUM];
+static struct superblock * undes[UNDES_BIN_NUM_GLOBAL];
 static ooc_lock_t undes_lock;
-
-
-/******************************************************************************/
-/* ========================================================================== */
-/******************************************************************************/
-static long int PAGESIZE;
-
-
-/******************************************************************************/
-/* Allocate a new block */
-/******************************************************************************/
-static struct block *
-block_alloc(void)
-{
-  void * ret;
-  struct block * block;
-
-  ret = CALL_SYS_ALLOC(block, BLOCK_SIZE);
-  if (SYS_ALLOC_FAIL == ret) {
-    return NULL;
-  }
-
-  return block;
-}
-
-
-/******************************************************************************/
-/* Free an existing block */
-/******************************************************************************/
-static void
-block_free(struct block * const block)
-{
-  int ret;
-
-  ret = CALL_SYS_FREE(block, BLOCK_SIZE);
-  assert(SYS_FREE_FAIL != ret);
-}
 
 
 /******************************************************************************/
@@ -197,55 +203,277 @@ block_free(struct block * const block)
 /******************************************************************************/
 /* Translate a vma to its corresponding block. */
 /******************************************************************************/
+static struct superblock *
+block_2superblock(struct block * const block)
+{
+  return block->superblock;
+}
+
+
+/******************************************************************************/
+/* Translate a vma to its corresponding block. */
+/******************************************************************************/
 static struct block *
 vma_2block(struct vma * const vma)
 {
-  return (struct block*)((uintptr_t)vma&(~(uintptr_t)(PAGESIZE-1)));
+  return (struct block*)((uintptr_t)vma&(~(uintptr_t)(BLOCK_SIZE-1)));
 }
+
+
+/******************************************************************************/
+/* ========================================================================== */
+/******************************************************************************/
+
+
+/******************************************************************************/
+/* Allocate a new superblock */
+/******************************************************************************/
+static struct superblock *
+superblock_alloc(void)
+{
+  void * ret;
+  struct superblock * superblock;
+
+  ret = CALL_SYS_ALLOC(superblock, SUPERBLOCK_SIZE);
+  if (SYS_ALLOC_FAIL == ret) {
+    return NULL;
+  }
+
+  DBG_LOG(stderr, "allocated new superblock %p\n", (void*)superblock);
+
+  return superblock;
+}
+
+
+/******************************************************************************/
+/* Free an existing superblock */
+/******************************************************************************/
+static void
+superblock_free(struct superblock * const superblock)
+{
+  int ret;
+
+  ret = CALL_SYS_FREE(superblock, SUPERBLOCK_SIZE);
+  assert(SYS_FREE_FAIL != ret);
+
+  DBG_LOG(stderr, "freed superblock %p\n", (void*)superblock);
+}
+
+
+/******************************************************************************/
+/* ========================================================================== */
+/******************************************************************************/
+
+
+/******************************************************************************/
+/* Get next available block. */
+/******************************************************************************/
+static struct block *
+block_alloc(void)
+{
+  int ret;
+  struct block * block;
+  struct superblock * superblock;
+
+  block = NULL;
+  superblock = mpool.head_superblock;
+
+  if (NULL == superblock) {
+    if (0 != mpool.n_undes) { /* Designate superblock from thread pool. */
+      superblock = mpool.undes[--mpool.n_undes];
+    }
+    else {
+      ret = lock_get(&(undes_lock));
+      assert(!ret);
+      if (0 != n_undes) {     /* Designate superblock from global pool. */
+        superblock = undes[--n_undes];
+        ret = lock_let(&(undes_lock));
+        assert(!ret);
+      }
+      else {                  /* Allocate new superblock. */
+        ret = lock_let(&(undes_lock));
+        assert(!ret);
+        superblock = superblock_alloc();
+        if (NULL == superblock) {
+          goto fn_fail;
+        }
+      }
+    }
+
+    /* Set up new superblock. */
+    superblock->hdr.bctr = 0;
+    superblock->hdr.prev = NULL;
+    superblock->hdr.next = NULL;
+    superblock->hdr.head = NULL;
+
+    /* Set superblock as head of doubly-linked list. */
+    superblock->hdr.prev = NULL;
+    superblock->hdr.next = mpool.head_superblock;
+    if (NULL != superblock->hdr.next) {
+      superblock->hdr.next->hdr.prev = superblock;
+    }
+    mpool.head_superblock = superblock;
+
+    /* Get first block in superblock. */
+    block = superblock->block;
+
+    /* Set block's pointer to the superblock. */
+    block->superblock = superblock;
+
+    /* Set head of superblock's singly-linked list to first block. */
+    superblock->hdr.head = block;
+
+    /* Reset pointer for head block. This way, dangling pointers will get reset
+     * correctly. See note in the if(NULL == block->next) condition below. */
+    block->next = NULL;
+  }
+  else {                                    /* Use head superblock. */
+    /* Get head block of superblock's singly-linked-list. */
+    block = superblock->hdr.head;
+  }
+
+  /* Increment block count. */
+  superblock->hdr.bctr++;
+
+  /* Remove full superblock from doubly-linked list. */
+  if (SUPERBLOCK_CTR_FULL == superblock->hdr.bctr) {
+    if (NULL != superblock->hdr.prev) {
+      superblock->hdr.prev->hdr.next = superblock->hdr.next;
+    }
+    else {
+      mpool.head_superblock = superblock->hdr.next;
+    }
+    if (NULL != superblock->hdr.next) {
+      superblock->hdr.next->hdr.prev = superblock->hdr.prev;
+    }
+
+    superblock->hdr.prev = NULL;
+    superblock->hdr.next = NULL;
+  }
+  else {
+    if (NULL == block->next) {
+      /* Set next pointer. */
+      block->next = (struct block*)((char*)block+BLOCK_SIZE);
+
+      /* Set next block's pointer to the superblock. */
+      block->next->superblock = superblock;
+
+      /* Reset pointer for next block. If this block has never been previously
+       * used, then if follows that neither has the next. Resetting pointers in
+       * this way makes it so that memset'ing a superblock when it is
+       * undesignated, unnecessary. */
+      block->next->next = NULL;
+    }
+  }
+
+  /* Remove block from front of superblock's singly-linked list. */
+  superblock->hdr.head = block->next;
+
+  DBG_LOG(stderr, "allocated new block %p\n", (void*)block);
+  DBG_LOG(stderr, "  :: %d\n", (int)superblock->hdr.bctr);
+
+  fn_fail:
+  return block;
+}
+
+
+/******************************************************************************/
+/* Return a block to the superblock to which it belongs. */
+/******************************************************************************/
+static void
+block_free(struct block * const block)
+{
+  int ret;
+  struct superblock * superblock;
+
+  superblock = block_2superblock(block);
+
+  DBG_LOG(stderr, "freeing block %p\n", (void*)block);
+  DBG_LOG(stderr, "  :: %p\n", (void*)superblock);
+  DBG_LOG(stderr, "  :: %d\n", (int)superblock->hdr.bctr);
+
+  /* Decrement block count. */
+  superblock->hdr.bctr--;
+
+  if (0 == superblock->hdr.bctr) {
+    if (mpool.n_undes < UNDES_BIN_NUM_THREAD) {
+      DBG_LOG(stderr, "  :: %d\n", (int)mpool.n_undes);
+      /* Put superblock on thread undesignated stack. */
+      mpool.undes[mpool.n_undes++] = superblock;
+    }
+    else {
+      ret = lock_get(&(undes_lock));
+      assert(!ret);
+      if (n_undes < UNDES_BIN_NUM_GLOBAL) {
+        /* Put superblock on global undesignated stack. */
+        undes[n_undes++] = superblock;
+        ret = lock_let(&(undes_lock));
+        assert(!ret);
+      }
+      else {
+        ret = lock_let(&(undes_lock));
+        assert(!ret);
+        /* Release back to system. */
+        superblock_free(superblock);
+      }
+    }
+  }
+  else {
+    /* Prepend block to front of superblock singly-linked list. */
+    block->next = superblock->hdr.head;
+    superblock->hdr.head = block;
+
+    /* If not already part of mpool doubly-linked list, add superblock to it. */
+    if (NULL == superblock->hdr.prev && NULL == superblock->hdr.next &&\
+        superblock != mpool.head_superblock)
+    {
+      superblock->hdr.prev = NULL;
+      superblock->hdr.next = mpool.head_superblock;
+      if (NULL != superblock->hdr.next) {
+        superblock->hdr.next->hdr.prev = superblock;
+      }
+      mpool.head_superblock = superblock;
+    }
+  }
+}
+
+
+/******************************************************************************/
+/* ========================================================================== */
+/******************************************************************************/
 
 
 /******************************************************************************/
 /* Get next available vma. */
 /******************************************************************************/
-static struct vma *
-vma_get(void)
+struct vma *
+vma_alloc(void)
 {
-  int ret;
   struct block * block;
   struct vma * vma;
 
   vma = NULL;
-  block = mpool.head;
+  block = mpool.head_block;
 
   if (NULL == block) {
-    ret = lock_get(&(undes_lock));
-    assert(!ret);
-    if (0 != n_undes) {                     /* Designate existing block. */
-      block = undes[--n_undes];
-      ret = lock_let(&(undes_lock));
-      assert(!ret);
-    }
-    else {                                  /* Allocate new block. */
-      ret = lock_let(&(undes_lock));
-      assert(!ret);
-      block = (struct block*)block_alloc();
-      if (NULL == block)
-        goto fn_fail;
+    block = (struct block*)block_alloc();
+    if (NULL == block) {
+      goto fn_fail;
     }
 
     /* Set up new block. */
-    block->ctr = 0;
+    block->vctr = 0;
     block->prev = NULL;
     block->next = NULL;
     block->head = NULL;
 
     /* Set block as head of doubly-linked list. */
     block->prev = NULL;
-    block->next = mpool.head;
+    block->next = mpool.head_block;
     if (NULL != block->next) {
       block->next->prev = block;
     }
-    mpool.head = block;
+    mpool.head_block = block;
 
     /* Get first vma in block. */
     vma = block->vma;
@@ -263,15 +491,15 @@ vma_get(void)
   }
 
   /* Increment block count. */
-  block->ctr++;
+  block->vctr++;
 
   /* Remove full block from doubly-linked list. */
-  if (BLOCK_CTR_FULL == block->ctr) {
+  if (BLOCK_CTR_FULL == block->vctr) {
     if (NULL != block->prev) {
       block->prev->next = block->next;
     }
     else {
-      mpool.head = block->next;
+      mpool.head_block = block->next;
     }
     if (NULL != block->next) {
       block->next->prev = block->prev;
@@ -296,6 +524,9 @@ vma_get(void)
   /* Remove vma from front of block's singly-linked list. */
   block->head = vma->next;
 
+  DBG_LOG(stderr, "allocated new vma %p\n", (void*)vma);
+  DBG_LOG(stderr, "  :: %d\n", (int)block->vctr);
+
   fn_fail:
   return vma;
 }
@@ -304,32 +535,22 @@ vma_get(void)
 /******************************************************************************/
 /* Return a vma to the block to which it belongs. */
 /******************************************************************************/
-static void
-vma_put(struct vma * const vma)
+void
+vma_free(struct vma * const vma)
 {
-  int ret;
   struct block * block;
 
   block = vma_2block(vma);
 
-  /* Decrement block count. */
-  block->ctr--;
+  DBG_LOG(stderr, "freeing vma %p\n", (void*)vma);
+  DBG_LOG(stderr, "  :: %p\n", (void*)block);
+  DBG_LOG(stderr, "  :: %d\n", (int)block->vctr);
 
-  if (0 == block->ctr) {
-    ret = lock_get(&(undes_lock));
-    assert(!ret);
-    if (n_undes < UNDES_BIN_NUM) {
-      /* Put block on undesignated stack. */
-      undes[n_undes++] = block;
-      ret = lock_let(&(undes_lock));
-      assert(!ret);
-    }
-    else {
-      ret = lock_let(&(undes_lock));
-      assert(!ret);
-      /* Release back to system. */
-      block_free(block);
-    }
+  /* Decrement block count. */
+  block->vctr--;
+
+  if (0 == block->vctr) {
+    block_free(block);
   }
   else {
     /* Prepend vma to front of block singly-linked list. */
@@ -337,13 +558,15 @@ vma_put(struct vma * const vma)
     block->head = vma;
 
     /* If not already part of mpool doubly-linked list, add block to it. */
-    if (NULL == block->prev && NULL == block->next && block != mpool.head) {
+    if (NULL == block->prev && NULL == block->next &&\
+        block != mpool.head_block)
+    {
       block->prev = NULL;
-      block->next = mpool.head;
+      block->next = mpool.head_block;
       if (NULL != block->next) {
         block->next->prev = block;
       }
-      mpool.head = block;
+      mpool.head_block = block;
     }
   }
 }
@@ -355,39 +578,14 @@ vma_put(struct vma * const vma)
 
 
 /******************************************************************************/
-/* Allocate a vma. */
-/******************************************************************************/
-struct vma *
-vma_alloc(void)
-{
-  return vma_get();
-}
-
-
-/******************************************************************************/
-/* Free a vma. */
-/******************************************************************************/
-void
-vma_free(struct vma * const vma)
-{
-  vma_put(vma);
-}
-
-
-/******************************************************************************/
 /* Initialize the memory pool. */
 /******************************************************************************/
 void
 vma_mpool_init(void)
 {
-  int ret, i;
+  int ret;
 
-  PAGESIZE = sysconf(_SC_PAGESIZE);
-  assert(-1 != PAGESIZE);
-
-  for (i=0; i<UNDES_BIN_NUM; ++i) {
-    undes[i] = NULL;
-  }
+  n_undes = 0;
 
   ret = lock_init(&(undes_lock));
   assert(!ret);
@@ -402,10 +600,14 @@ vma_mpool_free(void)
 {
   int ret, i;
 
+  DBG_LOG(stderr, " :: %d %d\n", mpool.n_undes, n_undes);
+
+  /* FIXME */
+  /* Need to release per thread undesignated superblocks */
+
   for (i=0; i<n_undes; ++i) {
     /* Release back to system. */
-    ret = CALL_SYS_FREE(undes[i], sizeof(undes[i]));
-    assert(SYS_FREE_FAIL != ret);
+    superblock_free(undes[i]);
   }
 
   ret = lock_free(&(undes_lock));
@@ -424,31 +626,43 @@ vma_mpool_free(void)
 /* EXIT_SUCCESS */
 #include <stdlib.h>
 
+#define N_ALLOC  (BLOCK_CTR_FULL*SUPERBLOCK_CTR_FULL-1)
+#define N_THREAD 1
+
 int
 main(void)
 {
   int i;
-  struct vma * vma[1000];
+  struct vma ** vma;
+
+  vma = malloc(N_ALLOC*sizeof(struct vma*));
+  assert(vma);
+
+  printf("%lu %lu\n", sizeof(struct block), sizeof(struct superblock));
+  printf("%lu %lu\n", BLOCK_CTR_FULL, SUPERBLOCK_CTR_FULL);
 
   vma_mpool_init();
 
-  #pragma omp parallel for num_threads(4)
-  for (i=0; i<1000; ++i) {
-    vma[i] = vma_alloc();
-    assert(vma[i]);
-
-    vma[i]->pte.b = (uintptr_t)i;
+  #pragma omp parallel for num_threads(N_THREAD) ordered
+  for (i=0; i<N_ALLOC; ++i) {
+    #pragma omp ordered
+    {
+      vma[i] = vma_alloc();
+      assert(vma[i]);
+    }
   }
 
-  for (i=0; i<1000; ++i) {
-    assert((uintptr_t)i == vma[i]->pte.b);
-  }
-
-  for (i=0; i<1000; ++i) {
-    vma_free(vma[i]);
+  #pragma omp parallel for num_threads(N_THREAD) ordered
+  for (i=0; i<N_ALLOC; ++i) {
+    #pragma omp ordered
+    {
+      vma_free(vma[i]);
+    }
   }
 
   vma_mpool_free();
+
+  free(vma);
 
   return EXIT_SUCCESS;
 }
