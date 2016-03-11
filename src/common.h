@@ -97,6 +97,7 @@ struct vma
 {
   struct pte pte;
   uint8_t * pflags;
+  struct vma * next;
 };
 
 
@@ -109,6 +110,11 @@ int ptbl_find_and_lock(struct ptbl * const ptbl, uintptr_t const d,\
 int ptbl_remove(struct ptbl * const ptbl, uintptr_t const d);
 int ptbl_next(struct ptbl * const ptbl, struct pte ** const pte_p);
 int ptbl_empty(struct ptbl * const ptbl);
+
+struct vma * vma_alloc(void);
+void vma_free(struct vma * const vma);
+void vma_mpool_init(void);
+void vma_mpool_free(void);
 
 
 /* OOC page table - shared by all threads in a process, since said threads all

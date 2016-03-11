@@ -3,4 +3,4 @@ src_LIBRARIES := libooc.a
 src_LDLIBS    := -lrt
 src_CFLAGS    := -fopenmp
 
-libooc.a_SOURCES := malloc.c ptbl.c sched.c
+libooc.a_SOURCES := malloc.c ptbl.c sched.c vma_alloc.c
