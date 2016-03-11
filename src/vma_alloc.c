@@ -107,10 +107,10 @@ THE SOFTWARE.
  *                        
  *    Since blocks are page aligned and sized, the block to which a vma struct
  *    belongs can easily be computed by bit-wise anding the address of a vma
- *    struct with the page size minus one, block_ptr=((&vma)&(pagesize-1)).
- *    This allows for constant time checks to see when a block is empty and
- *    should be released. When a vma struct is inactive, the `void *' field
- *    shall point to the next available vma struct.
+ *    struct with the complement of the page size minus one,
+ *    block_ptr=((&vma)&(~(pagesize-1))). This allows for constant time checks
+ *    to see when a block is empty and should be released. When a vma struct is
+ *    inactive, the `void *' field shall point to the next available vma struct.
  *
  */
 /******************************************************************************/
