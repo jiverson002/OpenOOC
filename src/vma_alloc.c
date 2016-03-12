@@ -22,21 +22,16 @@ THE SOFTWARE.
 
 
 #if 0
-  #ifndef _GNU_SOURCE
-    #define _GNU_SOURCE
-  #endif
+  /* omp_get_thread_num() */
+  #include <omp.h>
   /* printf */
   #include <stdio.h>
-  /* syscall, SYS_gettid */
-  #include <sys/syscall.h>
   #define DBG_LOG \
-    fprintf(stderr, "[%d] ", (int)syscall(SYS_gettid));\
+    fprintf(stderr, "[%d] ", (int)omp_get_thread_num());\
     fprintf
 #else
-  #define stderr       NULL
-  #define SYS_gettid   0
-  #define syscall(cmd) 0
-  static inline void noop(void const * const fmt, ...) { if (fmt) {} }
+  #define stderr       0
+  static inline void noop(int const fd, ...) { if (fd) {} }
   #define DBG_LOG noop
 #endif
 
@@ -48,8 +43,8 @@ THE SOFTWARE.
 #endif
 
 #ifdef USE_MMAP
-  #ifndef _BSD_SOURCE
-    #define _BSD_SOURCE
+  #if !defined(_BSD_SOURCE) && !defined(_SVID_SOURCE)
+    #define _BSD_SOURCE /* Expose MAP_ANONYMOUS */
   #endif
   /* mmap, munmap */
   #include <sys/mman.h>
@@ -61,16 +56,17 @@ THE SOFTWARE.
 #endif
 
 #ifdef USE_MEMALIGN
-  #ifndef _POSIX_C_SOURCE
+  #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
     #define _POSIX_C_SOURCE 200112L
-  #elif _POSIX_C_SOURCE < 200112L
+  #elif defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE < 200112L
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 200112L
+  #elif defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600
+    #undef _XOPEN_SOURCE
+    #define _XOPEN_SOURCE 600
   #endif
-  /* posix_memalign */
+  /* posix_memalign, free */
   #include <stdlib.h>
-  /* memset */
-  #include <string.h>
   #define SYS_ALLOC_FAIL NULL
   #define SYS_FREE_FAIL  -1
   #define CALL_SYS_ALLOC(P,S) \
@@ -87,9 +83,6 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <stdint.h>
 
-/* sysconf */
-#include <unistd.h>
-
 /* */
 #include "common.h"
 
@@ -102,55 +95,22 @@ THE SOFTWARE.
 /******************************************************************************/
 /* Block data structure. */
 /******************************************************************************/
-/******************************************************************************/
-/*
- *  struct block:
- *
- *    | size_t | void * | void * | void * | `vma structs' |
- *    +--------+--------+--------+--------+---------------+
- *
- *    Memory blocks must be page aligned and have size equal to one page. They
- *    consist of a header that is a single size_t counter of the number of used
- *    structs in the block. The header maybe followed by some padding to ensure
- *    that the first vma struct in the block is aligned properly.
- *
- *
- *  vma struct:   
- *
- *      ACTIVE  | `used memory'            |
- *              +--------------------------+
- *                        
- *
- *    INACTIVE  | void * | `unused memory' |
- *              +--------+-----------------+
- *                        
- *    Since blocks are page aligned and sized, the block to which a vma struct
- *    belongs can easily be computed by bit-wise anding the address of a vma
- *    struct with the complement of the page size minus one,
- *    block_ptr=((&vma)&(~(pagesize-1))). This allows for constant time checks
- *    to see when a block is empty and should be released. When a vma struct is
- *    inactive, the `void *' field shall point to the next available vma struct.
- *
- */
-/******************************************************************************/
-#define BLOCK_SIZE      4096   /* 2^12 */ /* If using mmap, this should be
-                                             alignment required by mmap. */
+#define BLOCK_SIZE      4096   /* 2^12 */ /* If using mmap, this should be */
+                                          /* alignment required by mmap. */
 #define SUPERBLOCK_SIZE 262144 /* 2^18 */
 #define BLOCK_CTR_FULL \
-  ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vma)+1)
+  ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vma))
 #define SUPERBLOCK_CTR_FULL \
-  ((SUPERBLOCK_SIZE-sizeof(struct superblock))/BLOCK_SIZE+1)
+  ((SUPERBLOCK_SIZE-sizeof(struct superblock))/BLOCK_SIZE)
 
 struct superblock;
 
 struct block
 {
   size_t vctr;
-  struct block * prev;
   struct block * next;
   struct superblock * superblock;
   struct vma * head;
-  struct vma vma[1];
 };
 
 struct superblock
@@ -163,9 +123,9 @@ struct superblock
     struct block * head;
   } hdr;
   /* This padding is necessary to ensure that the first block is properly
-   * BLOCK_SIZE aligned. */
+   * BLOCK_SIZE aligned. This works because the superblock itself is BLOCK_SIZE
+   * aligned. */
   char _pad[BLOCK_SIZE-sizeof(struct hdr)];
-  struct block block[1];
 };
 
 
@@ -181,17 +141,21 @@ struct superblock
 #define UNDES_BIN_NUM_GLOBAL 16
 
 
-/* A per-process instance of a memory pool. */
-__thread struct mpool
+/* A per-thread instance of a memory pool. */
+static __thread struct
 {
   int n_undes;
   struct superblock * superblock;
   struct superblock * undes[UNDES_BIN_NUM_THREAD];
 } mpool = { 0, NULL, { NULL } };
 
-static int n_undes;
-static struct superblock * undes[UNDES_BIN_NUM_GLOBAL];
-static ooc_lock_t undes_lock;
+/* A per-process instance of a memory pool. */
+static struct
+{
+  int n_undes;
+  struct superblock * undes[UNDES_BIN_NUM_GLOBAL];
+  ooc_lock_t lock;
+} gpool;
 
 
 /******************************************************************************/
@@ -200,7 +164,7 @@ static ooc_lock_t undes_lock;
 
 
 /******************************************************************************/
-/* Translate a vma to its corresponding block. */
+/* Translate a block to its corresponding superblock. */
 /******************************************************************************/
 static struct superblock *
 block_2superblock(struct block * const block)
@@ -225,7 +189,7 @@ vma_2block(struct vma * const vma)
 
 
 /******************************************************************************/
-/* Allocate a new superblock */
+/* Allocate a new superblock. */
 /******************************************************************************/
 static struct superblock *
 superblock_alloc(void)
@@ -240,15 +204,15 @@ superblock_alloc(void)
     superblock = mpool.undes[--mpool.n_undes];
   }
   else {
-    ret = lock_get(&(undes_lock));
+    ret = lock_get(&(gpool.lock));
     assert(!ret);
-    if (0 != n_undes) {     /* Designate superblock from global pool. */
-      superblock = undes[--n_undes];
-      ret = lock_let(&(undes_lock));
+    if (0 != gpool.n_undes) {   /* Designate superblock from global pool. */
+      superblock = gpool.undes[--gpool.n_undes];
+      ret = lock_let(&(gpool.lock));
       assert(!ret);
     }
-    else {                  /* Allocate new superblock. */
-      ret = lock_let(&(undes_lock));
+    else {                      /* Allocate new superblock. */
+      ret = lock_let(&(gpool.lock));
       assert(!ret);
       retp = CALL_SYS_ALLOC(superblock, SUPERBLOCK_SIZE);
       if (SYS_ALLOC_FAIL == retp) {
@@ -261,7 +225,7 @@ superblock_alloc(void)
   superblock->hdr.bctr = 0;
   superblock->hdr.prev = NULL;
   superblock->hdr.next = NULL;
-  superblock->hdr.head = superblock->block;
+  superblock->hdr.head = (struct block*)((char*)superblock+sizeof(struct superblock));
 
   /* Set superblock as head of mpool's superblock cache. */
   mpool.superblock = superblock;
@@ -298,16 +262,16 @@ superblock_free(struct superblock * const superblock)
     mpool.undes[mpool.n_undes++] = superblock;
   }
   else {
-    ret = lock_get(&(undes_lock));
+    ret = lock_get(&(gpool.lock));
     assert(!ret);
-    if (n_undes < UNDES_BIN_NUM_GLOBAL) {
+    if (gpool.n_undes < UNDES_BIN_NUM_GLOBAL) {
       /* Put superblock on global undesignated stack. */
-      undes[n_undes++] = superblock;
-      ret = lock_let(&(undes_lock));
+      gpool.undes[gpool.n_undes++] = superblock;
+      ret = lock_let(&(gpool.lock));
       assert(!ret);
     }
     else {
-      ret = lock_let(&(undes_lock));
+      ret = lock_let(&(gpool.lock));
       assert(!ret);
       /* Release back to system. */
       ret = CALL_SYS_FREE(superblock, SUPERBLOCK_SIZE);
@@ -352,16 +316,12 @@ block_alloc(void)
       goto fn_fail;
     }
 
-    /* Get head of superblock's doubly-linked list. */
+    /* Get head of superblock's singly-linked list. */
     block = superblock->hdr.head;
 
     /* Reset pointer for head block. This way, dangling pointers will get reset
      * correctly. See note in the if(NULL == block->next) condition below. */
     block->next = NULL;
-  }
-  else {                                    /* Use head superblock. */
-    /* Get head block of superblock's doubly-linked-list. */
-    block = superblock->hdr.head;
   }
 
   /* Increment block count. */
@@ -385,12 +345,13 @@ block_alloc(void)
        * this way makes it so that memset'ing a superblock when it is
        * undesignated, unnecessary. */
       block->next->next = NULL;
+      block->next->head = NULL;
     }
   }
 
   /* Set up new block. */
   block->vctr = 0;
-  block->head = block->vma;
+  block->head = (struct vma*)((char*)block+sizeof(struct block));
   block->superblock = superblock;
 
   DBG_LOG(stderr, "allocated new block %p\n", (void*)block);
@@ -423,11 +384,11 @@ block_free(struct block * const block)
     superblock_free(superblock);
   }
   else {
-    /* Prepend block to front of superblock's doubly-linked list. */
+    /* Prepend block to front of superblock's singly-linked list. */
     block->next = superblock->hdr.head;
     superblock->hdr.head = block;
 
-    if (NULL == superblock->hdr.prev && superblock != mpool.superblock) {
+    if (SUPERBLOCK_CTR_FULL-1 == superblock->hdr.bctr) {
       /* Prepend superblock to front of mpool's superblock cache. */
       superblock->hdr.next = mpool.superblock;
       if (NULL != superblock->hdr.next) {
@@ -461,7 +422,7 @@ vma_alloc(void)
     block = NULL;
   }
   else {
-    /* Check superblock's linked list. */
+    /* Check superblock's singly-linked list. */
     block = superblock->hdr.head;
   }
 
@@ -469,7 +430,7 @@ vma_alloc(void)
     vma = NULL;
   }
   else {
-    /* Check block's linked list. */
+    /* Check block's singly-linked list. */
     vma = block->head;
   }
 
@@ -486,10 +447,6 @@ vma_alloc(void)
      * correctly. See note in the if(NULL == vma->next) condition below. */
     vma->next = NULL;
   }
-  else {
-    /* Get head of block's singly-linked-list. */
-    vma = block->head;
-  }
 
   /* Increment block count. */
   block->vctr++;
@@ -497,12 +454,8 @@ vma_alloc(void)
   if (BLOCK_CTR_FULL == block->vctr) {
     superblock = block_2superblock(block);
 
-    /* Remove block from superblocks's doubly-linked list. */
+    /* Remove block from superblocks's singly-linked list. */
     superblock->hdr.head = block->next;
-    if (NULL != block->next) {
-      block->next->prev = NULL;
-    }
-    block->prev = NULL;
   }
   else {
     if (NULL == vma->next) {
@@ -558,12 +511,9 @@ vma_free(struct vma * const vma)
     vma->next = block->head;
     block->head = vma;
 
-    if (NULL == block->prev && block != superblock->hdr.head) {
-      /* Prepend block to superblock's double-linked list. */
+    if (BLOCK_CTR_FULL-1 == block->vctr) {
+      /* Prepend block to superblock's singly-linked list. */
       block->next = superblock->hdr.head;
-      if (NULL != block->next) {
-        block->next->prev = block;
-      }
       superblock->hdr.head = block;
     }
   }
@@ -583,9 +533,9 @@ vma_mpool_init(void)
 {
   int ret;
 
-  n_undes = 0;
+  gpool.n_undes = 0;
 
-  ret = lock_init(&(undes_lock));
+  ret = lock_init(&(gpool.lock));
   assert(!ret);
 }
 
@@ -601,16 +551,20 @@ vma_mpool_free(void)
   /* FIXME */
   /* Need to release per thread undesignated superblocks */
 
-  for (i=0; i<n_undes; ++i) {
+  for (i=0; i<gpool.n_undes; ++i) {
     /* Release back to system. */
-    ret = CALL_SYS_FREE(undes[i], SUPERBLOCK_SIZE);
+    ret = CALL_SYS_FREE(gpool.undes[i], SUPERBLOCK_SIZE);
     assert(SYS_FREE_FAIL != ret);
   }
 
-  ret = lock_free(&(undes_lock));
+  ret = lock_free(&(gpool.lock));
   assert(!ret);
 }
 
+
+/******************************************************************************/
+/* ========================================================================== */
+/******************************************************************************/
 
 
 #ifdef TEST
@@ -620,7 +574,7 @@ vma_mpool_free(void)
 /* uintptr_t */
 #include <inttypes.h>
 
-/* EXIT_SUCCESS */
+/* malloc, free, EXIT_SUCCESS */
 #include <stdlib.h>
 
 #define N_ALLOC  (1<<22)
