@@ -95,56 +95,55 @@ sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
   struct sp_node n, * l, * r, * y;
 
-  if (!t) {
-    return t;
-  }
-  n.sp_p = n.sp_l = n.sp_r = NULL;
-  l = r = &n;
+  if (t) {
+    n.sp_p = n.sp_l = n.sp_r = NULL;
+    l = r = &n;
 
-  for (;;) {
-    if (vm_addr < t->vm_start) {
-      if (!t->sp_l) {
-        break;
-      }
-      if (vm_addr < t->sp_l->vm_start) {
-        y = t->sp_l;                        /* rotate right */
-        MAKE_CHILD(t, sp_l, y->sp_r);
-        MAKE_CHILD(y, sp_r, t);
-        t = y;
+    for (;;) {
+      if (vm_addr < t->vm_start) {
         if (!t->sp_l) {
           break;
         }
+        if (vm_addr < t->sp_l->vm_start) {
+          y = t->sp_l;                        /* rotate right */
+          MAKE_CHILD(t, sp_l, y->sp_r);
+          MAKE_CHILD(y, sp_r, t);
+          t = y;
+          if (!t->sp_l) {
+            break;
+          }
+        }
+        MAKE_CHILD(r, sp_l, t);               /* link right */
+        r = t;
+        t = t->sp_l;
       }
-      MAKE_CHILD(r, sp_l, t);               /* link right */
-      r = t;
-      t = t->sp_l;
-    }
-    else if (t->vm_start < vm_addr) {
-      if (!t->sp_r) {
-        break;
-      }
-      if (t->sp_r->vm_start < vm_addr) {
-        y = t->sp_r;                        /* rotate left */
-        MAKE_CHILD(t, sp_r, y->sp_l);
-        MAKE_CHILD(y, sp_l, t);
-        t = y;
+      else if (t->vm_start < vm_addr) {
         if (!t->sp_r) {
           break;
         }
+        if (t->sp_r->vm_start < vm_addr) {
+          y = t->sp_r;                        /* rotate left */
+          MAKE_CHILD(t, sp_r, y->sp_l);
+          MAKE_CHILD(y, sp_l, t);
+          t = y;
+          if (!t->sp_r) {
+            break;
+          }
+        }
+        MAKE_CHILD(l, sp_r, t);               /* link left */
+        l = t;
+        t = t->sp_r;
       }
-      MAKE_CHILD(l, sp_r, t);               /* link left */
-      l = t;
-      t = t->sp_r;
+      else {
+        break;
+      }
     }
-    else {
-      break;
-    }
+    MAKE_CHILD(l, sp_r, t->sp_l);             /* assemble */
+    MAKE_CHILD(r, sp_l, t->sp_r);
+    MAKE_CHILD(t, sp_l, n.sp_r);
+    MAKE_CHILD(t, sp_r, n.sp_l);
+    t->sp_p = NULL;
   }
-  MAKE_CHILD(l, sp_r, t->sp_l);             /* assemble */
-  MAKE_CHILD(r, sp_l, t->sp_r);
-  MAKE_CHILD(t, sp_l, n.sp_r);
-  MAKE_CHILD(t, sp_r, n.sp_l);
-  t->sp_p = NULL;
 
   return t;
 }
@@ -215,14 +214,14 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
     goto fn_return;
   }
 
-  /* We get here if it's already in the tree */
   /* erroneous */
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
   return -1;
 
   fn_return:
   ret = lock_let(&(sp->lock));
   assert(!ret);
-
   return 0;
 }
 
@@ -237,14 +236,14 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  /* splay vm_addr to root of tree */
-  sp->root = sp_tree_splay(vm_addr, sp->root);
-
-  /* if root equals vm_addr, then vm_addr exists in tree and can be returned. if
-   * not, then vm_addr does not exist in tree and nothing will be returned, but
-   * a neighbor of where vm_addr would be in the tree will be made root and the
-   * tree will be slightly more balanced. */
   if (sp->root) {
+    /* splay vm_addr to root of tree */
+    sp->root = sp_tree_splay(vm_addr, sp->root);
+
+    /* if root equals vm_addr, then vm_addr exists in tree and can be returned.
+     * if not, then vm_addr does not exist in tree and nothing will be returned,
+     * but a neighbor of where vm_addr would be in the tree will be made root
+     * and the tree will be slightly more balanced. */
     if (sp->root->vm_start <= vm_addr) {
       if (vm_addr < sp->root->vm_end) {
         ret = lock_get(&(sp->root->vm_lock));
@@ -269,12 +268,13 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   }
 
   /* erroneous */
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
   return -1;
 
   fn_return:
   ret = lock_let(&(sp->lock));
   assert(!ret);
-
   return 0;
 }
 
@@ -308,12 +308,13 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
   }
 
   /* erroneous */
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
   return -1;
 
   fn_return:
   ret = lock_let(&(sp->lock));
   assert(!ret);
-
   return 0;
 }
 
@@ -335,28 +336,58 @@ main(void)
 {
   int ret, i;
   struct sp_node * zp;
-  struct sp_node z[100];
+  struct sp_node z[101];
 
   ret = sp_tree_init(&vma_tree);
   assert(!ret);
 
   for (i=0; i<100; ++i) {
-    z[i].vm_start = (void*)((uintptr_t)i*4096);
-    z[i].vm_end   = (void*)((char*)z[i].vm_start+4096);
+    if (i%2 == 0) {
+      z[i].vm_start = (void*)((uintptr_t)i*4096);
+      z[i].vm_end   = (void*)((char*)z[i].vm_start+4096);
+    }
+    else {
+      z[i].vm_start = (void*)((uintptr_t)(100-i)*4096);
+      z[i].vm_end   = (void*)((char*)z[i].vm_start+4096);
+    }
 
     ret = lock_init(&(z[i].vm_lock));
     assert(!ret);
 
     ret = sp_tree_insert(&vma_tree, &(z[i]));
     assert(!ret);
-    assert((void*)((uintptr_t)i*4096) == vma_tree.root->vm_start);
+
+    if (i%2 == 0) {
+      assert((void*)((uintptr_t)i*4096) == vma_tree.root->vm_start);
+    }
+    else {
+      assert((void*)((uintptr_t)(100-i)*4096) == vma_tree.root->vm_start);
+    }
     assert((void*)((char*)vma_tree.root->vm_start+4096) == vma_tree.root->vm_end);
   }
 
+  /* Insert element already in tree. */
+  z[100].vm_start = (void*)((uintptr_t)0);
+  z[100].vm_end   = (void*)((char*)z[100].vm_start+4096);
+  ret = lock_init(&(z[100].vm_lock));
+  assert(!ret);
+  /* FIXME This breaks stuff. */
+  /*ret = sp_tree_insert(&vma_tree, &(z[100]));
+  assert(-1 == ret);*/
+
   for (i=0; i<100; ++i) {
-    ret = sp_tree_find_and_lock(&vma_tree, (void*)((uintptr_t)i*4096+128), (void*)&zp);
-    assert(!ret);
-    assert((void*)((uintptr_t)i*4096) == zp->vm_start);
+    if (i%2 == 0) {
+      ret = sp_tree_find_and_lock(&vma_tree, (void*)((uintptr_t)i*4096+128),\
+        (void*)&zp);
+      assert(!ret);
+      assert((void*)((uintptr_t)i*4096) == zp->vm_start);
+    }
+    else {
+      ret = sp_tree_find_and_lock(&vma_tree,\
+        (void*)((uintptr_t)(100-i)*4096+128), (void*)&zp);
+      assert(!ret);
+      assert((void*)((uintptr_t)(100-i)*4096) == zp->vm_start);
+    }
     assert((void*)((char*)zp->vm_start+4096) == zp->vm_end);
 
     ret = lock_let(&(zp->vm_lock));
