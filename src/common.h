@@ -25,12 +25,6 @@ THE SOFTWARE.
 #define OOC_COMMON_H
 
 
-/* uintptr_t, uint8_t */
-#include <inttypes.h>
-
-/* size_t */
-#include <stddef.h>
-
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
 
@@ -38,88 +32,122 @@ THE SOFTWARE.
 /*----------------------------------------------------------------------------*/
 /* Implementation constants */
 /*----------------------------------------------------------------------------*/
-/* OOC page size. */
+/*! OOC page size. */
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-/* Maximum number of fibers per thread. */
+/*! Maximum number of fibers per thread. */
 #define OOC_NUM_FIBERS 10
 
 
 /*----------------------------------------------------------------------------*/
 /* Simple lock implementation */
 /*----------------------------------------------------------------------------*/
+#define lock_init ooc_lock_init
+#define lock_free ooc_lock_free
+#define lock_get  ooc_lock_get
+#define lock_let  ooc_lock_let
+#define lock_t    ooc_lock_t
 #ifdef _OPENMP
 /* omp_lock_t */
 #include <omp.h>
 
-typedef omp_lock_t ooc_lock_t;
+typedef omp_lock_t lock_t;
 
-#define lock_init(lock) (omp_init_lock(lock), 0)
-#define lock_free(lock) (omp_destroy_lock(lock), 0)
-#define lock_get(lock)  (omp_set_lock(lock), 0)
-#define lock_let(lock)  (omp_unset_lock(lock), 0)
-
+#define ooc_lock_init(lock) (omp_init_lock(lock), 0)
+#define ooc_lock_free(lock) (omp_destroy_lock(lock), 0)
+#define ooc_lock_get(lock)  (omp_set_lock(lock), 0)
+#define ooc_lock_let(lock)  (omp_unset_lock(lock), 0)
 #else
+typedef int lock_t;
 
-typedef int ooc_lock_t;
-
-#define lock_init(lock) 0
-#define lock_free(lock) 0
-#define lock_get(lock)  0
-#define lock_let(lock)  0
+#define ooc_lock_init(lock) 0
+#define ooc_lock_free(lock) 0
+#define ooc_lock_get(lock)  0
+#define ooc_lock_let(lock)  0
 #endif
 
 
 /*----------------------------------------------------------------------------*/
-/* OOC page table */
+/* */
 /*----------------------------------------------------------------------------*/
-/* Page table entry - implemented as a splay tree node. */
-struct pte
+#define vm_area ooc_vm_area
+#define sp_node ooc_vm_area
+/*! Virtual memory area. */
+struct vm_area
 {
-  struct pte * p;
-  struct pte * l;
-  struct pte * r;
-  uintptr_t b;
-  size_t s;
-  ooc_lock_t lock;
+  struct vm_area * vm_next;   /* list of VMAs (used only by vma_alloc()) */
+
+  struct sp_node * sp_p;      /* parent node (used only by sp_tree_*() */
+  struct sp_node * sp_l;      /* left child ... */
+  struct sp_node * sp_r;      /* right child ... */
+
+  unsigned long  vm_flags;    /* flags */
+  void *         vm_start;    /* VMA start, inclusive */
+  void *         vm_end;      /* VMA end, exclusive */
+
+  lock_t         vm_lock;     /* struct lock */
 };
 
-/* Splay tree - implemented as a splay tree. */
-struct ptbl
+#define sp_tree ooc_sp_tree
+/*! Splay tree. */
+struct sp_tree
 {
-  struct pte * root;
-  struct pte * next;
-  ooc_lock_t lock;
-};
-
-/* Virtual memory allocation. */
-struct vma
-{
-  struct pte pte;
-  uint8_t * pflags;
-  struct vma * next;
+  struct sp_node * root;      /* root of tree */
+  lock_t         lock;        /* struct lock */
 };
 
 
-int ptbl_init(struct ptbl * const ptbl);
-int ptbl_free(struct ptbl * const ptbl);
-int ptbl_insert(struct ptbl * const ptbl, struct pte * const z,\
-                uintptr_t const b, size_t const s);
-int ptbl_find_and_lock(struct ptbl * const ptbl, uintptr_t const d,\
-                       struct pte ** const pte_p);
-int ptbl_remove(struct ptbl * const ptbl, uintptr_t const d);
-int ptbl_next(struct ptbl * const ptbl, struct pte ** const pte_p);
-int ptbl_empty(struct ptbl * const ptbl);
+/*----------------------------------------------------------------------------*/
+/* Function prototypes */
+/*----------------------------------------------------------------------------*/
+/* sp_tree.c */
+#define sp_tree_init ooc_sp_tree_init
+/*! Initialize the linked list to an empty list. */
+int sp_tree_init(struct sp_tree * const sp);
 
-struct vma * vma_alloc(void);
-void vma_free(struct vma * const vma);
+#define sp_tree_free ooc_sp_tree_free
+/*! Start from the root and recursively free each subtree of a splay tree. */
+int sp_tree_free(struct sp_tree * const sp);
+
+#define sp_tree_insert ooc_sp_tree_insert
+/*! Insert node with specified data into the tree, it MUST NOT exist. */
+int sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z);
+
+#define sp_tree_find_and_lock ooc_sp_tree_find_and_lock
+/*! Find and lock node with specified datum in the tree, it MUST exist. */
+int sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,\
+                          struct sp_node ** const zp);
+
+#define sp_tree_remove ooc_sp_tree_remove
+/*! Remove node with specified datum in the tree, if MUST exist. */
+int sp_tree_remove(struct sp_tree * const sp_tree, void * const vm_addr);
+
+
+/* vma_alloc.c */
+#define vma_alloc ooc_vma_alloc
+/*! Get next available vm_area struct. */
+struct vm_area * vma_alloc(void);
+
+#define vma_free ooc_vma_free
+/*! Return a vm_area struct to the system. */
+void vma_free(struct vm_area * const vma);
+
+#define vma_mpool_init ooc_vma_mpool_init
+/*! Initialize the vm_area struct memory pool. */
 void vma_mpool_init(void);
+
+#define vma_mpool_free ooc_vma_mpool_free
+/*! Free the vm_area struct memory pool. */
 void vma_mpool_free(void);
 
 
-/* OOC page table - shared by all threads in a process, since said threads all
- * share the same address space. */
-extern struct ptbl _ptbl;
+/*----------------------------------------------------------------------------*/
+/* Extern variables */
+/*----------------------------------------------------------------------------*/
+#define vma_tree ooc_vma_tree
+/*! OOC Virtual Memory Area (VMA) tree - shared by all threads in a process,
+ * since said threads all share the same address space. */
+extern struct sp_tree vma_tree;
 
 
 #endif /* OOC_COMMON_H */

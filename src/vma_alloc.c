@@ -99,7 +99,7 @@ THE SOFTWARE.
                                           /* alignment required by mmap. */
 #define SUPERBLOCK_SIZE 262144 /* 2^18 */
 #define BLOCK_CTR_FULL \
-  ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vma))
+  ((BLOCK_SIZE-sizeof(struct block))/sizeof(struct vm_area))
 #define SUPERBLOCK_CTR_FULL \
   ((SUPERBLOCK_SIZE-sizeof(struct superblock))/BLOCK_SIZE)
 
@@ -110,7 +110,7 @@ struct block
   size_t vctr;
   struct block * next;
   struct superblock * superblock;
-  struct vma * head;
+  struct vm_area * head;
 };
 
 struct superblock
@@ -177,7 +177,7 @@ block_2superblock(struct block * const block)
 /* Translate a vma to its corresponding block. */
 /******************************************************************************/
 static struct block *
-vma_2block(struct vma * const vma)
+vma_2block(struct vm_area * const vma)
 {
   return (struct block*)((uintptr_t)vma&(~(uintptr_t)(BLOCK_SIZE-1)));
 }
@@ -351,7 +351,7 @@ block_alloc(void)
 
   /* Set up new block. */
   block->vctr = 0;
-  block->head = (struct vma*)((char*)block+sizeof(struct block));
+  block->head = (struct vm_area*)((char*)block+sizeof(struct block));
   block->superblock = superblock;
 
   DBG_LOG(stderr, "allocated new block %p\n", (void*)block);
@@ -408,10 +408,10 @@ block_free(struct block * const block)
 /******************************************************************************/
 /* Get next available vma. */
 /******************************************************************************/
-struct vma *
+struct vm_area *
 vma_alloc(void)
 {
-  struct vma * vma;
+  struct vm_area * vma;
   struct block * block;
   struct superblock * superblock;
 
@@ -444,8 +444,8 @@ vma_alloc(void)
     vma = block->head;
 
     /* Reset pointer for head vma. This way, dangling pointers will get reset
-     * correctly. See note in the if(NULL == vma->next) condition below. */
-    vma->next = NULL;
+     * correctly. See note in the if(NULL == vma->vm_next) condition below. */
+    vma->vm_next = NULL;
   }
 
   /* Increment block count. */
@@ -458,20 +458,20 @@ vma_alloc(void)
     superblock->hdr.head = block->next;
   }
   else {
-    if (NULL == vma->next) {
+    if (NULL == vma->vm_next) {
       /* Set next pointer. */
-      vma->next = vma+1;
+      vma->vm_next = vma+1;
 
       /* Reset pointer for next vma. If this vma has never been previously used,
        * then if follows that neither has the next. Resetting pointers in this
        * way makes it so that memset'ing a block when it is undesignated,
        * unnecessary. */
-      vma->next->next = NULL;
+      vma->vm_next->vm_next = NULL;
     }
   }
 
   /* Remove vma from front of block's singly-linked list. */
-  block->head = vma->next;
+  block->head = vma->vm_next;
 
   DBG_LOG(stderr, "allocated new vma %p\n", (void*)vma);
   DBG_LOG(stderr, "  :: %d\n", (int)block->vctr);
@@ -485,7 +485,7 @@ vma_alloc(void)
 /* Return a vma to the block to which it belongs. */
 /******************************************************************************/
 void
-vma_free(struct vma * const vma)
+vma_free(struct vm_area * const vma)
 {
   struct block * block;
   struct superblock * superblock;
@@ -508,7 +508,7 @@ vma_free(struct vma * const vma)
   }
   else {
     /* Prepend vma to front of block singly-linked list. */
-    vma->next = block->head;
+    vma->vm_next = block->head;
     block->head = vma;
 
     if (BLOCK_CTR_FULL-1 == block->vctr) {
@@ -584,9 +584,9 @@ int
 main(void)
 {
   int i;
-  struct vma ** vma;
+  struct vm_area ** vma;
 
-  vma = malloc(N_ALLOC*sizeof(struct vma*));
+  vma = malloc(N_ALLOC*sizeof(struct vm_area*));
   assert(vma);
 
   vma_mpool_init();

@@ -97,7 +97,7 @@ THE SOFTWARE.
 static __thread size_t _iter[OOC_NUM_FIBERS];
 static __thread void * _args[OOC_NUM_FIBERS];
 static __thread void (*_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
-static __thread uintptr_t _addr[OOC_NUM_FIBERS];
+static __thread void * _addr[OOC_NUM_FIBERS];
 static __thread ucontext_t _handler[OOC_NUM_FIBERS];
 static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
 static __thread ucontext_t _kern[OOC_NUM_FIBERS];
@@ -121,26 +121,44 @@ static __thread ucontext_t _main;
 static __thread int _is_init=0;
 
 /* System page table. */
-struct ptbl _ptbl;
+struct sp_tree vma_tree;
 
 
 static void
 _sigsegv_handler(void)
 {
   int ret, prot;
-  size_t page;
   uintptr_t addr;
-  struct vma * vma;
+  struct vm_area * vma;
+
+  /* TODO Because we may be splitting/merging vma after locking it, we may need
+   * to hold a lock with a greater scope, like maybe vma_tree lock until
+   * splitting/merging is done. The reason for this is that if I get the lock on
+   * vma, then another thread segfaults on a different/same address in vma, then
+   * they will find_and_lock on vma and will block when they try to get the
+   * lock. If I split vma, then the vma they have found, may no longer include
+   * the address which caused their segfault. If I merge vma, then the vma they
+   * found may no longer exist. */
+
+  /* TODO Maybe the solution to the above problem is to call a new function
+   * called sp_tree_find_mod_and_lock(). This way, the find, split/merge, and
+   * lock is all done atomically (while holding the vma_tree lock inside the
+   * function called). */
+
+  /* FIXME The unit test is passing right now because after the first page in an
+   * vma gets faulted, since no splitting/merging happens, the vma is marked
+   * with read flag. After that, any other page in the vma that faults, will see
+   * that its vma has read flag and be automatically granted read/write flags.
+   * This allows the code to work, but also means that after the first page
+   * fault in a vma, every other page fault, even read accesses will cause the
+   * vma to be marked dirty. */
 
   /* Find the vma corresponding to the offending address and lock it. */
-  ret = ptbl_find_and_lock(&_ptbl, _addr[_me], (void*)&vma);
+  ret = sp_tree_find_and_lock(&vma_tree, _addr[_me], (void*)&vma);
   assert(!ret);
 
-  addr = _addr[_me]&(~(_ps-1)); /* page align */
-  page = (addr-vma->pte.b)/_ps;
-
-  if (!(vma->pflags[page]&0x1)) {
-    if (vma->pflags[page]&0x10) {
+  if (!(vma->vm_flags&0x1)) {
+    if (vma->vm_flags&0x10) {
       /* TODO Post an async-io request. */
       /*aio_read(...);*/
 
@@ -151,25 +169,26 @@ _sigsegv_handler(void)
     }
 
     /* Update page flags. */
-    vma->pflags[page] |= 0x1;
+    vma->vm_flags |= 0x1;
 
     /* Grant read protection to page containing offending address. */
     prot = PROT_READ;
   }
   else {
     /* Update page flags. */
-    vma->pflags[page] |= 0x10;
+    vma->vm_flags |= 0x10;
 
     /* Grant write protection to page containing offending address. */
     prot = PROT_READ|PROT_WRITE;
   }
 
   /* Apply updates to page containing offending address. */
+  addr = (uintptr_t)_addr[_me]&(~(_ps-1)); /* page align */
   ret = mprotect((void*)addr, _ps, prot);
   assert(!ret);
 
   /* Unlock the vma. */
-  ret = lock_let(&(vma->pte.lock));
+  ret = lock_let(&(vma->vm_lock));
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */
@@ -191,7 +210,7 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   assert(SIGSEGV == sig);
 
-  _addr[_me] = (uintptr_t)si->si_addr;
+  _addr[_me] = si->si_addr;
 
   ret = getcontext(&tmp_uc);
   assert(!ret);
@@ -363,7 +382,7 @@ main(void)
   int ret;
   char var;
   size_t ps;
-  struct vma * vma;
+  struct vm_area * vma;
 
   /* This would be set in ooc_sched normally. */
   _me = 0;
@@ -371,7 +390,7 @@ main(void)
   ps = (size_t)sysconf(_SC_PAGESIZE);
   assert((size_t)-1 != ps);
 
-  ret = ptbl_init(&_ptbl);
+  ret = sp_tree_init(&vma_tree);
   assert(!ret);
 
   vma = mmap(NULL, 2*ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -379,36 +398,35 @@ main(void)
   ret = mprotect(vma, ps, PROT_READ|PROT_WRITE);
   assert(!ret);
 
-  vma->pflags = (uint8_t*)((char*)vma)+sizeof(struct pte);
+  vma->vm_start = (void*)((char*)vma+ps);
+  vma->vm_end   = (void*)((char*)vma->vm_start+ps);
 
   ret = _init();
   assert(!ret);
 
-  ret = ptbl_insert(&_ptbl, &(vma->pte), (uintptr_t)((char*)vma+ps), ps);
+  ret = sp_tree_insert(&vma_tree, vma);
   assert(!ret);
 
-  ((char*)vma->pte.b)[0] = 'a'; /* Raise a SIGSEGV. */
-  assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
+  ((char*)vma->vm_start)[0] = 'a'; /* Raise a SIGSEGV. */
+  assert(&(((char*)vma->vm_start)[0]) == (void*)_addr[_me]);
 
-  ((char*)vma->pte.b)[1] = 'b'; /* Should not raise SIGSEGV. */
-  assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
-  var = ((char*)vma->pte.b)[1]; /* Should not raise SIGSEGV. */
+  ((char*)vma->vm_start)[1] = 'b'; /* Should not raise SIGSEGV. */
+  assert(&(((char*)vma->vm_start)[0]) == (void*)_addr[_me]);
+  var = ((char*)vma->vm_start)[1]; /* Should not raise SIGSEGV. */
   assert(var = 'b');
 
   ret = ooc_finalize();
   assert(!ret);
 
-  ret = ptbl_remove(&_ptbl, vma->pte.b);
+  ret = sp_tree_remove(&vma_tree, vma->vm_start);
   assert(!ret);
 
   ret = munmap(vma, 2*ps);
   assert(!ret);
 
-  ret = ptbl_free(&_ptbl);
+  ret = sp_tree_free(&vma_tree);
   assert(!ret);
 
   return EXIT_SUCCESS;
-
-  if (var) {}
 }
 #endif

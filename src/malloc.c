@@ -24,7 +24,7 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
-/* uintptr_t, uint8_t */
+/* uintptr_t */
 #include <inttypes.h>
 
 /* NULL */
@@ -49,11 +49,11 @@ ooc_malloc(size_t const size)
 {
   int ret;
   size_t info_sz, data_sz, mmap_sz;
-  struct vma * vma;
+  struct vm_area * vma;
 
   /* Compute segment sizes. */
   data_sz = ALIGN(size);
-  info_sz = ALIGN(sizeof(struct vma)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
+  info_sz = ALIGN(sizeof(struct vm_area));
   mmap_sz = info_sz+data_sz;
 
   /* Allocate memory for new vma with read-only protection. */
@@ -68,17 +68,18 @@ ooc_malloc(size_t const size)
     goto fn_cleanup;
   }
 
-  /* Setup vma struct. */
-  vma->pflags = (uint8_t*)((char*)vma+sizeof(struct vma));
+  /* Setup vma */
+  vma->vm_start = (void*)((char*)vma+info_sz);
+  vma->vm_end   = (void*)((char*)vma->vm_start+size);
 
   /* Insert new vma into page table. */
-  ret = ptbl_insert(&_ptbl, &(vma->pte), (uintptr_t)((char*)vma+info_sz), size);
+  ret = sp_tree_insert(&vma_tree, vma);
   if (ret) {
     goto fn_cleanup;
   }
 
   /* Return pointer to data segment. */
-  return (void*)(vma->pte.b);
+  return vma->vm_start;
 
   fn_cleanup:
   /* Deallocate memory that was allocated for new vma. */
@@ -96,24 +97,23 @@ ooc_free(void * ptr)
 {
   int ret;
   size_t info_sz, data_sz, mmap_sz;
-  struct vma * vma;
+  struct vm_area * vma;
 
   /* Find the node corresponding to the offending address. */
   /* FIXME If we structure a vma differently, this could be a constant time
    * address manipulation instead of a splay tree lookup. However, since this is
    * the free function, it may not be that performance critical. */
-  ret = ptbl_find_and_lock(&_ptbl, (uintptr_t)ptr, (void*)&vma);
+  ret = sp_tree_find_and_lock(&vma_tree, ptr, (void*)&vma);
   assert(!ret);
 
-  /* Remove from splay tree. This will be fast, since ptbl_find_and_lock will
+  /* Remove from splay tree. This will be fast, since sp_tree_find_and_lock will
    * splay vma to top of tree. */
-  ret = ptbl_remove(&_ptbl, vma->pte.b);
+  ret = sp_tree_remove(&vma_tree, vma->vm_start);
   assert(!ret);
 
-  /* Deallocate memory. */
   /* Compute segment sizes. */
-  data_sz = ALIGN(vma->pte.s);
-  info_sz = ALIGN(sizeof(struct vma)+RNDUP(data_sz, (size_t)OOC_PAGE_SIZE));
+  data_sz = ALIGN((uintptr_t)vma->vm_end-(uintptr_t)vma->vm_start);
+  info_sz = ALIGN(sizeof(struct vm_area));
   mmap_sz = info_sz+data_sz;
 
   /* Allocate memory for new vma. */
@@ -125,6 +125,8 @@ ooc_free(void * ptr)
 #ifdef TEST
 /* EXIT_SUCCESS */
 #include <stdlib.h>
+
+struct sp_tree vma_tree;
 
 int
 main(void)
