@@ -231,6 +231,26 @@ _kernel_trampoline(int const i)
 }
 
 
+/* Moved this into its own function to prevent the following gcc error:
+   variable ‘i’ might be clobbered by ‘longjmp’ or ‘vfork’ [-Werror=clobbered]
+ */
+static int
+_kern_init(int const i)
+{
+  int ret;
+
+  ret = getcontext(&(_kern[i]));
+  assert(!ret);
+  _kern[i].uc_stack.ss_sp = _stack[i];
+  _kern[i].uc_stack.ss_size = SIGSTKSZ;
+  _kern[i].uc_stack.ss_flags = 0;
+
+  makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
+
+  return 0;
+}
+
+
 static int
 _init(void)
 {
@@ -246,13 +266,8 @@ _init(void)
   assert(!ret);
 
   for (i=0; i<OOC_NUM_FIBERS; ++i) {
-    ret = getcontext(&(_kern[i]));
+    ret = _kern_init(i);
     assert(!ret);
-    _kern[i].uc_stack.ss_sp = _stack[i];
-    _kern[i].uc_stack.ss_size = SIGSTKSZ;
-    _kern[i].uc_stack.ss_flags = 0;
-
-    makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
   }
 
   _is_init = 1;
@@ -350,6 +365,9 @@ main(void)
   size_t ps;
   struct vma * vma;
 
+  /* This would be set in ooc_sched normally. */
+  _me = 0;
+
   ps = (size_t)sysconf(_SC_PAGESIZE);
   assert((size_t)-1 != ps);
 
@@ -361,7 +379,6 @@ main(void)
   ret = mprotect(vma, ps, PROT_READ|PROT_WRITE);
   assert(!ret);
 
-  /* Setup vma struct. */
   vma->pflags = (uint8_t*)((char*)vma)+sizeof(struct pte);
 
   ret = _init();
@@ -370,11 +387,13 @@ main(void)
   ret = ptbl_insert(&_ptbl, &(vma->pte), (uintptr_t)((char*)vma+ps), ps);
   assert(!ret);
 
-  var = ((char*)vma->pte.b)[0]; /* Raise a SIGSEGV. */
+  ((char*)vma->pte.b)[0] = 'a'; /* Raise a SIGSEGV. */
   assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
 
-  var = ((char*)vma->pte.b)[1]; /* Should not raise SIGSEGV. */
+  ((char*)vma->pte.b)[1] = 'b'; /* Should not raise SIGSEGV. */
   assert(&(((char*)vma->pte.b)[0]) == (void*)_addr[_me]);
+  var = ((char*)vma->pte.b)[1]; /* Should not raise SIGSEGV. */
+  assert(var = 'b');
 
   ret = ooc_finalize();
   assert(!ret);

@@ -31,7 +31,7 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
-/* getpagesize */
+/* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
 
 
