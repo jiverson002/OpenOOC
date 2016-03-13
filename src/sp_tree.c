@@ -89,7 +89,7 @@ sp_node_init(struct sp_node * const n)
 }
 
 
-/*! Simple top down splay, not requiring d to be in the tree t. */
+/*! Simple top down splay, not requiring vm_addr to be in the tree t. */
 static struct sp_node *
 sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
@@ -109,6 +109,8 @@ sp_tree_splay(void * const vm_addr, struct sp_node * t)
           MAKE_CHILD(t, sp_l, y->sp_r);
           MAKE_CHILD(y, sp_r, t);
           t = y;
+          /* FIXME This control statement does not evaluate to true in any of
+           * the tests. */
           if (!t->sp_l) {
             break;
           }
@@ -213,6 +215,12 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
     sp->root = z;
     goto fn_return;
   }
+  else {
+    /* This should not happen, see erroneous note below. This is only here to
+     * protect keep the structure consistent in the face of an erroneous
+     * insertion. */
+    sp->root = t;
+  }
 
   /* erroneous */
   ret = lock_let(&(sp->lock));
@@ -240,10 +248,10 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
     /* splay vm_addr to root of tree */
     sp->root = sp_tree_splay(vm_addr, sp->root);
 
-    /* if root equals vm_addr, then vm_addr exists in tree and can be returned.
-     * if not, then vm_addr does not exist in tree and nothing will be returned,
-     * but a neighbor of where vm_addr would be in the tree will be made root
-     * and the tree will be slightly more balanced. */
+    /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
+     * does not exist in tree and nothing will be returned, but a neighbor of
+     * where vm_addr would be in the tree will be made root and the tree will be
+     * slightly more balanced. */
     if (sp->root->vm_start <= vm_addr) {
       if (vm_addr < sp->root->vm_end) {
         ret = lock_get(&(sp->root->vm_lock));
@@ -255,14 +263,12 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
     }
     else {
       for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);
-      if (n->vm_start <= vm_addr) {
-        if (vm_addr < n->vm_end) {
-          ret = lock_get(&(n->vm_lock));
-          assert(!ret);
+      if (n->vm_start <= vm_addr && vm_addr < n->vm_end) {
+        ret = lock_get(&(n->vm_lock));
+        assert(!ret);
 
-          *zp = n;
-          goto fn_return;
-        }
+        *zp = n;
+        goto fn_return;
       }
     }
   }
@@ -329,27 +335,35 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
 /* EXIT_SUCCESS */
 #include <stdlib.h>
 
+#define N_NODES 100
+
 struct sp_tree vma_tree;
 
 int
 main(void)
 {
   int ret, i;
+  uintptr_t vm_start, vm_end, vm_addr;
   struct sp_node * zp;
-  struct sp_node z[101];
+  struct sp_node z[N_NODES+1];
 
   ret = sp_tree_init(&vma_tree);
   assert(!ret);
 
-  for (i=0; i<100; ++i) {
+  /* TODO Instead of just inserting nodes according to some pattern, as is done
+   * below, we should deliberately chose the vm_start and vm_end addresses so
+   * that each execution path through the code is executed. */
+  for (i=0; i<N_NODES; ++i) {
     if (i%2 == 0) {
-      z[i].vm_start = (void*)((uintptr_t)i*4096);
-      z[i].vm_end   = (void*)((char*)z[i].vm_start+4096);
+      vm_start = ((uintptr_t)i*4096);
     }
     else {
-      z[i].vm_start = (void*)((uintptr_t)(100-i)*4096);
-      z[i].vm_end   = (void*)((char*)z[i].vm_start+4096);
+      vm_start = ((uintptr_t)(N_NODES-(N_NODES%2==1)-i)*4096);
     }
+    vm_end = vm_start+4096;
+
+    z[i].vm_start = (void*)vm_start;
+    z[i].vm_end   = (void*)vm_end;
 
     ret = lock_init(&(z[i].vm_lock));
     assert(!ret);
@@ -357,37 +371,38 @@ main(void)
     ret = sp_tree_insert(&vma_tree, &(z[i]));
     assert(!ret);
 
-    if (i%2 == 0) {
-      assert((void*)((uintptr_t)i*4096) == vma_tree.root->vm_start);
-    }
-    else {
-      assert((void*)((uintptr_t)(100-i)*4096) == vma_tree.root->vm_start);
-    }
-    assert((void*)((char*)vma_tree.root->vm_start+4096) == vma_tree.root->vm_end);
+    assert((void*)vm_start == vma_tree.root->vm_start);
+    assert((void*)vm_end   == vma_tree.root->vm_end);
   }
 
-  /* Insert element already in tree. */
-  z[100].vm_start = (void*)((uintptr_t)0);
-  z[100].vm_end   = (void*)((char*)z[100].vm_start+4096);
-  ret = lock_init(&(z[100].vm_lock));
-  assert(!ret);
-  /* FIXME This breaks stuff. */
-  /*ret = sp_tree_insert(&vma_tree, &(z[100]));
-  assert(-1 == ret);*/
+  /* Try to insert an element already in the tree. */
+  z[N_NODES].vm_start = (void*)((uintptr_t)0);
+  z[N_NODES].vm_end   = (void*)((char*)z[N_NODES].vm_start+4096);
+  ret = sp_tree_insert(&vma_tree, &(z[N_NODES]));
+  assert(-1 == ret);
 
-  for (i=0; i<100; ++i) {
+  /* Try to search for an element not in the tree. */
+  vm_addr = (uintptr_t)N_NODES*4096;
+  ret = sp_tree_find_and_lock(&vma_tree, (void*)vm_addr, (void*)&zp);
+  assert(-1 == ret);
+
+  /* Try to remove an element not in the tree. */
+  vm_addr = (uintptr_t)N_NODES*4096;
+  ret = sp_tree_remove(&vma_tree, (void*)vm_addr);
+  assert(-1 == ret);
+
+  for (i=0; i<N_NODES; ++i) {
     if (i%2 == 0) {
-      ret = sp_tree_find_and_lock(&vma_tree, (void*)((uintptr_t)i*4096+128),\
-        (void*)&zp);
-      assert(!ret);
-      assert((void*)((uintptr_t)i*4096) == zp->vm_start);
+      vm_addr = (uintptr_t)(i*4096+128);
     }
     else {
-      ret = sp_tree_find_and_lock(&vma_tree,\
-        (void*)((uintptr_t)(100-i)*4096+128), (void*)&zp);
-      assert(!ret);
-      assert((void*)((uintptr_t)(100-i)*4096) == zp->vm_start);
+      vm_addr = ((uintptr_t)(N_NODES-(N_NODES%2==1)-i)*4096+128);
     }
+
+    ret = sp_tree_find_and_lock(&vma_tree, (void*)vm_addr, (void*)&zp);
+    assert(!ret);
+
+    assert((void*)(vm_addr-128) == zp->vm_start);
     assert((void*)((char*)zp->vm_start+4096) == zp->vm_end);
 
     ret = lock_let(&(zp->vm_lock));
@@ -397,7 +412,7 @@ main(void)
   ret = sp_tree_free(&vma_tree);
   assert(!ret);
 
-  for (i=0; i<100; ++i) {
+  for (i=0; i<N_NODES; ++i) {
     ret = lock_free(&(z[i].vm_lock));
     assert(!ret);
   }

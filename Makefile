@@ -215,6 +215,10 @@ check: \
     done; \
     echo; \
     echo "Tests executed: $$count  Tests failed: $$rc"
+
+
+# TODO Create a gcov target that checks code coverage for each of the tests to
+# make sure that all code or some minimum percentage of code is being checked.
  
 
 # Remove object (*.o) and dependency (*.d) files
