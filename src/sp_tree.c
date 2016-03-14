@@ -95,57 +95,59 @@ sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
   struct sp_node n, * l, * r, * y;
 
-  if (t) {
-    n.sp_p = n.sp_l = n.sp_r = NULL;
-    l = r = &n;
+  if (!t) {
+    return t;
+  }
 
-    for (;;) {
-      if (vm_addr < t->vm_start) {
+  n.sp_p = n.sp_l = n.sp_r = NULL;
+  l = r = &n;
+
+  for (;;) {
+    if (vm_addr < t->vm_start) {
+      if (!t->sp_l) {
+        break;
+      }
+      if (vm_addr < t->sp_l->vm_start) {
+        y = t->sp_l;                        /* rotate right */
+        MAKE_CHILD(t, sp_l, y->sp_r);
+        MAKE_CHILD(y, sp_r, t);
+        t = y;
+        /* FIXME This control statement does not evaluate to true in any of
+         * the tests. */
         if (!t->sp_l) {
           break;
         }
-        if (vm_addr < t->sp_l->vm_start) {
-          y = t->sp_l;                        /* rotate right */
-          MAKE_CHILD(t, sp_l, y->sp_r);
-          MAKE_CHILD(y, sp_r, t);
-          t = y;
-          /* FIXME This control statement does not evaluate to true in any of
-           * the tests. */
-          if (!t->sp_l) {
-            break;
-          }
-        }
-        MAKE_CHILD(r, sp_l, t);               /* link right */
-        r = t;
-        t = t->sp_l;
       }
-      else if (t->vm_start < vm_addr) {
+      MAKE_CHILD(r, sp_l, t);               /* link right */
+      r = t;
+      t = t->sp_l;
+    }
+    else if (t->vm_start < vm_addr) {
+      if (!t->sp_r) {
+        break;
+      }
+      if (t->sp_r->vm_start < vm_addr) {
+        y = t->sp_r;                        /* rotate left */
+        MAKE_CHILD(t, sp_r, y->sp_l);
+        MAKE_CHILD(y, sp_l, t);
+        t = y;
         if (!t->sp_r) {
           break;
         }
-        if (t->sp_r->vm_start < vm_addr) {
-          y = t->sp_r;                        /* rotate left */
-          MAKE_CHILD(t, sp_r, y->sp_l);
-          MAKE_CHILD(y, sp_l, t);
-          t = y;
-          if (!t->sp_r) {
-            break;
-          }
-        }
-        MAKE_CHILD(l, sp_r, t);               /* link left */
-        l = t;
-        t = t->sp_r;
       }
-      else {
-        break;
-      }
+      MAKE_CHILD(l, sp_r, t);               /* link left */
+      l = t;
+      t = t->sp_r;
     }
-    MAKE_CHILD(l, sp_r, t->sp_l);             /* assemble */
-    MAKE_CHILD(r, sp_l, t->sp_r);
-    MAKE_CHILD(t, sp_l, n.sp_r);
-    MAKE_CHILD(t, sp_r, n.sp_l);
-    t->sp_p = NULL;
+    else {
+      break;
+    }
   }
+  MAKE_CHILD(l, sp_r, t->sp_l);             /* assemble */
+  MAKE_CHILD(r, sp_l, t->sp_r);
+  MAKE_CHILD(t, sp_l, n.sp_r);
+  MAKE_CHILD(t, sp_r, n.sp_l);
+  t->sp_p = NULL;
 
   return t;
 }
@@ -300,13 +302,13 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
     t = sp_tree_splay(vm_addr, t);
 
     if (vm_addr == t->vm_start) {            /* found it */
-      if (!t->sp_l) {
-        z = t->sp_r;
-      }
-      else {
+      if (t->sp_l) {
         z = sp_tree_splay(vm_addr, t->sp_l);
         z->sp_p = NULL;
         MAKE_CHILD(z, sp_r, t->sp_r);
+      }
+      else {
+        z = t->sp_r;
       }
       sp->root = z;
       goto fn_return;
