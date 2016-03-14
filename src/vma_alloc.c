@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-#if 0
+#if 1
   /* omp_get_thread_num() */
   #include <omp.h>
   /* printf */
@@ -30,8 +30,8 @@ THE SOFTWARE.
     fprintf(stderr, "[%d] ", (int)omp_get_thread_num());\
     fprintf
 #else
-  #define stderr       0
-  static inline void noop(int const fd, ...) { if (fd) {} }
+  #define stderr NULL
+  static inline void noop(void * unused, ...) { if (unused) {} }
   #define DBG_LOG noop
 #endif
 
@@ -243,7 +243,7 @@ superblock_free(struct superblock * const superblock)
   LOCK_GET(&(gpool.lock));
 
   /* Remove superblock from gpool's superblock cache. */
-  if (NULL == superblock->prev) {
+  if (gpool.superblock == superblock) {
     gpool.superblock = superblock->next;
   }
   else {
@@ -293,7 +293,7 @@ static struct block *
 block_alloc(void)
 {
   int ret;
-  struct block * block;
+  struct block * head, * block;
   struct superblock * superblock;
 
   /* Lock gpool. */
@@ -316,9 +316,21 @@ block_alloc(void)
     superblock->next = gpool.superblock;
     gpool.superblock = superblock;
 
+    /* Get head block. */
+    head = superblock->head;
+
     /* Reset pointer for head block. This way, dangling pointers will get reset
      * correctly. See note in the if(NULL == block->next) condition below. */
-    superblock->head->next = NULL;
+    head->next = NULL;
+
+    /* Initialize head block's lock. */
+    ret = lock_init(&(head->lock));
+    assert(!ret);
+
+    /* Set up new head block. */
+    head->vctr = 0;
+    head->head = (struct vm_area*)((char*)head+sizeof(struct block));
+    head->superblock = superblock;
   }
   else {
     /* Lock superblock. */
@@ -327,6 +339,9 @@ block_alloc(void)
 
   /* Get head of superblock's block list. */
   block = superblock->head;
+
+  /* TODO I suspect problem is that I am incrementing counter here even when I
+   * grab an existing block. */
 
   /* Increment block count. */
   superblock->bctr++;
@@ -341,12 +356,32 @@ block_alloc(void)
 
     /* Unlock gpool. */
     LOCK_LET(&(gpool.lock));
+
+    if (NULL == block->next) {
+      /* Initialize head block's lock. */
+      ret = lock_init(&(block->lock));
+      assert(!ret);
+
+      /* Set up new head block. */
+      block->vctr = 0;
+      block->head = (struct vm_area*)((char*)block+sizeof(struct block));
+      block->superblock = superblock;
+    }
   }
   else {
     /* Unlock gpool. */
     LOCK_LET(&(gpool.lock));
 
     if (NULL == block->next) {
+      /* Initialize head block's lock. */
+      ret = lock_init(&(block->lock));
+      assert(!ret);
+
+      /* Set up new head block. */
+      block->vctr = 0;
+      block->head = (struct vm_area*)((char*)block+sizeof(struct block));
+      block->superblock = superblock;
+
       /* Set next pointer. */
       block->next = (struct block*)((char*)block+BLOCK_SIZE);
 
@@ -361,20 +396,13 @@ block_alloc(void)
     superblock->head = block->next;
   }
 
-  /* Unlock superblock. */
-  LOCK_LET(&(superblock->lock));
-
-  /* Initialize block lock. */
-  ret = lock_init(&(block->lock));
-  assert(!ret);
-
   /* Lock block. */
   LOCK_GET(&(block->lock));
 
-  /* Set up new block. */
-  block->vctr = 0;
-  block->head = (struct vm_area*)((char*)block+sizeof(struct block));
-  block->superblock = superblock;
+  /* Unlock superblock. */
+  LOCK_LET(&(superblock->lock));
+
+  assert(block_2superblock(block) == superblock);
 
   DBG_LOG(stderr, "allocated new block %p\n", (void*)block);
   DBG_LOG(stderr, "  :: %d\n", (int)superblock->bctr);
@@ -391,6 +419,12 @@ block_free(struct block * const block)
 {
   int ret;
   struct superblock * superblock;
+
+  /* Reset cache block in mpool. */
+  if (mpool.block == block) {
+    DBG_LOG(stderr, "  >> reset cache block in mpool\n");
+    mpool.block = NULL;
+  }
 
   /* Get superblock. */
   superblock = block_2superblock(block);
@@ -412,6 +446,10 @@ block_free(struct block * const block)
     /* Free superblock. */
     superblock_free(superblock);
     /* superblock_free() will unlock superblock. */
+
+    DBG_LOG(stderr, "freed block %p\n", (void*)block);
+    DBG_LOG(stderr, "  :: %p\n", (void*)superblock);
+    DBG_LOG(stderr, "  :: 0\n");
   }
   else {
     /* Prepend block to front of superblock's block list. */
@@ -435,10 +473,11 @@ block_free(struct block * const block)
 
     /* Unlock superblock. */
     LOCK_LET(&(superblock->lock));
-  }
 
-  DBG_LOG(stderr, "freed block %p\n", (void*)block);
-  DBG_LOG(stderr, "  :: %p\n", (void*)superblock);
+    DBG_LOG(stderr, "freed block %p\n", (void*)block);
+    DBG_LOG(stderr, "  :: %p\n", (void*)superblock);
+    DBG_LOG(stderr, "  :: %lu\n", superblock->bctr);
+  }
 }
 
 
@@ -469,6 +508,7 @@ vma_alloc(void)
 
     /* Cache block in mpool. */
     mpool.block = block;
+    DBG_LOG(stderr, "  >> initialized cache block in mpool %p\n", (void*)block);
 
     /* Reset pointer for head vma. This way, dangling pointers will get reset
      * correctly. See note in the if(NULL == vma->vm_next) condition below. */
@@ -481,6 +521,7 @@ vma_alloc(void)
 
   /* Get head of block's vma list. */
   vma = block->head;
+  assert(vma_2block(vma) == block);
 
   /* Increment block's vma count. */
   block->vctr++;
@@ -488,6 +529,7 @@ vma_alloc(void)
   if (BLOCK_CTR_FULL == block->vctr) {
     /* Reset cache block in mpool. */
     mpool.block = NULL;
+    DBG_LOG(stderr, "  >> reset cache block in mpool\n");
   }
   else {
     if (NULL == vma->vm_next) {
@@ -500,13 +542,28 @@ vma_alloc(void)
        * unnecessary. */
       vma->vm_next->vm_next = NULL;
     }
+    else {
+      assert(vma_2block(vma->vm_next) == block);
+    }
+
+    if (vma->vm_next) {
+      if (vma_2block(vma->vm_next) != block) {
+        printf("%p %d %d\n", (void*)block, block->vctr, BLOCK_CTR_FULL);
+        printf("%p\n", (void*)vma_2block(vma));
+        printf("%p\n", (void*)vma_2block(vma->vm_next));
+      }
+      assert(vma_2block(vma->vm_next) == block);
+    }
 
     /* Remove vma from front of block's vma list. */
     block->head = vma->vm_next;
+    vma->vm_next = NULL;
   }
 
   /* Unlock block. */
   LOCK_LET(&(block->lock));
+
+  assert(vma_2block(vma) == block);
 
   DBG_LOG(stderr, "allocated new vma %p\n", (void*)vma);
   DBG_LOG(stderr, "  :: %d\n", (int)block->vctr);
@@ -537,11 +594,19 @@ vma_free(struct vm_area * const vma)
   if (0 == block->vctr) {
     block_free(block);
     /* block_free() will unlock block. */
+
+    DBG_LOG(stderr, "freed vma %p\n", (void*)vma);
+    DBG_LOG(stderr, "  :: %p\n", (void*)block);
+    DBG_LOG(stderr, "  :: 0\n");
   }
   else {
     /* Prepend vma to front of block's vma list. */
     vma->vm_next = block->head;
     block->head = vma;
+    assert(vma_2block(vma) == block);
+    if (vma->vm_next) {
+      assert(vma_2block(vma->vm_next) == block);
+    }
 
     if (BLOCK_CTR_FULL-1 == block->vctr) {
       /* Get superblock. */
@@ -560,10 +625,11 @@ vma_free(struct vm_area * const vma)
 
     /* Unlock block. */
     LOCK_LET(&(block->lock));
-  }
 
-  DBG_LOG(stderr, "freed vma %p\n", (void*)vma);
-  DBG_LOG(stderr, "  :: %p\n", (void*)block);
+    DBG_LOG(stderr, "freed vma %p\n", (void*)vma);
+    DBG_LOG(stderr, "  :: %p\n", (void*)block);
+    DBG_LOG(stderr, "  :: %lu\n", block->vctr);
+  }
 }
 
 
@@ -594,7 +660,6 @@ void
 vma_mpool_free(void)
 {
   int ret, i;
-  struct superblock * superblock;
 
   while (gpool.superblock) {
     superblock_free(gpool.superblock);
@@ -626,8 +691,9 @@ vma_mpool_free(void)
 /* malloc, free, EXIT_SUCCESS */
 #include <stdlib.h>
 
-#define N_ALLOC  (1<<22)
-#define N_THREAD 4
+#define N_ALLOC  (1<<8)
+//#define N_ALLOC  (1<<22)
+#define N_THREAD 1
 
 int
 main(void)
