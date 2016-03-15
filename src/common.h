@@ -46,6 +46,7 @@ THE SOFTWARE.
 #define lock_free ooc_lock_free
 #define lock_get  ooc_lock_get
 #define lock_let  ooc_lock_let
+#define lock_try  ooc_lock_try
 #define lock_t    ooc_lock_t
 #ifdef _OPENMP
 /* omp_lock_t */
@@ -57,6 +58,7 @@ typedef omp_lock_t lock_t;
 #define ooc_lock_free(lock) (omp_destroy_lock(lock), 0)
 #define ooc_lock_get(lock)  (omp_set_lock(lock), 0)
 #define ooc_lock_let(lock)  (omp_unset_lock(lock), 0)
+#define ooc_lock_try(lock)  (0 == omp_test_lock(lock))
 #else
 typedef int lock_t;
 
@@ -64,6 +66,7 @@ typedef int lock_t;
 #define ooc_lock_free(lock) 0
 #define ooc_lock_get(lock)  0
 #define ooc_lock_let(lock)  0
+#define ooc_lock_try(lock)  0
 #endif
 
 
@@ -132,13 +135,21 @@ struct vm_area * vma_alloc(void);
 /*! Return a vm_area struct to the system. */
 void vma_free(struct vm_area * const vma);
 
-#define vma_mpool_init ooc_vma_mpool_init
+#define vma_gpool_init ooc_vma_gpool_init
 /*! Initialize the vm_area struct memory pool. */
-void vma_mpool_init(void);
+void vma_gpool_init(void);
 
-#define vma_mpool_free ooc_vma_mpool_free
+#define vma_gpool_free ooc_vma_gpool_free
 /*! Free the vm_area struct memory pool. */
-void vma_mpool_free(void);
+void vma_gpool_free(void);
+
+#define vma_gpool_gather ooc_vma_gpool_gather
+/*! Gather statistics runtime statistics. */
+void vma_gpool_gather(void);
+
+#define vma_gpool_show ooc_vma_gpool_show
+/*! Show runtime statistics. */
+void vma_gpool_show(void);
 
 
 /*----------------------------------------------------------------------------*/
