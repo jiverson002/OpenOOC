@@ -250,9 +250,9 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
     /* splay vm_addr to root of tree */
     sp->root = sp_tree_splay(vm_addr, sp->root);
 
-    /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
-     * does not exist in tree and nothing will be returned, but a neighbor of
-     * where vm_addr would be in the tree will be made root and the tree will be
+    /* if root contains vm_addr, then return root. if not, then vm_addr does not
+     * exist in tree and nothing will be returned, but a neighbor of where
+     * vm_addr would be in the tree will be made root and the tree will be
      * slightly more balanced. */
     if (sp->root->vm_start <= vm_addr) {
       if (vm_addr < sp->root->vm_end) {

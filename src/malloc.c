@@ -100,9 +100,6 @@ ooc_free(void * ptr)
   struct vm_area * vma;
 
   /* Find the node corresponding to the offending address. */
-  /* FIXME If we structure a vma differently, this could be a constant time
-   * address manipulation instead of a splay tree lookup. However, since this is
-   * the free function, it may not be that performance critical. */
   ret = sp_tree_find_and_lock(&vma_tree, ptr, (void*)&vma);
   assert(!ret);
 
