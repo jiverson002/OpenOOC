@@ -246,32 +246,37 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  if (sp->root) {
-    /* splay vm_addr to root of tree */
-    sp->root = sp_tree_splay(vm_addr, sp->root);
+  if (!sp->root) {
+    /* erroneous */
+    ret = lock_let(&(sp->lock));
+    assert(!ret);
+    return -1;
+  }
 
-    /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
-     * does not exist in tree and nothing will be returned, but a neighbor of
-     * where vm_addr would be in the tree will be made root and the tree will be
-     * slightly more balanced. */
-    if (sp->root->vm_start <= vm_addr) {
-      if (vm_addr < sp->root->vm_end) {
-        ret = lock_get(&(sp->root->vm_lock));
-        assert(!ret);
+  /* splay vm_addr to root of tree */
+  sp->root = sp_tree_splay(vm_addr, sp->root);
 
-        *zp = sp->root;
-        goto fn_return;
-      }
+  /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
+   * does not exist in tree and nothing will be returned, but a neighbor of
+   * where vm_addr would be in the tree will be made root and the tree will be
+   * slightly more balanced. */
+  if (sp->root->vm_start <= vm_addr) {
+    if (vm_addr < sp->root->vm_end) {
+      ret = lock_get(&(sp->root->vm_lock));
+      assert(!ret);
+
+      *zp = sp->root;
+      goto fn_return;
     }
-    else {
-      for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);
-      if (n->vm_start <= vm_addr && vm_addr < n->vm_end) {
-        ret = lock_get(&(n->vm_lock));
-        assert(!ret);
+  }
+  else {
+    for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);
+    if (n->vm_start <= vm_addr && vm_addr < n->vm_end) {
+      ret = lock_get(&(n->vm_lock));
+      assert(!ret);
 
-        *zp = n;
-        goto fn_return;
-      }
+      *zp = n;
+      goto fn_return;
     }
   }
 
@@ -296,23 +301,26 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  t = sp->root;
+  if (!sp->root) {
+    /* erroneous */
+    ret = lock_let(&(sp->lock));
+    assert(!ret);
+    return -1;
+  }
 
-  if (t) {
-    t = sp_tree_splay(vm_addr, t);
+  t = sp_tree_splay(vm_addr, sp->root);
 
-    if (vm_addr == t->vm_start) {            /* found it */
-      if (t->sp_l) {
-        z = sp_tree_splay(vm_addr, t->sp_l);
-        z->sp_p = NULL;
-        MAKE_CHILD(z, sp_r, t->sp_r);
-      }
-      else {
-        z = t->sp_r;
-      }
-      sp->root = z;
-      goto fn_return;
+  if (vm_addr == t->vm_start) {            /* found it */
+    if (t->sp_l) {
+      z = sp_tree_splay(vm_addr, t->sp_l);
+      z->sp_p = NULL;
+      MAKE_CHILD(z, sp_r, t->sp_r);
     }
+    else {
+      z = t->sp_r;
+    }
+    sp->root = z;
+    goto fn_return;
   }
 
   /* erroneous */
