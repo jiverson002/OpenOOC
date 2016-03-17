@@ -83,6 +83,9 @@ THE SOFTWARE.
 /* printf */
 #include <stdio.h>
 
+/* NULL */
+#include <stdlib.h>
+
 /* uintptr_t */
 #include <stdint.h>
 
@@ -103,9 +106,6 @@ THE SOFTWARE.
 /******************************************************************************/
 
 
-/******************************************************************************/
-/* Block data structure. */
-/******************************************************************************/
 #define BLOCK_SIZE      4096   /* 2^12 */ /* If using mmap, this should be */
                                           /* alignment required by mmap. */
 #define SUPERBLOCK_SIZE 262144 /* 2^18 */
@@ -114,9 +114,17 @@ THE SOFTWARE.
 #define SUPERBLOCK_CTR_FULL \
   ((SUPERBLOCK_SIZE-BLOCK_SIZE)/BLOCK_SIZE)
 
+
+/******************************************************************************/
+/* ========================================================================== */
+/******************************************************************************/
+
+
+/*! Forward declarations. */
 struct superblock;
 struct mpool;
 
+/*! Block data structure -- contains BLOCK_CTR_FULL vmas. */
 struct block
 {
   size_t vctr, lctr;
@@ -128,6 +136,8 @@ struct block
   struct block * next;
 };
 
+
+/*! Superblock data structure -- contains SUPERBLOCK_CTR_FULL blocks. */
 struct superblock
 {
   size_t bctr, lctr, blctr;
@@ -143,20 +153,21 @@ struct superblock
 /******************************************************************************/
 
 
-/******************************************************************************/
-/* Memory pool data structure */
-/******************************************************************************/
-/* A per-thread instance of a memory pool. */
+/*! A per-thread initalization variable to specify whether or not their
+ *  per-thread memory pool has been initialized. */
 static __thread int S_init = 0;
-struct mpool
+
+
+/*! A per-thread instance of a memory pool. */
+static __thread struct mpool
 {
   size_t lctr;
   lock_t lock;
   struct block * head;
-};
-static __thread struct mpool S_mpool;
+} S_mpool;
 
-/* A per-process instance of a memory pool. */
+
+/*! A per-process instance of a memory pool. */
 static struct
 {
   size_t actr;
@@ -171,9 +182,7 @@ static struct
 /******************************************************************************/
 
 
-/******************************************************************************/
-/* Translate a block to its corresponding superblock. */
-/******************************************************************************/
+/*! Translate a block to its corresponding superblock. */
 static struct superblock *
 S_block_2superblock(struct block * const block)
 {
@@ -181,9 +190,7 @@ S_block_2superblock(struct block * const block)
 }
 
 
-/******************************************************************************/
-/* Translate a vma to its corresponding block. */
-/******************************************************************************/
+/*! Translate a vma to its corresponding block. */
 static struct block *
 S_vma_2block(struct vm_area * const vma)
 {
@@ -198,9 +205,7 @@ S_vma_2block(struct vm_area * const vma)
 
 /* TODO This is the step I would like to find a way to do lazily, i.e., as each
  * block/vma is requested. */
-/******************************************************************************/
-/* Setup a superblock's block list and each block's vma list. */
-/******************************************************************************/
+/*! Setup a superblock's block list and each block's vma list. */
 static void
 S_superblock_list_setup(struct superblock * const superblock)
 {
@@ -246,9 +251,7 @@ S_superblock_list_setup(struct superblock * const superblock)
 
 /* TODO This is the step I would like to find a way to do lazily, i.e., as each
  * block/vma is requested. */
-/******************************************************************************/
-/* Destroy a superblock's block list and each block's vma list. */
-/******************************************************************************/
+/*! Destroy a superblock's block list and each block's vma list. */
 static void
 S_superblock_list_destroy(struct superblock * const superblock)
 {
@@ -280,9 +283,7 @@ S_superblock_list_destroy(struct superblock * const superblock)
 }
 
 
-/******************************************************************************/
-/* Get a superblock with available block[s]. */
-/******************************************************************************/
+/*! Get a superblock with available block[s]. */
 static struct superblock *
 S_superblock_get_and_lock(void)
 {
@@ -326,9 +327,7 @@ S_superblock_get_and_lock(void)
 }
 
 
-/******************************************************************************/
-/* Free a superblock with no used blocks. */
-/******************************************************************************/
+/*! Free a superblock with no used blocks. */
 static void
 S_superblock_unlock_and_put(struct superblock * const superblock)
 {
@@ -386,9 +385,7 @@ S_superblock_unlock_and_put(struct superblock * const superblock)
 /******************************************************************************/
 
 
-/******************************************************************************/
-/* Steal a block with available vma[s]. */
-/******************************************************************************/
+/*! Steal a block with available vma[s]. */
 static struct block *
 S_block_steal_and_lock(void)
 {
@@ -445,9 +442,7 @@ S_block_steal_and_lock(void)
 }
 
 
-/******************************************************************************/
-/* Return a block with available vma[s]. */
-/******************************************************************************/
+/*! Return a block with available vma[s]. */
 static void
 S_block_unlock_and_return(struct block * const block)
 {
@@ -516,9 +511,6 @@ S_block_unlock_and_return(struct block * const block)
 /******************************************************************************/
 
 
-/******************************************************************************/
-/* Get next available vma. */
-/******************************************************************************/
 struct vm_area *
 vma_alloc(void)
 {
@@ -590,9 +582,6 @@ vma_alloc(void)
 }
 
 
-/******************************************************************************/
-/* Return a vma to the block to which it belongs. */
-/******************************************************************************/
 void
 vma_free(struct vm_area * const vma)
 {
@@ -659,14 +648,6 @@ vma_free(struct vm_area * const vma)
 }
 
 
-/******************************************************************************/
-/* ========================================================================== */
-/******************************************************************************/
-
-
-/******************************************************************************/
-/* Initialize the memory pool. */
-/******************************************************************************/
 void
 vma_gpool_init(void)
 {
@@ -683,9 +664,6 @@ vma_gpool_init(void)
 }
 
 
-/******************************************************************************/
-/* Free the memory pool. */
-/******************************************************************************/
 void
 vma_gpool_free(void)
 {
@@ -704,9 +682,6 @@ vma_gpool_free(void)
 }
 
 
-/******************************************************************************/
-/* Gather statistics. */
-/******************************************************************************/
 void
 vma_gpool_gather(void)
 {
@@ -723,9 +698,6 @@ vma_gpool_gather(void)
 }
 
 
-/******************************************************************************/
-/* Show statistics. */
-/******************************************************************************/
 void
 vma_gpool_show(void)
 {
