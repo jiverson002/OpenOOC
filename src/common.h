@@ -78,7 +78,8 @@ typedef int lock_t;
 /*! Virtual memory area. */
 struct vm_area
 {
-  struct vm_area * vm_next;   /* list of VMAs (used only by vma_alloc()) */
+  struct vm_area * vm_next;   /* list of VMAs (for vma_alloc() and sp_tree_*) */
+  struct vm_area * vm_prev;   /* doubly-linked list of VMAs (for sp_tree_*) */
 
   struct sp_node * sp_p;      /* parent node (used only by sp_tree_*() */
   struct sp_node * sp_l;      /* left child ... */
@@ -117,7 +118,7 @@ int sp_tree_free(struct sp_tree * const sp);
 int sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z);
 
 #define sp_tree_find_and_lock ooc_sp_tree_find_and_lock
-/*! Find and lock node with specified datum in the tree, it MUST exist. */
+/*! Find and lock node containing vm_addr in the tree, it MUST exist. */
 int sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,\
                           struct sp_node ** const zp);
 

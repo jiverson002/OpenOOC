@@ -73,6 +73,22 @@ THE SOFTWARE.
 #include "common.h"
 
 
+#define FIX_LISTLT(A, B)\
+  (A)->vm_prev = (B)->vm_prev;\
+  (A)->vm_next = (B);\
+  if ((A)->vm_prev) (A)->vm_prev->vm_next = (A);\
+  (B)->vm_prev = (A);
+
+#define FIX_LISTGT(A, B)\
+  (A)->vm_prev = (B);\
+  (A)->vm_next = (B)->vm_next;\
+  if ((A)->vm_next) (A)->vm_next->vm_prev = (A);\
+  (B)->vm_next = (A);
+
+#define FIX_LISTRM(A)\
+  if ((A)->vm_prev) (A)->vm_prev->vm_next = (A)->vm_next;\
+  if ((A)->vm_next) (A)->vm_next->vm_prev = (A)->vm_prev;
+
 #define MAKE_CHILD(A, WHICH, B)\
   (A)->WHICH = (B);\
   if (B) (B)->sp_p = (A);\
@@ -81,17 +97,20 @@ THE SOFTWARE.
 
 /*! Create a new node. */
 static void
-sp_node_init(struct sp_node * const n)
+S_sp_node_init(struct sp_node * const n)
 {
   n->sp_p = NULL;
   n->sp_l = NULL;
   n->sp_r = NULL;
+
+  n->vm_prev = NULL;
+  n->vm_next = NULL;
 }
 
 
 /*! Simple top down splay, not requiring vm_addr to be in the tree t. */
 static struct sp_node *
-sp_tree_splay(void * const vm_addr, struct sp_node * t)
+S_sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
   struct sp_node n, * l, * r, * y;
 
@@ -192,18 +211,17 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  t = sp->root;
+  S_sp_node_init(z);
 
-  sp_node_init(z);
-
-  if (!t) {
+  if (!sp->root) {
     sp->root = z;
     goto fn_return;
   }
 
-  t = sp_tree_splay(z->vm_start, t);
+  t = S_sp_tree_splay(z->vm_start, sp->root);
 
   if (z->vm_start < t->vm_start) {
+    FIX_LISTLT(z, t);
     MAKE_CHILD(z, sp_l, t->sp_l);
     MAKE_CHILD(z, sp_r, t);
     t->sp_l = NULL;
@@ -211,6 +229,7 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
     goto fn_return;
   }
   else if (t->vm_start < z->vm_start) {
+    FIX_LISTGT(z, t);
     MAKE_CHILD(z, sp_r, t->sp_r);
     MAKE_CHILD(z, sp_l, t);
     t->sp_r = NULL;
@@ -219,8 +238,7 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
   }
   else {
     /* This should not happen, see erroneous note below. This is only here to
-     * protect keep the structure consistent in the face of an erroneous
-     * insertion. */
+     * keep the structure consistent in the face of an erroneous insertion. */
     sp->root = t;
   }
 
@@ -254,7 +272,7 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   }
 
   /* splay vm_addr to root of tree */
-  sp->root = sp_tree_splay(vm_addr, sp->root);
+  sp->root = S_sp_tree_splay(vm_addr, sp->root);
 
   /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
    * does not exist in tree and nothing will be returned, but a neighbor of
@@ -270,7 +288,8 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
     }
   }
   else {
-    for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);
+    n = sp->root->vm_prev;
+    /*for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);*/
     if (n->vm_start <= vm_addr && vm_addr < n->vm_end) {
       ret = lock_get(&(n->vm_lock));
       assert(!ret);
@@ -278,6 +297,7 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
       *zp = n;
       goto fn_return;
     }
+    /* TODO Do we also need to check the right neighbor? */
   }
 
   /* erroneous */
@@ -308,17 +328,20 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
     return -1;
   }
 
-  t = sp_tree_splay(vm_addr, sp->root);
+  t = S_sp_tree_splay(vm_addr, sp->root);
 
   if (vm_addr == t->vm_start) {            /* found it */
+    FIX_LISTRM(t);
+
     if (t->sp_l) {
-      z = sp_tree_splay(vm_addr, t->sp_l);
+      z = S_sp_tree_splay(vm_addr, t->sp_l);
       z->sp_p = NULL;
       MAKE_CHILD(z, sp_r, t->sp_r);
     }
     else {
       z = t->sp_r;
     }
+
     sp->root = z;
     goto fn_return;
   }
@@ -401,6 +424,26 @@ main(void)
   ret = sp_tree_remove(&vma_tree, (void*)vm_addr);
   assert(-1 == ret);
 
+  /* Find lowest value element. */
+  vm_start = 0;
+  vm_end = vm_start+4096;
+  ret = sp_tree_find_and_lock(&vma_tree, (void*)vm_start, (void*)&zp);
+  assert(0 == ret);
+  assert((void*)vm_start == zp->vm_start);
+  assert((void*)vm_end == zp->vm_end);
+  ret = lock_let(&(zp->vm_lock));
+  assert(!ret);
+
+  /* Walk the tree via the doubly-linked list. */
+  for (i=0; i<N_NODES && zp; ++i,zp=zp->vm_next) {
+    vm_start = ((uintptr_t)i*4096);
+    vm_end = vm_start+4096;
+
+    assert((void*)vm_start == zp->vm_start);
+    assert((void*)vm_end   == zp->vm_end);
+  }
+  assert(i == N_NODES);
+
   for (i=0; i<N_NODES; ++i) {
     if (i%2 == 0) {
       vm_addr = (uintptr_t)(i*4096+128);
@@ -418,6 +461,29 @@ main(void)
     ret = lock_let(&(zp->vm_lock));
     assert(!ret);
   }
+
+  /* Remove a couple nodes from tree. */
+  for (i=0; i<2; ++i) {
+    if (i%2 == 0) {
+      vm_addr = ((uintptr_t)i*4096);
+    }
+    else {
+      vm_addr = ((uintptr_t)(N_NODES-(N_NODES%2==1)-i)*4096);
+    }
+
+    ret = sp_tree_remove(&vma_tree, (void*)vm_addr);
+    assert(!ret);
+  }
+
+  /* Walk the tree via the doubly-linked list. */
+  for (i=1; i<N_NODES-1 && zp; ++i,zp=zp->vm_next) {
+    vm_start = ((uintptr_t)i*4096);
+    vm_end = vm_start+4096;
+
+    assert((void*)vm_start == zp->vm_start);
+    assert((void*)vm_end   == zp->vm_end);
+  }
+  assert(i == N_NODES-1);
 
   ret = sp_tree_free(&vma_tree);
   assert(!ret);
