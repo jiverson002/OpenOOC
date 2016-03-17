@@ -301,8 +301,8 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
 
 /*! NOTE vm_addr must be OOC_PAGE_SIZE aligned. */
 int
-sp_tree_find_and_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
-                              struct sp_node ** const zp)
+sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
+                          struct sp_node ** const zp)
 {
   int ret;
   struct sp_node * prev, * n=NULL, * t, * z;

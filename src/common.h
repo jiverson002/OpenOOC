@@ -122,11 +122,10 @@ int sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z);
 int sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,\
                           struct sp_node ** const zp);
 
-#define sp_tree_find_and_mod_and_lock ooc_sp_tree_find_and_mod_and_lock
+#define sp_tree_find_mod_and_lock ooc_sp_tree_find_mod_and_lock
 /*! Find and lock node containing vm_addr in the tree, it MUST exist. */
-int sp_tree_find_and_mod_and_lock(struct sp_tree * const sp,\
-                                  void * const vm_addr,\
-                                  struct sp_node ** const zp);
+int sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,\
+                              struct sp_node ** const zp);
 
 #define sp_tree_remove ooc_sp_tree_remove
 /*! Remove node with specified datum in the tree, if MUST exist. */
