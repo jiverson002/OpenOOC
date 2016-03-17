@@ -271,13 +271,152 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   sp->root = S_sp_tree_splay(vm_addr, sp->root);
 
   if (sp->root->vm_start <= vm_addr) {
+    /* Sanity check: vm_addr must be contained in sp->root. */
     assert(vm_addr < sp->root->vm_end);
+
     n = sp->root;
   }
   else {
+    /* Sanity check: vm_addr must be contained in sp->root->vm_prev. */
     assert(sp->root->vm_prev->vm_start <= vm_addr);
     assert(vm_addr < sp->root->vm_prev->vm_end);
+
     n = sp->root->vm_prev;
+  }
+
+  /* Lock the node containing vm_addr. */
+  ret = lock_get(&(n->vm_lock));
+  assert(!ret);
+
+  /* Unlock splay tree. */
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  /* Set output variable. */
+  *zp = n;
+
+  return 0;
+}
+
+
+/*! NOTE vm_addr must be OOC_PAGE_SIZE aligned. */
+int
+sp_tree_find_and_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
+                              struct sp_node ** const zp)
+{
+  int ret;
+  struct sp_node * prev, * n=NULL, * t, * z;
+
+  /* Lock splay tree. */
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
+
+  /* Sanity check: root cannot be NULL. */
+  assert(sp->root);
+
+  /* Splay vm_addr to root of tree. This will result in either: 1) sp->root
+   * containing vm_addr in its range, 2) sp->root->prev containing vm_addr in
+   * its range, or 3) neither, but sp->root will have greatest vm_start <=
+   * vm_addr. */
+  sp->root = S_sp_tree_splay(vm_addr, sp->root);
+
+  if (sp->root->vm_start <= vm_addr && vm_addr < sp->root->vm_end) {
+    n = sp->root;
+  }
+  else if ((prev=sp->root->vm_prev)) {
+    if (prev->vm_start <= vm_addr && vm_addr < prev->vm_end) {
+      n = sp->root->vm_prev;
+    }
+  }
+
+  /* TODO Maybe don't call sp_tree_insert, since we have already splay'd
+   * vm_addr to root. Or maybe it will be very fast, since we have already
+   * done it. */
+  if (!n) {
+    /* Add new vma. */
+    /* Create new vma for vm_addr. */
+    z = vma_alloc();
+    z->vm_start = vm_addr;
+    z->vm_end = (void*)((char*)z->vm_start+OOC_PAGE_SIZE);
+    S_sp_node_init(z);
+
+    /* Insert new node. */
+    ret = sp_tree_insert(sp, z);
+    assert(!ret);
+
+    /* Try 3-way merge. */
+  }
+  else if (n->vm_start != vm_addr &&\
+           n->vm_end != (void*)((char*)vm_addr+OOC_PAGE_SIZE))
+  {
+    /* Do mid split -- no merge is possible. */
+    /* Create new vma for vm_addr. */
+    z = vma_alloc();
+    z->vm_start = vm_addr;
+    z->vm_end = (void*)((char*)z->vm_start+OOC_PAGE_SIZE);
+    S_sp_node_init(z);
+
+    /* Create new vma for suffix range. */
+    t = vma_alloc();
+    t->vm_start = z->vm_end;
+    t->vm_end = n->vm_end;
+    S_sp_node_init(t);
+
+    /* Adjust range for prefix range. */
+    n->vm_end = z->vm_start;
+
+    /* Insert new nodes. */
+    ret = sp_tree_insert(sp, z);
+    assert(!ret);
+    ret = sp_tree_insert(sp, t);
+    assert(!ret);
+  }
+  else if (n->vm_start == vm_addr) {
+    if (n->vm_prev && /* new memory protections match n->prev */0) {
+      /* Do prefix migrate. */
+      n->vm_start = (void*)((char*)vm_addr+OOC_PAGE_SIZE);
+      n->vm_prev->vm_end = n->vm_start;
+    }
+    else {
+      /* Do prefix split. */
+      /* Create new vma for vm_addr. */
+      z = vma_alloc();
+      z->vm_start = vm_addr;
+      z->vm_end = (void*)((char*)z->vm_start+OOC_PAGE_SIZE);
+      S_sp_node_init(z);
+
+      /* Adjust suffix range. */
+      n->vm_start = z->vm_end;
+
+      /* Insert new node. */
+      ret = sp_tree_insert(sp, z);
+      assert(!ret);
+    }
+  }
+  else if (n->vm_end  == (void*)((char*)vm_addr+OOC_PAGE_SIZE)) {
+    if (n->vm_next && /* new memory protections match n->next */0) {
+      /* Do suffix migrate. */
+      n->vm_end = vm_addr;
+      n->vm_next->vm_start = n->vm_end;
+    }
+    else {
+      /* Do suffix split. */
+      /* Create new vma for vm_addr. */
+      z = vma_alloc();
+      z->vm_start = vm_addr;
+      z->vm_end = (void*)((char*)z->vm_start+OOC_PAGE_SIZE);
+      S_sp_node_init(z);
+
+      /* Adjust prefix range. */
+      n->vm_end = z->vm_start;
+
+      /* Insert new node. */
+      ret = sp_tree_insert(sp, z);
+      assert(!ret);
+    }
+  }
+  else {
+    /* Try 3-way merge. */
   }
 
   /* Lock the node containing vm_addr. */
