@@ -147,14 +147,14 @@ struct superblock
 /* Memory pool data structure */
 /******************************************************************************/
 /* A per-thread instance of a memory pool. */
-static __thread int init = 0;
+static __thread int S_init = 0;
 struct mpool
 {
   size_t lctr;
   lock_t lock;
   struct block * head;
 };
-static __thread struct mpool mpool;
+static __thread struct mpool S_mpool;
 
 /* A per-process instance of a memory pool. */
 static struct
@@ -163,7 +163,7 @@ static struct
   size_t lctr, mlctr, blctr, slctr;
   lock_t lock;
   struct superblock * head;
-} gpool;
+} S_gpool;
 
 
 /******************************************************************************/
@@ -175,7 +175,7 @@ static struct
 /* Translate a block to its corresponding superblock. */
 /******************************************************************************/
 static struct superblock *
-block_2superblock(struct block * const block)
+S_block_2superblock(struct block * const block)
 {
   return block->superblock;
 }
@@ -185,7 +185,7 @@ block_2superblock(struct block * const block)
 /* Translate a vma to its corresponding block. */
 /******************************************************************************/
 static struct block *
-vma_2block(struct vm_area * const vma)
+S_vma_2block(struct vm_area * const vma)
 {
   return (struct block*)((uintptr_t)vma&(~(uintptr_t)(BLOCK_SIZE-1)));
 }
@@ -202,7 +202,7 @@ vma_2block(struct vm_area * const vma)
 /* Setup a superblock's block list and each block's vma list. */
 /******************************************************************************/
 static void
-superblock_list_setup(struct superblock * const superblock)
+S_superblock_list_setup(struct superblock * const superblock)
 {
   int ret;
   size_t i, j;
@@ -250,7 +250,7 @@ superblock_list_setup(struct superblock * const superblock)
 /* Destroy a superblock's block list and each block's vma list. */
 /******************************************************************************/
 static void
-superblock_list_destroy(struct superblock * const superblock)
+S_superblock_list_destroy(struct superblock * const superblock)
 {
   int ret;
   size_t i;
@@ -284,22 +284,22 @@ superblock_list_destroy(struct superblock * const superblock)
 /* Get a superblock with available block[s]. */
 /******************************************************************************/
 static struct superblock *
-superblock_get_and_lock(void)
+S_superblock_get_and_lock(void)
 {
   int ret;
   void * retp;
   struct superblock * superblock;
 
-  if (NULL == (superblock=gpool.head)) {
+  if (NULL == (superblock=S_gpool.head)) {
     /* Allocate new superblock. */
     retp = CALL_SYS_ALLOC(superblock, SUPERBLOCK_SIZE);
     if (SYS_ALLOC_FAIL == retp) {
       return NULL;
     }
-    gpool.actr++;
+    S_gpool.actr++;
 
-    /* Prepend superblock to gpool's superblock list. */
-    gpool.head = superblock;
+    /* Prepend superblock to S_gpool's superblock list. */
+    S_gpool.head = superblock;
     superblock->prev = NULL;
     superblock->next = NULL;
 
@@ -313,7 +313,7 @@ superblock_get_and_lock(void)
     assert(!ret);
 
     /* Setup superblock's block list. */
-    superblock_list_setup(superblock);
+    S_superblock_list_setup(superblock);
   }
 
   /* Lock superblock. */
@@ -330,16 +330,16 @@ superblock_get_and_lock(void)
 /* Free a superblock with no used blocks. */
 /******************************************************************************/
 static void
-superblock_unlock_and_put(struct superblock * const superblock)
+S_superblock_unlock_and_put(struct superblock * const superblock)
 {
   int ret;
 
-  /* Lock gpool. */
-  LOCK_GET(&(gpool.lock), gpool.lctr);
+  /* Lock S_gpool. */
+  LOCK_GET(&(S_gpool.lock), S_gpool.lctr);
 
-  /* Remove superblock from gpool's superblock list. */
-  if (gpool.head == superblock) {
-    gpool.head = superblock->next;
+  /* Remove superblock from S_gpool's superblock list. */
+  if (S_gpool.head == superblock) {
+    S_gpool.head = superblock->next;
   }
   else {
     superblock->prev->next = superblock->next;
@@ -348,8 +348,8 @@ superblock_unlock_and_put(struct superblock * const superblock)
     superblock->next->prev = superblock->prev;
   }
 
-  /* Unlock gpool. */
-  LOCK_LET(&(gpool.lock));
+  /* Unlock S_gpool. */
+  LOCK_LET(&(S_gpool.lock));
 
   /* Unlock superblock. */
   LOCK_LET(&(superblock->lock));
@@ -359,18 +359,18 @@ superblock_unlock_and_put(struct superblock * const superblock)
   assert(!ret);
 
   /* Destroy superblock's block list. */
-  superblock_list_destroy(superblock);
+  S_superblock_list_destroy(superblock);
 
-  /* Lock gpool. */
-  LOCK_GET(&(gpool.lock), gpool.lctr);
+  /* Lock S_gpool. */
+  LOCK_GET(&(S_gpool.lock), S_gpool.lctr);
 
   /* Accumulate superblock's block wait counter. */
-  gpool.blctr += superblock->blctr;
+  S_gpool.blctr += superblock->blctr;
   /* Accumulate superblock's wait counter. */
-  gpool.slctr += superblock->lctr;
+  S_gpool.slctr += superblock->lctr;
 
-  /* Unlock gpool. */
-  LOCK_LET(&(gpool.lock));
+  /* Unlock S_gpool. */
+  LOCK_LET(&(S_gpool.lock));
 
   /* Release back to system. */
   ret = CALL_SYS_FREE(superblock, SUPERBLOCK_SIZE);
@@ -390,18 +390,18 @@ superblock_unlock_and_put(struct superblock * const superblock)
 /* Steal a block with available vma[s]. */
 /******************************************************************************/
 static struct block *
-block_steal_and_lock(void)
+S_block_steal_and_lock(void)
 {
   int ret;
   struct block * block;
   struct superblock * superblock;
 
-  /* Lock gpool. */
-  LOCK_GET(&(gpool.lock), gpool.lctr);
+  /* Lock S_gpool. */
+  LOCK_GET(&(S_gpool.lock), S_gpool.lctr);
 
-  if (NULL == (superblock=superblock_get_and_lock())) {
-    /* Unlock gpool. */
-    LOCK_LET(&(gpool.lock));
+  if (NULL == (superblock=S_superblock_get_and_lock())) {
+    /* Unlock S_gpool. */
+    LOCK_LET(&(S_gpool.lock));
 
     return NULL;
   }
@@ -423,8 +423,8 @@ block_steal_and_lock(void)
   superblock->bctr++;
 
   if (NULL == superblock->head) {
-    /* Remove superblock from front of gpool's superblock list. */
-    gpool.head = superblock->next;
+    /* Remove superblock from front of S_gpool's superblock list. */
+    S_gpool.head = superblock->next;
     if (NULL != superblock->next) {
       superblock->next->prev = superblock->prev;
     }
@@ -435,8 +435,8 @@ block_steal_and_lock(void)
   /* Unlock superblock. */
   LOCK_LET(&(superblock->lock));
 
-  /* Unlock gpool. */
-  LOCK_LET(&(gpool.lock));
+  /* Unlock S_gpool. */
+  LOCK_LET(&(S_gpool.lock));
 
   DBG_LOG(stderr, "stole block %p-%p\n", (void*)block,\
     (void*)((char*)block+BLOCK_SIZE));
@@ -449,13 +449,13 @@ block_steal_and_lock(void)
 /* Return a block with available vma[s]. */
 /******************************************************************************/
 static void
-block_unlock_and_return(struct block * const block)
+S_block_unlock_and_return(struct block * const block)
 {
   int ret;
   struct superblock * superblock;
 
   /* Get superblock. */
-  superblock = block_2superblock(block);
+  superblock = S_block_2superblock(block);
 
   /* Lock superblock. */
   LOCK_GET(&(superblock->lock), superblock->lctr);
@@ -477,24 +477,24 @@ block_unlock_and_return(struct block * const block)
     /* Unlock block. */
     LOCK_LET(&(block->lock));
 
-    superblock_unlock_and_put(superblock);
-    /* superblock_unlock_and_put() will unlock superblock. */
+    S_superblock_unlock_and_put(superblock);
+    /* S_superblock_unlock_and_put() will unlock superblock. */
 
   }
   else {
     if (NULL == block->next) {
-      /* Lock gpool. */
-      LOCK_GET(&(gpool.lock), gpool.lctr);
+      /* Lock S_gpool. */
+      LOCK_GET(&(S_gpool.lock), S_gpool.lctr);
 
-      /* Prepend superblock to front of gpool's superblock list. */
-      superblock->next = gpool.head;
+      /* Prepend superblock to front of S_gpool's superblock list. */
+      superblock->next = S_gpool.head;
       if (NULL != superblock->next) {
         superblock->next->prev = superblock;
       }
-      gpool.head = superblock;
+      S_gpool.head = superblock;
 
-      /* Unlock gpool. */
-      LOCK_LET(&(gpool.lock));
+      /* Unlock S_gpool. */
+      LOCK_LET(&(S_gpool.lock));
 
       assert(SUPERBLOCK_CTR_FULL-1 == superblock->bctr);
     }
@@ -526,37 +526,37 @@ vma_alloc(void)
   struct vm_area * vma;
   struct block * block;
 
-  if (0 == init) {
-    init = 1;
-    mpool.lctr = 0;
-    ret = lock_init(&(mpool.lock));
+  if (0 == S_init) {
+    S_init = 1;
+    S_mpool.lctr = 0;
+    ret = lock_init(&(S_mpool.lock));
     assert(!ret);
-    mpool.head = NULL;
+    S_mpool.head = NULL;
   }
 
-  /* Check for cached block in mpool. */
-  if (NULL == (block=mpool.head)) {
-    block = block_steal_and_lock();
+  /* Check for cached block in S_mpool. */
+  if (NULL == (block=S_mpool.head)) {
+    block = S_block_steal_and_lock();
     if (NULL == block) {
       return NULL;
     }
     /* block will be locked by block_steal_and_lock(). */
 
-    /* Lock mpool. */
-    LOCK_GET(&(mpool.lock), mpool.lctr);
+    /* Lock S_mpool. */
+    LOCK_GET(&(S_mpool.lock), S_mpool.lctr);
 
-    /* Prepend block to mpool's block list. */
-    mpool.head = block;
+    /* Prepend block to S_mpool's block list. */
+    S_mpool.head = block;
     block->prev = NULL;
     block->next = NULL;
-    block->mpool = &mpool;
+    block->mpool = &S_mpool;
   }
   else {
     /* Lock block. */
     LOCK_GET(&(block->lock), block->lctr);
 
     /* Lock mpool. */
-    LOCK_GET(&(mpool.lock), mpool.lctr);
+    LOCK_GET(&(S_mpool.lock), S_mpool.lctr);
   }
 
   /* Get head of block's vma list. */
@@ -570,7 +570,7 @@ vma_alloc(void)
 
   if (NULL == block->head) {
     /* Remove block from front of mpool's block list. */
-    mpool.head = block->next;
+    S_mpool.head = block->next;
     if (NULL != block->next) {
       block->next->prev = block->prev;
     }
@@ -578,8 +578,8 @@ vma_alloc(void)
     assert(BLOCK_CTR_FULL == block->vctr);
   }
 
-  /* Unlock mpool. */
-  LOCK_LET(&(mpool.lock));
+  /* Unlock S_mpool. */
+  LOCK_LET(&(S_mpool.lock));
 
   /* Unlock block. */
   LOCK_LET(&(block->lock));
@@ -600,7 +600,7 @@ vma_free(struct vm_area * const vma)
   struct block * block;
 
   /* Get block. */
-  block = vma_2block(vma);
+  block = S_vma_2block(vma);
 
   /* Lock block. */
   LOCK_GET(&(block->lock), block->lctr);
@@ -630,8 +630,8 @@ vma_free(struct vm_area * const vma)
     /* Unlock block's mpool. */
     LOCK_LET(&(block->mpool->lock));
 
-    block_unlock_and_return(block);
-    /* block_unlock_and_return() will unlock block. */
+    S_block_unlock_and_return(block);
+    /* S_block_unlock_and_return() will unlock block. */
   }
   else {
     if (NULL == vma->vm_next) {
@@ -672,13 +672,13 @@ vma_gpool_init(void)
 {
   int ret;
 
-  gpool.actr = 0;
-  gpool.blctr = 0;
-  gpool.slctr = 0;
-  gpool.mlctr = 0;
-  gpool.lctr = 0;
+  S_gpool.actr = 0;
+  S_gpool.blctr = 0;
+  S_gpool.slctr = 0;
+  S_gpool.mlctr = 0;
+  S_gpool.lctr = 0;
 
-  ret = lock_init(&(gpool.lock));
+  ret = lock_init(&(S_gpool.lock));
   assert(!ret);
 }
 
@@ -694,12 +694,12 @@ vma_gpool_free(void)
   /* TODO Until superblock_* cache unused superblocks, this is unnecessary if we
    * say that applications must free all memory they allocate. */
 #if 0
-  while (gpool.head) {
-    superblock_unlock_and_put(gpool.head);
+  while (S_gpool.head) {
+    S_superblock_unlock_and_put(S_gpool.head);
   }
 #endif
 
-  ret = lock_free(&(gpool.lock));
+  ret = lock_free(&(S_gpool.lock));
   assert(!ret);
 }
 
@@ -712,14 +712,14 @@ vma_gpool_gather(void)
 {
   int ret;
 
-  /* Lock gpool. */
-  LOCK_GET(&(gpool.lock), gpool.lctr);
+  /* Lock S_gpool. */
+  LOCK_GET(&(S_gpool.lock), S_gpool.lctr);
 
-  /* Accumulate threads's mpool wait counter. */
-  gpool.mlctr += mpool.lctr;
+  /* Accumulate threads's S_mpool wait counter. */
+  S_gpool.mlctr += S_mpool.lctr;
 
-  /* Unlock gpool. */
-  LOCK_LET(&(gpool.lock));
+  /* Unlock S_gpool. */
+  LOCK_LET(&(S_gpool.lock));
 }
 
 
@@ -730,12 +730,12 @@ void
 vma_gpool_show(void)
 {
   printf("Number of lock contentions...\n");
-  printf("  block:       %lu\n", (long unsigned)gpool.blctr);
-  printf("  superblock:  %lu\n", (long unsigned)gpool.slctr);
-  printf("  thread pool: %lu\n", (long unsigned)gpool.mlctr);
-  printf("  global pool: %lu\n", (long unsigned)gpool.lctr);
+  printf("  block:       %lu\n", (long unsigned)S_gpool.blctr);
+  printf("  superblock:  %lu\n", (long unsigned)S_gpool.slctr);
+  printf("  thread pool: %lu\n", (long unsigned)S_gpool.mlctr);
+  printf("  global pool: %lu\n", (long unsigned)S_gpool.lctr);
   printf("Number of system allocations...\n");
-  printf("               %lu\n", (long unsigned)gpool.actr);
+  printf("               %lu\n", (long unsigned)S_gpool.actr);
 }
 
 
@@ -772,7 +772,7 @@ void block_6(void);
 void block_7(void);
 
 
-/*! This will test the functionality of superblock_get_and_lock() when gpool's
+/*! This will test the functionality of S_superblock_get_and_lock() when S_gpool's
  *  superblock list is empty. */
 void superblock_1(void)
 {
@@ -783,11 +783,11 @@ void superblock_1(void)
   struct superblock * superblock;
 
   /* ---- UNIT ---- */
-  superblock = superblock_get_and_lock();
+  superblock = S_superblock_get_and_lock();
 
   /* ---- ASSERTIONS ---- */
   assert(superblock);
-  assert(superblock == gpool.head);
+  assert(superblock == S_gpool.head);
   assert(NULL == superblock->prev);
   assert(NULL == superblock->next);
   for (ictr=0,block=superblock->head; block; block=block->next,++ictr) {
@@ -806,12 +806,12 @@ void superblock_1(void)
   assert(!ret);
   ret = CALL_SYS_FREE(superblock, SUPERBLOCK_SIZE);
   assert(SYS_FREE_FAIL != ret);
-  gpool.head = NULL;
+  S_gpool.head = NULL;
 }
 
 
-/*! This will test the functionality of superblock_unlock_and_put() when
- *  superblock is the only superblock in gpool's superblock list. */
+/*! This will test the functionality of S_superblock_unlock_and_put() when
+ *  superblock is the only superblock in S_gpool's superblock list. */
 void superblock_2(void)
 {
   int ret;
@@ -825,21 +825,21 @@ void superblock_2(void)
   assert(!ret);
   superblock->prev = NULL;
   superblock->next = NULL;
-  gpool.head = superblock;
+  S_gpool.head = superblock;
   LOCK_GET(&(superblock->lock), null_ctr);
 
   /* ---- UNIT ---- */
-  superblock_unlock_and_put(superblock);
+  S_superblock_unlock_and_put(superblock);
 
   /* ---- ASSERTIONS ---- */
-  assert(NULL == gpool.head);
+  assert(NULL == S_gpool.head);
 
   /* ---- CLEANUP ---- */
 }
 
 
-/*! This will test the functionality of superblock_unlock_and_put() when
- *  superblock is the first superblock in gpool's superblock list. */
+/*! This will test the functionality of S_superblock_unlock_and_put() when
+ *  superblock is the first superblock in S_gpool's superblock list. */
 void superblock_3(void)
 {
   int ret;
@@ -859,26 +859,26 @@ void superblock_3(void)
   superblock1->next = NULL;
   superblock2->prev = NULL;
   superblock2->next = superblock1;
-  gpool.head = superblock2;
+  S_gpool.head = superblock2;
   LOCK_GET(&(superblock2->lock), null_ctr);
 
   /* ---- UNIT ---- */
-  superblock_unlock_and_put(superblock2);
+  S_superblock_unlock_and_put(superblock2);
 
   /* ---- ASSERTIONS ---- */
-  assert(superblock1 == gpool.head);
+  assert(superblock1 == S_gpool.head);
   assert(NULL == superblock1->prev);
   assert(NULL == superblock1->next);
 
   /* ---- CLEANUP ---- */
   ret = CALL_SYS_FREE(superblock1, SUPERBLOCK_SIZE);
   assert(SYS_FREE_FAIL != ret);
-  gpool.head = NULL;
+  S_gpool.head = NULL;
 }
 
 
-/*! This will test the functionality of superblock_unlock_and_put() when
- *  superblock is the last superblock in gpool's superblock list. */
+/*! This will test the functionality of S_superblock_unlock_and_put() when
+ *  superblock is the last superblock in S_gpool's superblock list. */
 void superblock_4(void)
 {
   int ret;
@@ -898,26 +898,26 @@ void superblock_4(void)
   superblock1->next = NULL;
   superblock2->prev = NULL;
   superblock2->next = superblock1;
-  gpool.head = superblock2;
+  S_gpool.head = superblock2;
   LOCK_GET(&(superblock1->lock), null_ctr);
 
   /* ---- UNIT ---- */
-  superblock_unlock_and_put(superblock1);
+  S_superblock_unlock_and_put(superblock1);
 
   /* ---- ASSERTIONS ---- */
-  assert(superblock2 == gpool.head);
+  assert(superblock2 == S_gpool.head);
   assert(NULL == superblock2->prev);
   assert(NULL == superblock2->next);
 
   /* ---- CLEANUP ---- */
   ret = CALL_SYS_FREE(superblock2, SUPERBLOCK_SIZE);
   assert(SYS_FREE_FAIL != ret);
-  gpool.head = NULL;
+  S_gpool.head = NULL;
 }
 
 
-/*! This will test the functionality of superblock_unlock_and_put() when
- *  superblock is an internal node in gpool's superblock list. */
+/*! This will test the functionality of S_superblock_unlock_and_put() when
+ *  superblock is an internal node in S_gpool's superblock list. */
 void superblock_5(void)
 {
   int ret;
@@ -943,14 +943,14 @@ void superblock_5(void)
   superblock2->next = superblock1;
   superblock3->prev = NULL;
   superblock3->next = superblock2;
-  gpool.head = superblock3;
+  S_gpool.head = superblock3;
   LOCK_GET(&(superblock2->lock), null_ctr);
 
   /* ---- UNIT ---- */
-  superblock_unlock_and_put(superblock2);
+  S_superblock_unlock_and_put(superblock2);
 
   /* ---- ASSERTIONS ---- */
-  assert(gpool.head = superblock3);
+  assert(S_gpool.head = superblock3);
   assert(NULL == superblock3->prev);
   assert(superblock1 == superblock3->next);
   assert(superblock3 == superblock1->prev);
@@ -961,11 +961,11 @@ void superblock_5(void)
   assert(SYS_FREE_FAIL != ret);
   ret = CALL_SYS_FREE(superblock3, SUPERBLOCK_SIZE);
   assert(SYS_FREE_FAIL != ret);
-  gpool.head = NULL;
+  S_gpool.head = NULL;
 }
 
 
-/*! This will test the functionality of block_steal_and_lock() when gpool's
+/*! This will test the functionality of S_block_steal_and_lock() when S_gpool's
  *  superblock list is empty. */
 void block_1(void)
 {
@@ -974,12 +974,12 @@ void block_1(void)
   struct superblock * superblock;
 
   /* ---- UNIT ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
 
   /* ---- ASSERTIONS ---- */
   assert(block);
-  superblock = block_2superblock(block);
-  assert(superblock == gpool.head);
+  superblock = S_block_2superblock(block);
+  assert(superblock == S_gpool.head);
   assert(block != superblock->head);
   assert(block->next == superblock->head);
 
@@ -991,13 +991,13 @@ void block_1(void)
   assert(!ret);
   ret = CALL_SYS_FREE(superblock, SUPERBLOCK_SIZE);
   assert(SYS_FREE_FAIL != ret);
-  gpool.head = NULL;
+  S_gpool.head = NULL;
 }
 
 
-/*! This will test the functionality of block_steal_and_lock() when the stolen
+/*! This will test the functionality of S_block_steal_and_lock() when the stolen
  *  block is the last block in the superblock and superblock is the only
- *  superblock in gpool's superblock list. */
+ *  superblock in S_gpool's superblock list. */
 void block_2(void)
 {
   int ret;
@@ -1005,32 +1005,32 @@ void block_2(void)
   struct superblock * superblock;
 
   /* ---- SETUP ---- */
-  superblock = superblock_get_and_lock();
+  superblock = S_superblock_get_and_lock();
   superblock->bctr = SUPERBLOCK_CTR_FULL-1; /* fake the next block as the last. */
   superblock->head->next = NULL;            /* ... */
   LOCK_LET(&(superblock->lock));
 
   /* ---- UNIT ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
 
   /* ---- ASSERTIONS ---- */
   assert(block);
-  assert(superblock == block_2superblock(block));
-  assert(superblock != gpool.head);
-  assert(superblock->next == gpool.head);
+  assert(superblock == S_block_2superblock(block));
+  assert(superblock != S_gpool.head);
+  assert(superblock->next == S_gpool.head);
   assert(block != superblock->head);
   assert(NULL == superblock->head);
   assert(NULL == block->next);
 
   /* ---- CLEANUP ---- */
-  gpool.head = superblock;
-  superblock_unlock_and_put(superblock);
+  S_gpool.head = superblock;
+  S_superblock_unlock_and_put(superblock);
 }
 
 
-/*! This will test the functionality of block_steal_and_lock() when the stolen
+/*! This will test the functionality of S_block_steal_and_lock() when the stolen
  *  block is the last block in the superblock and superblock is not the only
- *  superblock in gpool's superblock list. */
+ *  superblock in S_gpool's superblock list. */
 void block_3(void)
 {
   int ret;
@@ -1038,10 +1038,10 @@ void block_3(void)
   struct superblock * superblock1, * superblock2;
 
   /* ---- SETUP ---- */
-  superblock1 = superblock_get_and_lock();
+  superblock1 = S_superblock_get_and_lock();
   LOCK_LET(&(superblock1->lock));
-  gpool.head = NULL;
-  superblock2 = superblock_get_and_lock();
+  S_gpool.head = NULL;
+  superblock2 = S_superblock_get_and_lock();
   superblock2->next = superblock1;
   superblock1->prev = superblock2;
   superblock2->bctr = SUPERBLOCK_CTR_FULL-1; /* fake the next block as the last. */
@@ -1049,13 +1049,13 @@ void block_3(void)
   LOCK_LET(&(superblock2->lock));
 
   /* ---- UNIT ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
 
   /* ---- ASSERTIONS ---- */
   assert(block);
-  assert(superblock2 == block_2superblock(block));
-  assert(superblock2 != gpool.head);
-  assert(superblock1 == gpool.head);
+  assert(superblock2 == S_block_2superblock(block));
+  assert(superblock2 != S_gpool.head);
+  assert(superblock1 == S_gpool.head);
   assert(NULL == superblock1->prev);
   assert(NULL == superblock1->next);
   assert(block != superblock2->head);
@@ -1063,34 +1063,34 @@ void block_3(void)
   assert(NULL == block->next);
 
   /* ---- CLEANUP ---- */
-  gpool.head = superblock2;
-  superblock_unlock_and_put(superblock2);
-  gpool.head = superblock1;
-  superblock_unlock_and_put(superblock1);
+  S_gpool.head = superblock2;
+  S_superblock_unlock_and_put(superblock2);
+  S_gpool.head = superblock1;
+  S_superblock_unlock_and_put(superblock1);
 }
 
 
-/*! This will test the functionality of block_unlock_and_return() to a empty
+/*! This will test the functionality of S_block_unlock_and_return() to a empty
  *  superblock. */
 void block_4(void)
 {
   struct block * block;
 
   /* ---- SETUP ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
   assert(block);
 
   /* ---- UNIT ---- */
-  block_unlock_and_return(block);
+  S_block_unlock_and_return(block);
 
   /* ---- ASSERTIONS ---- */
-  assert(NULL == gpool.head);
+  assert(NULL == S_gpool.head);
 
   /* ---- CLEANUP ---- */
 }
 
 
-/*! This will test the functionality of block_unlock_and_return() to a non-full
+/*! This will test the functionality of S_block_unlock_and_return() to a non-full
  *  superblock. */
 void block_5(void)
 {
@@ -1098,48 +1098,48 @@ void block_5(void)
   struct superblock * superblock;
 
   /* ---- SETUP ---- */
-  block1 = block_steal_and_lock();
+  block1 = S_block_steal_and_lock();
   assert(block1);
-  block2 = block_steal_and_lock();
+  block2 = S_block_steal_and_lock();
   assert(block2);
-  superblock = block_2superblock(block1);
-  assert(superblock == block_2superblock(block2));
+  superblock = S_block_2superblock(block1);
+  assert(superblock == S_block_2superblock(block2));
 
   /* ---- UNIT ---- */
-  block_unlock_and_return(block1);
+  S_block_unlock_and_return(block1);
 
   /* ---- ASSERTIONS ---- */
-  assert(superblock == block_2superblock(block2));
-  assert(superblock == gpool.head);
+  assert(superblock == S_block_2superblock(block2));
+  assert(superblock == S_gpool.head);
   assert(NULL == superblock->next);
   assert(block1 == superblock->head);
 
   /* ---- CLEANUP ---- */
-  superblock_unlock_and_put(superblock);
+  S_superblock_unlock_and_put(superblock);
 }
 
 
-/*! This will test the functionality of block_unlock_and_return() to a full
- *  superblock that is the only superblock in gpool's superblock list. */
+/*! This will test the functionality of S_block_unlock_and_return() to a full
+ *  superblock that is the only superblock in S_gpool's superblock list. */
 void block_6(void)
 {
   struct block * block;
   struct superblock * superblock;
 
   /* ---- SETUP ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
   assert(block);
-  superblock = block_2superblock(block);
-  gpool.head = NULL;
+  superblock = S_block_2superblock(block);
+  S_gpool.head = NULL;
   superblock->bctr = SUPERBLOCK_CTR_FULL; /* fake a full superblock. */
   superblock->head = NULL;                /* ... */
 
   /* ---- UNIT ---- */
-  block_unlock_and_return(block);
+  S_block_unlock_and_return(block);
 
   /* ---- ASSERTIONS ---- */
-  assert(superblock == block_2superblock(block));
-  assert(superblock == gpool.head);
+  assert(superblock == S_block_2superblock(block));
+  assert(superblock == S_gpool.head);
   assert(NULL == superblock->prev);
   assert(NULL == superblock->next);
   assert(block == superblock->head);
@@ -1147,12 +1147,12 @@ void block_6(void)
   assert(NULL == block->prev);
 
   /* ---- CLEANUP ---- */
-  superblock_unlock_and_put(superblock);
+  S_superblock_unlock_and_put(superblock);
 }
 
 
-/*! This will test the functionality of block_unlock_and_return() to a full
- *  superblock that is not the only superblock in gpool's superblock list. */
+/*! This will test the functionality of S_block_unlock_and_return() to a full
+ *  superblock that is not the only superblock in S_gpool's superblock list. */
 void block_7(void)
 {
   int ret;
@@ -1160,21 +1160,21 @@ void block_7(void)
   struct superblock * superblock1, * superblock2;
 
   /* ---- SETUP ---- */
-  block = block_steal_and_lock();
+  block = S_block_steal_and_lock();
   assert(block);
-  superblock1 = block_2superblock(block);
+  superblock1 = S_block_2superblock(block);
   superblock1->bctr = SUPERBLOCK_CTR_FULL; /* fake a full superblock. */
   superblock1->head = NULL;                /* ... */
-  gpool.head = NULL;
-  superblock2 = superblock_get_and_lock();
+  S_gpool.head = NULL;
+  superblock2 = S_superblock_get_and_lock();
   LOCK_LET(&(superblock2->lock));
 
   /* ---- UNIT ---- */
-  block_unlock_and_return(block);
+  S_block_unlock_and_return(block);
 
   /* ---- ASSERTIONS ---- */
-  assert(superblock1 == block_2superblock(block));
-  assert(superblock1 == gpool.head);
+  assert(superblock1 == S_block_2superblock(block));
+  assert(superblock1 == S_gpool.head);
   assert(NULL == superblock1->prev);
   assert(superblock2 == superblock1->next);
   assert(block == superblock1->head);
@@ -1182,9 +1182,9 @@ void block_7(void)
   assert(NULL == block->prev);
 
   /* ---- CLEANUP ---- */
-  superblock_unlock_and_put(superblock1);
-  superblock_unlock_and_put(superblock2);
-  assert(NULL == gpool.head);
+  S_superblock_unlock_and_put(superblock1);
+  S_superblock_unlock_and_put(superblock2);
+  assert(NULL == S_gpool.head);
 }
 
 

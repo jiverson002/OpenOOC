@@ -57,11 +57,11 @@ THE SOFTWARE.
 
 /******************************************************************************/
 /*
- *  Page flag bits flow chart for _sigsegv_handler
+ *  Page flag bits flow chart for S_sigsegv_handler
  *    - Each page has two bits designated [xy] as flags
  *
- *         _sigsegv_handler                             _async_flush
- *         ================                             ============
+ *         S_sigsegv_handler                           S_async_flush
+ *         =================                           =============
  *
  *            resident
  *            --------
@@ -94,38 +94,38 @@ THE SOFTWARE.
  * known simply as a fiber. Multiple arrays are used instead of a struct with
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
-static __thread size_t _iter[OOC_NUM_FIBERS];
-static __thread void * _args[OOC_NUM_FIBERS];
-static __thread void (*_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
-static __thread void * _addr[OOC_NUM_FIBERS];
-static __thread ucontext_t _handler[OOC_NUM_FIBERS];
-static __thread ucontext_t _trampoline[OOC_NUM_FIBERS];
-static __thread ucontext_t _kern[OOC_NUM_FIBERS];
-static __thread char _stack[OOC_NUM_FIBERS][SIGSTKSZ];
+static __thread size_t S_iter[OOC_NUM_FIBERS];
+static __thread void * S_args[OOC_NUM_FIBERS];
+static __thread void (*S_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
+static __thread void * S_addr[OOC_NUM_FIBERS];
+static __thread ucontext_t S_handler[OOC_NUM_FIBERS];
+static __thread ucontext_t S_trampoline[OOC_NUM_FIBERS];
+static __thread ucontext_t S_kern[OOC_NUM_FIBERS];
+static __thread char S_stack[OOC_NUM_FIBERS][SIGSTKSZ];
 
 /* My fiber id. */
-static __thread int _me;
+static __thread int S_me;
 
 /* The old sigaction to be replaced when we are done. */
-static __thread struct sigaction _old_act;
+static __thread struct sigaction S_old_act;
 
 /* System page size. */
-static __thread uintptr_t _ps;
+static __thread uintptr_t S_ps;
 
 /* The main context, i.e., the context which spawned all of the fibers. */
 /* TODO Need to convince myself that we don't need a main context for each
  * fiber? */
-static __thread ucontext_t _main;
+static __thread ucontext_t S_main;
 
 /* Indicator variable for library initialization. */
-static __thread int _is_init=0;
+static __thread int S_is_init=0;
 
 /* System page table. */
 struct sp_tree vma_tree;
 
 
 static void
-_sigsegv_handler(void)
+S_sigsegv_handler(void)
 {
   int ret, prot;
   uintptr_t addr;
@@ -154,7 +154,7 @@ _sigsegv_handler(void)
    * vma to be marked dirty. */
 
   /* Find the vma corresponding to the offending address and lock it. */
-  ret = sp_tree_find_and_lock(&vma_tree, _addr[_me], (void*)&vma);
+  ret = sp_tree_find_and_lock(&vma_tree, S_addr[S_me], (void*)&vma);
   assert(!ret);
 
   if (!(vma->vm_flags&0x1)) {
@@ -163,7 +163,7 @@ _sigsegv_handler(void)
       /*aio_read(...);*/
 
       if (/* FIXME async-io has not finished */0) {
-        ret = swapcontext(&(_handler[_me]), &_main);
+        ret = swapcontext(&(S_handler[S_me]), &S_main);
         assert(!ret);
       }
     }
@@ -183,8 +183,8 @@ _sigsegv_handler(void)
   }
 
   /* Apply updates to page containing offending address. */
-  addr = (uintptr_t)_addr[_me]&(~(_ps-1)); /* page align */
-  ret = mprotect((void*)addr, _ps, prot);
+  addr = (uintptr_t)S_addr[S_me]&(~(S_ps-1)); /* page align */
+  ret = mprotect((void*)addr, S_ps, prot);
   assert(!ret);
 
   /* Unlock the vma. */
@@ -192,7 +192,7 @@ _sigsegv_handler(void)
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */
-  setcontext(&(_trampoline[_me]));
+  setcontext(&(S_trampoline[S_me]));
 
   /* It is erroneous to reach this point. */
   abort();
@@ -200,7 +200,7 @@ _sigsegv_handler(void)
 
 
 static void
-_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
+S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 {
   /* Signal handler context. */
   static __thread ucontext_t tmp_uc;
@@ -210,40 +210,40 @@ _sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   assert(SIGSEGV == sig);
 
-  _addr[_me] = si->si_addr;
+  S_addr[S_me] = si->si_addr;
 
   ret = getcontext(&tmp_uc);
   assert(!ret);
   tmp_uc.uc_stack.ss_sp = tmp_stack;
   tmp_uc.uc_stack.ss_size = SIGSTKSZ;
   tmp_uc.uc_stack.ss_flags = 0;
-  memcpy(&(tmp_uc.uc_sigmask), &(_main.uc_sigmask), sizeof(_main.uc_sigmask));
+  memcpy(&(tmp_uc.uc_sigmask), &(S_main.uc_sigmask), sizeof(S_main.uc_sigmask));
 
-  makecontext(&tmp_uc, (void (*)(void))_sigsegv_handler, 0);
+  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler, 0);
 
-  swapcontext(&(_trampoline[_me]), &tmp_uc);
+  swapcontext(&(S_trampoline[S_me]), &tmp_uc);
 
   if (uc) {}
 }
 
 
 static void
-_flush(void)
+S_flush(void)
 {
 }
 
 
 static void
-_kernel_trampoline(int const i)
+S_kernel_trampoline(int const i)
 {
-  _kernel[i](_iter[i], _args[i]);
+  S_kernel[i](S_iter[i], S_args[i]);
 
   /* TODO Before this context returns, it should call a `flush function` where
    * the data it accessed is flushed to disk. */
-  _flush();
+  S_flush();
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
-  setcontext(&_main);
+  setcontext(&S_main);
 
   /* It is erroneous to reach this point. */
   abort();
@@ -254,42 +254,42 @@ _kernel_trampoline(int const i)
    variable ‘i’ might be clobbered by ‘longjmp’ or ‘vfork’ [-Werror=clobbered]
  */
 static int
-_kern_init(int const i)
+S_kern_init(int const i)
 {
   int ret;
 
-  ret = getcontext(&(_kern[i]));
+  ret = getcontext(&(S_kern[i]));
   assert(!ret);
-  _kern[i].uc_stack.ss_sp = _stack[i];
-  _kern[i].uc_stack.ss_size = SIGSTKSZ;
-  _kern[i].uc_stack.ss_flags = 0;
+  S_kern[i].uc_stack.ss_sp = S_stack[i];
+  S_kern[i].uc_stack.ss_size = SIGSTKSZ;
+  S_kern[i].uc_stack.ss_flags = 0;
 
-  makecontext(&(_kern[i]), (void (*)(void))&_kernel_trampoline, 1, i);
+  makecontext(&(S_kern[i]), (void (*)(void))&S_kernel_trampoline, 1, i);
 
   return 0;
 }
 
 
 static int
-_init(void)
+S_init(void)
 {
   int ret, i;
   struct sigaction act;
 
-  _ps = (uintptr_t)OOC_PAGE_SIZE;
+  S_ps = (uintptr_t)OOC_PAGE_SIZE;
 
   memset(&act, 0, sizeof(act));
-  act.sa_sigaction = &_sigsegv_trampoline;
+  act.sa_sigaction = &S_sigsegv_trampoline;
   act.sa_flags = SA_SIGINFO;
-  ret = sigaction(SIGSEGV, &act, &_old_act);
+  ret = sigaction(SIGSEGV, &act, &S_old_act);
   assert(!ret);
 
   for (i=0; i<OOC_NUM_FIBERS; ++i) {
-    ret = _kern_init(i);
+    ret = S_kern_init(i);
     assert(!ret);
   }
 
-  _is_init = 1;
+  S_is_init = 1;
 
   return ret;
 }
@@ -300,9 +300,9 @@ ooc_finalize(void)
 {
   int ret;
 
-  ret = sigaction(SIGSEGV, &_old_act, NULL);
+  ret = sigaction(SIGSEGV, &S_old_act, NULL);
 
-  _is_init = 0;
+  S_is_init = 0;
 
   return ret;
 }
@@ -315,8 +315,8 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
   int ret, j, run=-1, idle=-1;
 
   /* Make sure that library has been initialized. */
-  if (!_is_init) {
-    ret = _init();
+  if (!S_is_init) {
+    ret = S_init();
     assert(!ret);
   }
 
@@ -334,17 +334,17 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
 
   for (;;) {
     if (-1 != run) {
-      _me = run;
-      ret = swapcontext(&_main, &(_handler[_me]));
+      S_me = run;
+      ret = swapcontext(&S_main, &(S_handler[S_me]));
       assert(!ret);
     }
     else if (-1 != idle) {
-      _iter[idle] = i;
-      _kernel[idle] = kern;
-      _args[idle] = args;
+      S_iter[idle] = i;
+      S_kernel[idle] = kern;
+      S_args[idle] = args;
 
-      _me = idle;
-      ret = swapcontext(&_main, &(_kern[_me]));
+      S_me = idle;
+      ret = swapcontext(&S_main, &(S_kern[S_me]));
       assert(!ret);
 
       /* This is the only place we can safely break from this loop, since this
@@ -385,7 +385,7 @@ main(void)
   struct vm_area * vma;
 
   /* This would be set in ooc_sched normally. */
-  _me = 0;
+  S_me = 0;
 
   ps = (size_t)sysconf(_SC_PAGESIZE);
   assert((size_t)-1 != ps);
@@ -401,17 +401,17 @@ main(void)
   vma->vm_start = (void*)((char*)vma+ps);
   vma->vm_end   = (void*)((char*)vma->vm_start+ps);
 
-  ret = _init();
+  ret = S_init();
   assert(!ret);
 
   ret = sp_tree_insert(&vma_tree, vma);
   assert(!ret);
 
   ((char*)vma->vm_start)[0] = 'a'; /* Raise a SIGSEGV. */
-  assert(&(((char*)vma->vm_start)[0]) == (void*)_addr[_me]);
+  assert(&(((char*)vma->vm_start)[0]) == (void*)S_addr[S_me]);
 
   ((char*)vma->vm_start)[1] = 'b'; /* Should not raise SIGSEGV. */
-  assert(&(((char*)vma->vm_start)[0]) == (void*)_addr[_me]);
+  assert(&(((char*)vma->vm_start)[0]) == (void*)S_addr[S_me]);
   var = ((char*)vma->vm_start)[1]; /* Should not raise SIGSEGV. */
   assert(var = 'b');
 
