@@ -208,6 +208,7 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
   int ret;
   struct sp_node * t;
 
+  /* Lock splay tree. */
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
@@ -215,7 +216,12 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
 
   if (!sp->root) {
     sp->root = z;
-    goto fn_return;
+
+    /* Unlock splay tree. */
+    ret = lock_let(&(sp->lock));
+    assert(!ret);
+
+    return 0;
   }
 
   t = S_sp_tree_splay(z->vm_start, sp->root);
@@ -226,30 +232,21 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
     MAKE_CHILD(z, sp_r, t);
     t->sp_l = NULL;
     sp->root = z;
-    goto fn_return;
   }
-  else if (t->vm_start < z->vm_start) {
+  else {
+    assert(t->vm_start < z->vm_start);
+
     FIX_LISTGT(z, t);
     MAKE_CHILD(z, sp_r, t->sp_r);
     MAKE_CHILD(z, sp_l, t);
     t->sp_r = NULL;
     sp->root = z;
-    goto fn_return;
-  }
-  else {
-    /* This should not happen, see erroneous note below. This is only here to
-     * keep the structure consistent in the face of an erroneous insertion. */
-    sp->root = t;
   }
 
-  /* erroneous */
+  /* Unlock splay tree. */
   ret = lock_let(&(sp->lock));
   assert(!ret);
-  return -1;
 
-  fn_return:
-  ret = lock_let(&(sp->lock));
-  assert(!ret);
   return 0;
 }
 
@@ -261,53 +258,39 @@ sp_tree_find_and_lock(struct sp_tree * const sp, void * const vm_addr,
   int ret;
   struct sp_node * n;
 
+  /* Lock splay tree. */
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  if (!sp->root) {
-    /* erroneous */
-    ret = lock_let(&(sp->lock));
-    assert(!ret);
-    return -1;
-  }
+  /* Sanity check: root cannot be NULL. */
+  assert(sp->root);
 
-  /* splay vm_addr to root of tree */
+  /* Splay vm_addr to root of tree. This will result in either: 1) sp->root
+   * containing vm_addr in its range or 2) sp->root->prev containing vm_addr in
+   * its range. */
   sp->root = S_sp_tree_splay(vm_addr, sp->root);
 
-  /* if root contains vm_addr, then return root. FIXME if not, then vm_addr
-   * does not exist in tree and nothing will be returned, but a neighbor of
-   * where vm_addr would be in the tree will be made root and the tree will be
-   * slightly more balanced. */
   if (sp->root->vm_start <= vm_addr) {
-    if (vm_addr < sp->root->vm_end) {
-      ret = lock_get(&(sp->root->vm_lock));
-      assert(!ret);
-
-      *zp = sp->root;
-      goto fn_return;
-    }
+    assert(vm_addr < sp->root->vm_end);
+    n = sp->root;
   }
   else {
+    assert(sp->root->vm_prev->vm_start <= vm_addr);
+    assert(vm_addr < sp->root->vm_prev->vm_end);
     n = sp->root->vm_prev;
-    /*for (n=sp->root->sp_l; n && n->sp_r; n=n->sp_r);*/
-    if (n->vm_start <= vm_addr && vm_addr < n->vm_end) {
-      ret = lock_get(&(n->vm_lock));
-      assert(!ret);
-
-      *zp = n;
-      goto fn_return;
-    }
-    /* TODO Do we also need to check the right neighbor? */
   }
 
-  /* erroneous */
-  ret = lock_let(&(sp->lock));
+  /* Lock the node containing vm_addr. */
+  ret = lock_get(&(n->vm_lock));
   assert(!ret);
-  return -1;
 
-  fn_return:
+  /* Unlock splay tree. */
   ret = lock_let(&(sp->lock));
   assert(!ret);
+
+  /* Set output variable. */
+  *zp = n;
+
   return 0;
 }
 
@@ -318,42 +301,35 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
   int ret;
   struct sp_node * z, * t;
 
+  /* Lock splay tree. */
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  if (!sp->root) {
-    /* erroneous */
-    ret = lock_let(&(sp->lock));
-    assert(!ret);
-    return -1;
-  }
+  /* Sanity check: root cannot be NULL. */
+  assert(sp->root);
 
   t = S_sp_tree_splay(vm_addr, sp->root);
 
-  if (vm_addr == t->vm_start) {            /* found it */
-    FIX_LISTRM(t);
+  /* Sanity check: vm_addr must be the vm_start of some node in sp. */
+  assert(vm_addr == t->vm_start);
 
-    if (t->sp_l) {
-      z = S_sp_tree_splay(vm_addr, t->sp_l);
-      z->sp_p = NULL;
-      MAKE_CHILD(z, sp_r, t->sp_r);
-    }
-    else {
-      z = t->sp_r;
-    }
+  FIX_LISTRM(t);
 
-    sp->root = z;
-    goto fn_return;
+  if (t->sp_l) {
+    z = S_sp_tree_splay(vm_addr, t->sp_l);
+    z->sp_p = NULL;
+    MAKE_CHILD(z, sp_r, t->sp_r);
+  }
+  else {
+    z = t->sp_r;
   }
 
-  /* erroneous */
-  ret = lock_let(&(sp->lock));
-  assert(!ret);
-  return -1;
+  sp->root = z;
 
-  fn_return:
+  /* Unlock splay tree. */
   ret = lock_let(&(sp->lock));
   assert(!ret);
+
   return 0;
 }
 
@@ -408,21 +384,26 @@ main(void)
     assert((void*)vm_end   == vma_tree.root->vm_end);
   }
 
+  /****************************************************************************/
+  /* NOTE The following three tests are no long supported by the splay tree
+   * implementation. */
+  /****************************************************************************/
   /* Try to insert an element already in the tree. */
-  z[N_NODES].vm_start = (void*)((uintptr_t)0);
+  /*z[N_NODES].vm_start = (void*)((uintptr_t)0);
   z[N_NODES].vm_end   = (void*)((char*)z[N_NODES].vm_start+4096);
   ret = sp_tree_insert(&vma_tree, &(z[N_NODES]));
-  assert(-1 == ret);
+  assert(-1 == ret);*/
 
   /* Try to search for an element not in the tree. */
-  vm_addr = (uintptr_t)N_NODES*4096;
+  /*vm_addr = (uintptr_t)N_NODES*4096;
   ret = sp_tree_find_and_lock(&vma_tree, (void*)vm_addr, (void*)&zp);
-  assert(-1 == ret);
+  assert(-1 == ret);*/
 
   /* Try to remove an element not in the tree. */
-  vm_addr = (uintptr_t)N_NODES*4096;
+  /*vm_addr = (uintptr_t)N_NODES*4096;
   ret = sp_tree_remove(&vma_tree, (void*)vm_addr);
-  assert(-1 == ret);
+  assert(-1 == ret);*/
+  /****************************************************************************/
 
   /* Find lowest value element. */
   vm_start = 0;
