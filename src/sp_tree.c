@@ -96,7 +96,7 @@ THE SOFTWARE.
 
 
 /*! Create a new node. */
-static void
+static inline void
 S_sp_node_init(struct sp_node * const n)
 {
   n->sp_p = NULL;
@@ -109,7 +109,7 @@ S_sp_node_init(struct sp_node * const n)
 
 
 /*! Simple top down splay, not requiring vm_addr to be in the tree t. */
-static struct sp_node *
+static inline struct sp_node *
 S_sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
   struct sp_node n, * l, * r, * y;
@@ -172,6 +172,55 @@ S_sp_tree_splay(void * const vm_addr, struct sp_node * t)
 }
 
 
+/*! Insert helper function to fixup pointers. */
+static inline void
+S_sp_tree_insert_helper(struct sp_tree * const sp, struct sp_node * t,
+                        struct sp_node * z)
+{
+  if (!sp->root) {
+    sp->root = z;
+    return;
+  }
+
+  if (z->vm_start < t->vm_start) {
+    FIX_LISTLT(z, t);
+    MAKE_CHILD(z, sp_l, t->sp_l);
+    MAKE_CHILD(z, sp_r, t);
+    t->sp_l = NULL;
+    sp->root = z;
+  }
+  else {
+    assert(t->vm_start < z->vm_start);
+
+    FIX_LISTGT(z, t);
+    MAKE_CHILD(z, sp_r, t->sp_r);
+    MAKE_CHILD(z, sp_l, t);
+    t->sp_r = NULL;
+    sp->root = z;
+  }
+}
+
+
+static inline void
+S_sp_tree_remove_helper(struct sp_tree * const sp, struct sp_node * t)
+{
+  struct sp_node * z;
+
+  FIX_LISTRM(t);
+
+  if (t->sp_l) {
+    z = S_sp_tree_splay(t->vm_start, t->sp_l);
+    z->sp_p = NULL;
+    MAKE_CHILD(z, sp_r, t->sp_r);
+  }
+  else {
+    z = t->sp_r;
+  }
+
+  sp->root = z;
+}
+
+
 int
 sp_tree_init(struct sp_tree * const sp)
 {
@@ -214,34 +263,39 @@ sp_tree_insert(struct sp_tree * const sp, struct sp_node * const z)
 
   S_sp_node_init(z);
 
-  if (!sp->root) {
-    sp->root = z;
-
-    /* Unlock splay tree. */
-    ret = lock_let(&(sp->lock));
-    assert(!ret);
-
-    return 0;
-  }
-
   t = S_sp_tree_splay(z->vm_start, sp->root);
 
-  if (z->vm_start < t->vm_start) {
-    FIX_LISTLT(z, t);
-    MAKE_CHILD(z, sp_l, t->sp_l);
-    MAKE_CHILD(z, sp_r, t);
-    t->sp_l = NULL;
-    sp->root = z;
-  }
-  else {
-    assert(t->vm_start < z->vm_start);
+  /* Fixup pointers. */
+  S_sp_tree_insert_helper(sp, t, z);
 
-    FIX_LISTGT(z, t);
-    MAKE_CHILD(z, sp_r, t->sp_r);
-    MAKE_CHILD(z, sp_l, t);
-    t->sp_r = NULL;
-    sp->root = z;
-  }
+  /* Unlock splay tree. */
+  ret = lock_let(&(sp->lock));
+  assert(!ret);
+
+  return 0;
+}
+
+
+int
+sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
+{
+  int ret;
+  struct sp_node * t;
+
+  /* Lock splay tree. */
+  ret = lock_get(&(sp->lock));
+  assert(!ret);
+
+  /* Sanity check: root cannot be NULL. */
+  assert(sp->root);
+
+  t = S_sp_tree_splay(vm_addr, sp->root);
+
+  /* Sanity check: vm_addr must be the vm_start of some node in sp. */
+  assert(vm_addr == t->vm_start);
+
+  /* Fixup pointers. */
+  S_sp_tree_remove_helper(sp, t);
 
   /* Unlock splay tree. */
   ret = lock_let(&(sp->lock));
@@ -305,14 +359,38 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
                           struct sp_node ** const zp)
 {
   int ret;
-  struct sp_node * prev, * n=NULL, * t, * z;
+  void * vm_start, * vm_end;
+  struct sp_node * vm_prev, * vm_next, * n=NULL, * t, * z;
 
   /* Lock splay tree. */
   ret = lock_get(&(sp->lock));
   assert(!ret);
 
-  /* Sanity check: root cannot be NULL. */
-  assert(sp->root);
+  if (!sp->root) {
+    /* Add new vma. */
+
+    /* Create new vma for vm_addr. */
+    z = vma_alloc();
+    z->vm_start = vm_addr;
+    z->vm_end = (void*)((char*)z->vm_start+OOC_PAGE_SIZE);
+    S_sp_node_init(z);
+
+    /* Set root of tree. */
+    sp->root = z;
+
+    /* Lock the node containing vm_addr. */
+    ret = lock_get(&(z->vm_lock));
+    assert(!ret);
+
+    /* Unlock splay tree. */
+    ret = lock_let(&(sp->lock));
+    assert(!ret);
+
+    /* Set output variable. */
+    *zp = z;
+
+    return 0;
+  }
 
   /* Splay vm_addr to root of tree. This will result in either: 1) sp->root
    * containing vm_addr in its range, 2) sp->root->prev containing vm_addr in
@@ -320,19 +398,20 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
    * vm_addr. */
   sp->root = S_sp_tree_splay(vm_addr, sp->root);
 
+  /* Check whether we are in case 1) or 2). */
   if (sp->root->vm_start <= vm_addr && vm_addr < sp->root->vm_end) {
     n = sp->root;
   }
-  else if ((prev=sp->root->vm_prev)) {
-    if (prev->vm_start <= vm_addr && vm_addr < prev->vm_end) {
+  else if ((vm_prev=sp->root->vm_prev)) {
+    if (vm_prev->vm_start <= vm_addr && vm_addr < vm_prev->vm_end) {
       n = sp->root->vm_prev;
     }
   }
 
-  /* TODO Maybe don't call sp_tree_insert, since we have already splay'd
-   * vm_addr to root. Or maybe it will be very fast, since we have already
-   * done it. */
   if (!n) {
+    /* TODO Should try to merge first and only create the node if merging is not
+     * possible. */
+
     /* Add new vma. */
     /* Create new vma for vm_addr. */
     z = vma_alloc();
@@ -341,10 +420,44 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
     S_sp_node_init(z);
 
     /* Insert new node. */
-    ret = sp_tree_insert(sp, z);
-    assert(!ret);
+    S_sp_tree_insert_helper(sp, sp->root, z);
 
     /* Try 3-way merge. */
+    if (z->vm_prev && z->vm_prev->vm_end == z->vm_start &&\
+        /* new memory protections match z->vm_prev */0)
+    {
+      /* Do prefix merge. */
+      vm_prev = z->vm_prev;
+      vm_end = z->vm_end;
+
+      /* Remove z. */
+      S_sp_tree_remove_helper(sp, z);
+
+      /* Adjust prefix range. */
+      vm_prev->vm_end = vm_end;
+
+      /* Re-establish the z node. */
+      z = vm_prev;
+    }
+    if (z->vm_next && z->vm_next->vm_start == z->vm_end &&\
+        /* new memory protections match z->vm_next */0)
+    {
+      /* Do suffix merge. */
+      vm_next = z->vm_next;
+      vm_start = z->vm_start;
+
+      /* Remove z. */
+      S_sp_tree_remove_helper(sp, z);
+
+      /* Adjust suffix range. */
+      vm_next->vm_start = vm_start;
+
+      /* Re-establish the z node. */
+      z = vm_next;
+    }
+
+    /* Establish the n node. */
+    n = z;
   }
   else if (n->vm_start != vm_addr &&\
            n->vm_end != (void*)((char*)vm_addr+OOC_PAGE_SIZE))
@@ -366,16 +479,34 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
     n->vm_end = z->vm_start;
 
     /* Insert new nodes. */
-    ret = sp_tree_insert(sp, z);
-    assert(!ret);
-    ret = sp_tree_insert(sp, t);
-    assert(!ret);
+    S_sp_tree_insert_helper(sp, sp->root, t);
+    S_sp_tree_insert_helper(sp, sp->root, z); /* Second so z is root. */
+
+    /* Re-establish the n node. */
+    n = z;
   }
-  else if (n->vm_start == vm_addr) {
-    if (n->vm_prev && /* new memory protections match n->prev */0) {
+  else if (n->vm_start == vm_addr &&\
+           n->vm_end != (void*)((char*)vm_addr+OOC_PAGE_SIZE))
+  {
+    if (n->vm_prev && n->vm_prev->vm_end == n->vm_start &&\
+        /* new memory protections match n->vm_prev */0)
+    {
       /* Do prefix migrate. */
-      n->vm_start = (void*)((char*)vm_addr+OOC_PAGE_SIZE);
-      n->vm_prev->vm_end = n->vm_start;
+      vm_prev = n->vm_prev;
+
+      if ((void*)((char*)vm_addr+OOC_PAGE_SIZE) == n->vm_end) {
+        /* Remove n. */
+        S_sp_tree_remove_helper(sp, n);
+      }
+      else {
+        /* Adjust suffix range. */
+        n->vm_start = (void*)((char*)vm_addr+OOC_PAGE_SIZE);
+      }
+
+      vm_prev->vm_end = (void*)((char*)vm_addr+OOC_PAGE_SIZE);
+
+      /* Re-establish the n node. */
+      n = vm_prev;
     }
     else {
       /* Do prefix split. */
@@ -389,15 +520,34 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
       n->vm_start = z->vm_end;
 
       /* Insert new node. */
-      ret = sp_tree_insert(sp, z);
-      assert(!ret);
+      S_sp_tree_insert_helper(sp, sp->root, z);
+
+      /* Re-establish the n node. */
+      n = z;
     }
   }
-  else if (n->vm_end  == (void*)((char*)vm_addr+OOC_PAGE_SIZE)) {
-    if (n->vm_next && /* new memory protections match n->next */0) {
+  else if (n->vm_start != vm_addr &&\
+           n->vm_end  == (void*)((char*)vm_addr+OOC_PAGE_SIZE))
+  {
+    if (n->vm_next && n->vm_next->vm_start == n->vm_end &&\
+        /* new memory protections match n->vm_next */0)
+    {
       /* Do suffix migrate. */
-      n->vm_end = vm_addr;
-      n->vm_next->vm_start = n->vm_end;
+      vm_next = n->vm_next;
+
+      if ((void*)vm_addr == n->vm_start) {
+        /* Remove n. */
+        S_sp_tree_remove_helper(sp, n);
+      }
+      else {
+        /* Adjust suffix range. */
+        n->vm_end = (void*)vm_addr;
+      }
+
+      vm_next->vm_start = (void*)vm_addr;
+
+      /* Re-establish the n node. */
+      n = vm_next;
     }
     else {
       /* Do suffix split. */
@@ -411,12 +561,46 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
       n->vm_end = z->vm_start;
 
       /* Insert new node. */
-      ret = sp_tree_insert(sp, z);
-      assert(!ret);
+      S_sp_tree_insert_helper(sp, sp->root, z);
+
+      /* Re-establish the n node. */
+      n = z;
     }
   }
   else {
     /* Try 3-way merge. */
+    if (n->vm_prev && n->vm_prev->vm_end == n->vm_start &&\
+        /* new memory protections match n->vm_prev */0)
+    {
+      /* Do prefix merge. */
+      vm_prev = n->vm_prev;
+      vm_end = n->vm_end;
+
+      /* Remove n. */
+      S_sp_tree_remove_helper(sp, n);
+
+      /* Adjust prefix range. */
+      vm_prev->vm_end = vm_end;
+
+      /* Re-establish the n node. */
+      n = vm_prev;
+    }
+    if (n->vm_next && n->vm_next->vm_start == n->vm_end &&\
+        /* new memory protections match n->vm_next */0)
+    {
+      /* Do suffix merge. */
+      vm_next = n->vm_next;
+      vm_start = n->vm_start;
+
+      /* Remove n. */
+      S_sp_tree_remove_helper(sp, n);
+
+      /* Adjust suffix range. */
+      vm_next->vm_start = vm_start;
+
+      /* Re-establish the n node. */
+      n = vm_next;
+    }
   }
 
   /* Lock the node containing vm_addr. */
@@ -429,45 +613,6 @@ sp_tree_find_mod_and_lock(struct sp_tree * const sp, void * const vm_addr,
 
   /* Set output variable. */
   *zp = n;
-
-  return 0;
-}
-
-
-int
-sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
-{
-  int ret;
-  struct sp_node * z, * t;
-
-  /* Lock splay tree. */
-  ret = lock_get(&(sp->lock));
-  assert(!ret);
-
-  /* Sanity check: root cannot be NULL. */
-  assert(sp->root);
-
-  t = S_sp_tree_splay(vm_addr, sp->root);
-
-  /* Sanity check: vm_addr must be the vm_start of some node in sp. */
-  assert(vm_addr == t->vm_start);
-
-  FIX_LISTRM(t);
-
-  if (t->sp_l) {
-    z = S_sp_tree_splay(vm_addr, t->sp_l);
-    z->sp_p = NULL;
-    MAKE_CHILD(z, sp_r, t->sp_r);
-  }
-  else {
-    z = t->sp_r;
-  }
-
-  sp->root = z;
-
-  /* Unlock splay tree. */
-  ret = lock_let(&(sp->lock));
-  assert(!ret);
 
   return 0;
 }
@@ -487,6 +632,131 @@ sp_tree_remove(struct sp_tree * const sp, void * const vm_addr)
 
 struct sp_tree vma_tree;
 
+static void
+S_sp_tree_find_mod_and_lock_test_0(void)
+{
+  int ret;
+  struct sp_tree l_vma_tree;
+  struct sp_node * zp;
+
+  ret = sp_tree_init(&l_vma_tree);
+  assert(!ret);
+
+  /****************************************************************************/
+  /* Find, mod, and lock an element in an empty tree. */
+  /****************************************************************************/
+  ret = sp_tree_find_mod_and_lock(&l_vma_tree, (void*)(0*4096), (void*)&zp);
+  assert(!ret);
+
+  assert(l_vma_tree.root == zp);
+  assert(!zp->sp_p);
+  assert(!zp->sp_l);
+  assert(!zp->sp_r);
+  assert(!zp->vm_prev);
+  assert(!zp->vm_next);
+  assert((void*)(0*4096) == zp->vm_start);
+  assert((void*)(1*4096) == zp->vm_end);
+
+  ret = lock_let(&(zp->vm_lock));
+  assert(!ret);
+  /****************************************************************************/
+
+  ret = sp_tree_free(&l_vma_tree);
+  assert(!ret);
+}
+
+static void
+S_sp_tree_find_mod_and_lock_test_1(void)
+{
+  int ret;
+  struct sp_node z;
+  struct sp_tree l_vma_tree;
+  struct sp_node * zp;
+
+  ret = sp_tree_init(&l_vma_tree);
+  assert(!ret);
+
+  /****************************************************************************/
+  /* Find, mod, and lock an element that does not exist and cannot be merged. */
+  /****************************************************************************/
+  z.vm_start = (void*)(0*4096);
+  z.vm_end = (void*)(3*4096);
+  ret = sp_tree_insert(&l_vma_tree, &z);
+  assert(!ret);
+  assert(l_vma_tree.root == &z);
+
+  ret = sp_tree_find_mod_and_lock(&l_vma_tree, (void*)(5*4096), (void*)&zp);
+  assert(!ret);
+
+  assert(l_vma_tree.root == zp);
+  assert(!zp->sp_p);
+  assert(zp->sp_l);
+  assert(zp->sp_l == &z);
+  assert(zp->sp_l->sp_p == zp);
+  assert((void*)(0*4096) == zp->sp_l->vm_start);
+  assert((void*)(3*4096) == zp->sp_l->vm_end);
+  assert(!zp->sp_r);
+  assert(zp->vm_prev);
+  assert(zp->vm_prev == zp->sp_l);
+  assert(!zp->vm_next);
+  assert((void*)(5*4096) == zp->vm_start);
+  assert((void*)(6*4096) == zp->vm_end);
+
+  ret = lock_let(&(zp->vm_lock));
+  assert(!ret);
+  /****************************************************************************/
+
+  ret = sp_tree_free(&l_vma_tree);
+  assert(!ret);
+}
+
+static void
+S_sp_tree_find_mod_and_lock_test_2(void)
+{
+  int ret;
+  struct sp_node z;
+  struct sp_tree l_vma_tree;
+  struct sp_node * zp;
+
+  ret = sp_tree_init(&l_vma_tree);
+  assert(!ret);
+
+  /****************************************************************************/
+  /* Find, mod, and lock an element that must mid split a vma. */
+  /****************************************************************************/
+  z.vm_start = (void*)(0*4096);
+  z.vm_end = (void*)(3*4096);
+  ret = sp_tree_insert(&l_vma_tree, &z);
+  assert(!ret);
+
+  ret = sp_tree_find_mod_and_lock(&l_vma_tree, (void*)(1*4096), (void*)&zp);
+  assert(!ret);
+
+  assert(l_vma_tree.root == zp);
+  assert(!zp->sp_p);
+  assert(zp->sp_l);
+  assert(zp->sp_l->sp_p == zp);
+  assert((void*)(0*4096) == zp->sp_l->vm_start);
+  assert((void*)(1*4096) == zp->sp_l->vm_end);
+  assert(zp->sp_r);
+  assert(zp->sp_r->sp_p == zp);
+  assert((void*)(2*4096) == zp->sp_r->vm_start);
+  assert((void*)(3*4096) == zp->sp_r->vm_end);
+  assert(zp->vm_prev);
+  assert(zp->vm_next);
+  assert(zp->sp_l == zp->vm_prev);
+  assert(zp->sp_r == zp->vm_next);
+  assert((void*)(1*4096) == zp->vm_start);
+  assert((void*)(2*4096) == zp->vm_end);
+
+  ret = lock_let(&(zp->vm_lock));
+  assert(!ret);
+  /****************************************************************************/
+
+  ret = sp_tree_free(&l_vma_tree);
+  assert(!ret);
+}
+
 int
 main(void)
 {
@@ -494,6 +764,10 @@ main(void)
   uintptr_t vm_start, vm_end, vm_addr;
   struct sp_node * zp;
   struct sp_node z[N_NODES+1];
+
+  S_sp_tree_find_mod_and_lock_test_0();
+  S_sp_tree_find_mod_and_lock_test_1();
+  S_sp_tree_find_mod_and_lock_test_2();
 
   ret = sp_tree_init(&vma_tree);
   assert(!ret);
@@ -564,6 +838,7 @@ main(void)
   }
   assert(i == N_NODES);
 
+  /* Find each element and lock it. */
   for (i=0; i<N_NODES; ++i) {
     if (i%2 == 0) {
       vm_addr = (uintptr_t)(i*4096+128);
