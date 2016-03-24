@@ -576,55 +576,44 @@ ooc_sched2(void (*kern)(size_t const, void * const), size_t const i,
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
+void kern(size_t const i, void * const state);
+void kern(size_t const i, void * const state)
+{
+  char var;
+  char * mem=(char*)state;
+
+  mem[0] = 'a'; /* Raise a SIGSEGV. */
+  assert(&(mem[0]) == (void*)S_addr[S_me]);
+
+  mem[1] = 'b'; /* Should not raise SIGSEGV. */
+  assert(&(mem[0]) == (void*)S_addr[S_me]);
+
+  var = mem[1]; /* Should not raise SIGSEGV. */
+  assert(var = 'b');
+
+  if (i) {}
+}
+
 int
 main(void)
 {
   int ret;
-  char var;
   size_t ps;
-  struct vm_area * vma;
-
-  /* This would be set in ooc_sched normally. */
-  S_me = 0;
+  char * mem;
 
   ps = (size_t)sysconf(_SC_PAGESIZE);
   assert((size_t)-1 != ps);
 
-  ret = sp_tree_init(&vma_tree);
-  assert(!ret);
+  mem = mmap(NULL, ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != mem);
 
-  vma = mmap(NULL, 2*ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != vma);
-  ret = mprotect(vma, ps, PROT_READ|PROT_WRITE);
-  assert(!ret);
+  ooc_sched(&kern, 0, mem);
 
-  vma->vm_start = (void*)((char*)vma+ps);
-  vma->vm_end   = (void*)((char*)vma->vm_start+ps);
-
-  ret = S_init();
-  assert(!ret);
-
-  ret = sp_tree_insert(&vma_tree, vma);
-  assert(!ret);
-
-  ((char*)vma->vm_start)[0] = 'a'; /* Raise a SIGSEGV. */
-  assert(&(((char*)vma->vm_start)[0]) == (void*)S_addr[S_me]);
-
-  ((char*)vma->vm_start)[1] = 'b'; /* Should not raise SIGSEGV. */
-  assert(&(((char*)vma->vm_start)[0]) == (void*)S_addr[S_me]);
-  var = ((char*)vma->vm_start)[1]; /* Should not raise SIGSEGV. */
-  assert(var = 'b');
-
+  ooc_wait();
   ret = ooc_finalize();
   assert(!ret);
 
-  ret = sp_tree_remove(&vma_tree, vma->vm_start);
-  assert(!ret);
-
-  ret = munmap(vma, 2*ps);
-  assert(!ret);
-
-  ret = sp_tree_free(&vma_tree);
+  ret = munmap(mem, ps);
   assert(!ret);
 
   return EXIT_SUCCESS;
