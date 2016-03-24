@@ -215,19 +215,19 @@ S_superblock_list_setup(struct superblock * const superblock)
   struct block * block;
 
   /* Setup superblock's block list. */
-  superblock->head = (struct block*)((char*)superblock+BLOCK_SIZE);
+  superblock->head = (struct block*)((uintptr_t)superblock+BLOCK_SIZE);
   block = superblock->head;
   block->prev = NULL;
   for (i=0; i<SUPERBLOCK_CTR_FULL; ++i) {
     block->vctr = 0;
     block->lctr = 0;
     block->superblock = superblock;
-    block->head = (struct vm_area*)((char*)block+sizeof(struct block));
+    block->head = (struct vm_area*)((uintptr_t)block+sizeof(struct block));
     if (SUPERBLOCK_CTR_FULL-1 == i) {
       block->next = NULL;
     }
     else {
-      block->next = (struct block*)((char*)block+BLOCK_SIZE);
+      block->next = (struct block*)((uintptr_t)block+BLOCK_SIZE);
       block->next->prev = block;
     }
 
@@ -260,15 +260,15 @@ S_superblock_list_destroy(struct superblock * const superblock)
   struct block * block;
 
   /* Destroy superblock's block list. */
-  superblock->head = (struct block*)((char*)superblock+BLOCK_SIZE);
+  superblock->head = (struct block*)((uintptr_t)superblock+BLOCK_SIZE);
   block = superblock->head;
   for (i=0; i<SUPERBLOCK_CTR_FULL; ++i) {
-    block->head = (struct vm_area*)((char*)block+sizeof(struct block));
+    block->head = (struct vm_area*)((uintptr_t)block+sizeof(struct block));
     if (SUPERBLOCK_CTR_FULL-1 == i) {
       block->next = NULL;
     }
     else {
-      block->next = (struct block*)((char*)block+BLOCK_SIZE);
+      block->next = (struct block*)((uintptr_t)block+BLOCK_SIZE);
     }
 
     /* Destroy block's lock. */
