@@ -107,7 +107,8 @@ main(void)
   for (i=0; i<m; ++i) {
     mm(i, &args);
   }
-  OOC_FINAL /* Only need this if we want to remove the signal handler. */
+  OOC_FINAL /* Need this to wait for any outstanding fibers and remove the
+               signal handler. */
 
   ooc_free(a);
   ooc_free(b);

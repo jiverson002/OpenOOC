@@ -94,9 +94,6 @@ THE SOFTWARE.
   if (B) (B)->sp_p = (A);\
   if ((A)->sp_p == (B)) (A)->sp_p = NULL;
 
-#define VM_PROT_NONE  0x0LU
-#define VM_PROT_READ  0x1LU
-#define VM_PROT_WRITE 0x3LU
 #define VM_PROT_PROMOTE(prot)\
   (((prot)&(~0x3LU))|((((prot)&0x3LU)<<1)|0x1LU))
 

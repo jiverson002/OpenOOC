@@ -38,6 +38,11 @@ THE SOFTWARE.
 /*! Maximum number of fibers per thread. */
 #define OOC_NUM_FIBERS 10
 
+/*! Protection flags. */
+#define VM_PROT_NONE  0x0LU
+#define VM_PROT_READ  0x1LU
+#define VM_PROT_WRITE 0x3LU
+
 
 /*----------------------------------------------------------------------------*/
 /* Simple lock implementation */

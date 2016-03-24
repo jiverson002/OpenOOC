@@ -55,6 +55,11 @@ THE SOFTWARE.
 #include "common.h"
 
 
+/*! Fiber state flags. */
+#define FIBER_IDLE 0x1LU
+#define FIBER_WAIT 0x2LU
+
+
 /******************************************************************************/
 /*
  *  Page flag bits flow chart for S_sigsegv_handler
@@ -95,6 +100,7 @@ THE SOFTWARE.
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
 static __thread size_t S_iter[OOC_NUM_FIBERS];
+static __thread unsigned char S_state[OOC_NUM_FIBERS];
 static __thread void * S_args[OOC_NUM_FIBERS];
 static __thread void (*S_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
 static __thread void * S_addr[OOC_NUM_FIBERS];
@@ -124,8 +130,77 @@ static __thread int S_is_init=0;
 struct sp_tree vma_tree;
 
 
+static inline int
+S_is_runnable(int const id)
+{
+  int ret;
+  unsigned char incore=0;
+  void * page;
+
+  /* Page align the offending address. */
+  page = (void*)((uintptr_t)S_addr[id]&(~(S_ps-1)));
+
+  /* Check if the page is resident. */
+  ret = mincore(page, S_ps, &incore);
+  assert(!ret);
+
+  return incore;
+}
+
+
 static void
-S_sigsegv_handler(void)
+S_sigsegv_handler1(void)
+{
+  int ret;
+  void * page;
+
+  /* When a thread receives a SIGSEGV, it checks to see if this is the second
+   * consecutive SIGSEGV received on that page. If it is not, then we assume
+   * (not always correctly) that the page has no protection, issue a madvise
+   * for the page and give it read protection. If we assumed incorrectly, the
+   * only impact this has is additional overhead, since after the handler
+   * returns, the SIGSEGV will be raised again and the page will be promoted to
+   * write protection. */
+
+  /* TODO What will happen if multiple fibers segfault on same page? I think it
+   * might be possible that a later fiber could update to read/write, then when
+   * an earlier fiber resumes execution, it could overwrite memory protections
+   * of later fiber.
+   * XXX Since we defer dirty page tracking to OS, we can promote protection to
+   * read/write on first segfault. Thus, protections can not be degraded by
+   * fibers resuming execution. */
+
+  /* Page align the offending address. */
+  page = (void*)((uintptr_t)S_addr[S_me]&(~(S_ps-1)));
+
+  if (!S_is_runnable(S_me)) {
+    /* Advise kernel to fetch the page. */
+    ret = madvise(page, S_ps, MADV_WILLNEED);
+    assert(!ret);
+
+    /* Mark fiber as waiting. */
+    S_state[S_me] = FIBER_WAIT;
+
+    /* Switch back to main context to allow another fiber to execute. */
+    ret = swapcontext(&(S_handler[S_me]), &S_main);
+    assert(!ret);
+  }
+
+  /* Apply updates to page containing offending address. */
+  ret = mprotect(page, S_ps, PROT_READ|PROT_WRITE);
+  assert(!ret);
+
+  /* Switch back to trampoline context, so that it may return. */
+  setcontext(&(S_trampoline[S_me]));
+
+  /* It is erroneous to reach this point. */
+  abort();
+}
+
+
+#if 0
+static void
+S_sigsegv_handler2(void)
 {
   int ret, prot;
   uintptr_t addr;
@@ -152,6 +227,10 @@ S_sigsegv_handler(void)
    * This allows the code to work, but also means that after the first page
    * fault in a vma, every other page fault, even read accesses will cause the
    * vma to be marked dirty. */
+
+  /* FIXME There could be a problem here if multiple fibers from the same thread
+   * segfault on the same page, since one fiber will have locked the vma, the
+   * next fiber will deadlock when it tries to relock the vma. */
 
   /* Find the vma corresponding to the offending address and lock it. */
   ret = sp_tree_find_and_lock(&vma_tree, S_addr[S_me], (void*)&vma);
@@ -197,6 +276,7 @@ S_sigsegv_handler(void)
   /* It is erroneous to reach this point. */
   abort();
 }
+#endif
 
 
 static void
@@ -219,7 +299,8 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   tmp_uc.uc_stack.ss_flags = 0;
   memcpy(&(tmp_uc.uc_sigmask), &(S_main.uc_sigmask), sizeof(S_main.uc_sigmask));
 
-  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler, 0);
+  /* FIXME POC */
+  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler1, 0);
 
   swapcontext(&(S_trampoline[S_me]), &tmp_uc);
 
@@ -228,9 +309,17 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
 
 static void
-S_flush(void)
+S_flush1(void)
 {
 }
+
+
+#if 0
+static void
+S_flush2(void)
+{
+}
+#endif
 
 
 static void
@@ -240,7 +329,8 @@ S_kernel_trampoline(int const i)
 
   /* TODO Before this context returns, it should call a `flush function` where
    * the data it accessed is flushed to disk. */
-  S_flush();
+  /* FIXME POC */
+  S_flush1();
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
   setcontext(&S_main);
@@ -287,6 +377,8 @@ S_init(void)
   for (i=0; i<OOC_NUM_FIBERS; ++i) {
     ret = S_kern_init(i);
     assert(!ret);
+
+    S_state[i] = FIBER_IDLE;
   }
 
   S_is_init = 1;
@@ -309,10 +401,43 @@ ooc_finalize(void)
 
 
 void
+ooc_wait(void)
+{
+  int ret, wait, done;
+
+  for (;;) {
+    /* TODO Could maintain a list of runnable and idle fibers instead of
+     * searching through entire set of fibers. */
+    /* Search for a fiber that is waiting. */
+    for (wait=0,done=1; wait<OOC_NUM_FIBERS; ++wait) {
+      if (FIBER_WAIT == S_state[wait]) {
+        done = 0;
+
+        if (S_is_runnable(wait)) {
+          break;
+        }
+      }
+    }
+
+    if (done) {
+      break;
+    }
+
+    if (OOC_NUM_FIBERS != wait) {
+      /* Switch fibers. */
+      S_me = wait;
+      ret = swapcontext(&S_main, &(S_handler[S_me]));
+      assert(!ret);
+    }
+  }
+}
+
+
+void
 ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
           void * const args)
 {
-  int ret, j, run=-1, idle=-1;
+  int ret, j, wait, idle;
 
   /* Make sure that library has been initialized. */
   if (!S_is_init) {
@@ -320,19 +445,93 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     assert(!ret);
   }
 
-  /* Search for a fiber that is either blocked or idle. */
-  for (j=0; j<OOC_NUM_FIBERS; ++j) {
-    if (/* FIXME is runnable */0) {
-      run = j;
-      break;
+  for (;;) {
+    /* Search for a fiber that is either waiting or idle. */
+    for (j=0,wait=-1,idle=-1; j<OOC_NUM_FIBERS; ++j) {
+      switch (S_state[j]) {
+        case FIBER_WAIT:
+        if (S_is_runnable(j)) {
+          wait = j;
+        }
+        break;
+
+        case FIBER_IDLE:
+        idle = j;
+        break;
+      }
+
+      if (-1 != wait || -1 != idle) {
+        break;
+      }
     }
-    else if (/* FIXME is idle */1) {
-      idle = j;
+
+    if (-1 != wait) {
+      /* Switch fibers. */
+      S_me = wait;
+      ret = swapcontext(&S_main, &(S_handler[S_me]));
+      assert(!ret);
+
+      /* XXX At this point the fiber S_me has either successfully completed its
+       * execution of the kernel S_kern[S_me] or it received another SIGSEGV and
+       * repopulated the signal handler context S_handler[S_me], so that it can
+       * resume execution from the point it received the latest SIGSEGV at a
+       * later time. */
+    }
+    else if (-1 != idle) {
+      /* Setup fiber environment. */
+      S_iter[idle] = i;
+      S_kernel[idle] = kern;
+      S_args[idle] = args;
+      S_state[idle] = 0;
+
+      /* Switch fibers. */
+      S_me = idle;
+      ret = swapcontext(&S_main, &(S_kern[S_me]));
+      assert(!ret);
+
+      /* XXX At this point the fiber S_me has either successfully completed its
+       * execution of the kernel S_kern[S_me] or it received a SIGSEGV and
+       * populated the signal handler context S_handler[S_me], so that it can
+       * resume execution from the point it received SIGSEGV at a later time. */
+
+      /* Update my fiber state. */
+      S_state[S_me] = FIBER_IDLE;
+
+      /* XXX This is the only place we can safely break from this loop, since
+       * this is the only point that we know that iteration i has been scheduled
+       * to a fiber. */
       break;
     }
   }
+}
+
+
+#if 0
+void
+ooc_sched2(void (*kern)(size_t const, void * const), size_t const i,
+           void * const args)
+{
+  int ret, j, run, idle;
+
+  /* Make sure that library has been initialized. */
+  if (!S_is_init) {
+    ret = S_init();
+    assert(!ret);
+  }
 
   for (;;) {
+    /* Search for a fiber that is either blocked or idle. */
+    for (j=0,run=-1,idle=-1; j<OOC_NUM_FIBERS; ++j) {
+      if (/* FIXME is runnable */0) {
+        run = j;
+        break;
+      }
+      else if (/* FIXME is idle */1) {
+        idle = j;
+        break;
+      }
+    }
+
     if (-1 != run) {
       S_me = run;
       ret = swapcontext(&S_main, &(S_handler[S_me]));
@@ -361,6 +560,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     }
   }
 }
+#endif
 
 
 #ifdef TEST

@@ -89,10 +89,12 @@ void ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
 
 
 /* TODO remove after transparent finalization is implemented. */
+void ooc_wait(void);
 int ooc_finalize(void);
 #define OOC_FINAL \
   {\
     int _ret;\
+    ooc_wait();\
     _ret = ooc_finalize();\
     assert(!_ret);\
   }
