@@ -51,6 +51,15 @@ THE SOFTWARE.
 /* OOC_NUM_FIBERS, function prototypes */
 #include "include/ooc.h"
 
+/* Debug print statements. */
+#if 0
+#include <stdio.h>
+#include <sys/syscall.h>
+#define dbg_printf(...) printf(__VA_ARGS__)
+#else
+#define dbg_printf(...)
+#endif
+
 /* */
 #include "common.h"
 
@@ -181,9 +190,15 @@ S_sigsegv_handler1(void)
     /* Mark fiber as waiting. */
     S_state[S_me] = FIBER_WAIT;
 
+    dbg_printf("[%5d.%.3d]     Not runnable, switching to S_main\n",\
+      (int)syscall(SYS_gettid), S_me);
+
     /* Switch back to main context to allow another fiber to execute. */
     ret = swapcontext(&(S_handler[S_me]), &S_main);
     assert(!ret);
+  }
+  else {
+    dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), S_me);
   }
 
   /* Apply updates to page containing offending address. */
@@ -290,6 +305,10 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   assert(SIGSEGV == sig);
 
+  dbg_printf("[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), S_me);
+  dbg_printf("[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), S_me,\
+    si->si_addr);
+
   S_addr[S_me] = si->si_addr;
 
   ret = getcontext(&tmp_uc);
@@ -301,6 +320,9 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   /* FIXME POC */
   makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler1, 0);
+
+  dbg_printf("[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
+    (int)syscall(SYS_gettid), S_me);
 
   swapcontext(&(S_trampoline[S_me]), &tmp_uc);
 
@@ -331,6 +353,9 @@ S_kernel_trampoline(int const i)
    * the data it accessed is flushed to disk. */
   /* FIXME POC */
   S_flush1();
+
+  /* Update my fiber state. */
+  S_state[i] = FIBER_IDLE;
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
   setcontext(&S_main);
@@ -405,25 +430,46 @@ ooc_wait(void)
 {
   int ret, wait, done;
 
+  dbg_printf("[%5d.***] Waiting for outstanding fibers\n",\
+    (int)syscall(SYS_gettid));
+
   for (;;) {
     /* TODO Could maintain a list of runnable and idle fibers instead of
      * searching through entire set of fibers. */
     /* Search for a fiber that is waiting. */
     for (wait=0,done=1; wait<OOC_NUM_FIBERS; ++wait) {
+      dbg_printf("[%5d.%.3d]   State = %d\n", (int)syscall(SYS_gettid), wait,\
+        S_state[wait]);
+
       if (FIBER_WAIT == S_state[wait]) {
         done = 0;
 
+        dbg_printf("[%5d.%.3d]   Outstanding\n", (int)syscall(SYS_gettid),\
+          wait);
+
         if (S_is_runnable(wait)) {
+          break;
+        }
+        else {
+          /* TODO POC */
+          /* XXX Force the scheduler to schedule a fiber, since in the POC,
+           * until a thread actually access the pages which are not in core,
+           * they will not be faulted in. */
           break;
         }
       }
     }
 
     if (done) {
+      dbg_printf("[%5d.***]   No outstanding fibers, break\n",\
+        (int)syscall(SYS_gettid));
       break;
     }
 
     if (OOC_NUM_FIBERS != wait) {
+      dbg_printf("[%5d.%.3d]   Runnable, switching to S_handler\n",\
+        (int)syscall(SYS_gettid), wait);
+
       /* Switch fibers. */
       S_me = wait;
       ret = swapcontext(&S_main, &(S_handler[S_me]));
@@ -444,6 +490,8 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     ret = S_init();
     assert(!ret);
   }
+
+  dbg_printf("[%5d.***] Scheduling a new fiber\n", (int)syscall(SYS_gettid));
 
   for (;;) {
     /* Search for a fiber that is either waiting or idle. */
@@ -484,18 +532,21 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       S_args[idle] = args;
       S_state[idle] = 0;
 
+      dbg_printf("[%5d.%.3d]   Switching to S_kern\n",\
+        (int)syscall(SYS_gettid), idle);
+
       /* Switch fibers. */
       S_me = idle;
       ret = swapcontext(&S_main, &(S_kern[S_me]));
       assert(!ret);
 
+      dbg_printf("[%5d.%.3d]   Returned from S_kern\n",\
+        (int)syscall(SYS_gettid), idle);
+
       /* XXX At this point the fiber S_me has either successfully completed its
        * execution of the kernel S_kern[S_me] or it received a SIGSEGV and
        * populated the signal handler context S_handler[S_me], so that it can
        * resume execution from the point it received SIGSEGV at a later time. */
-
-      /* Update my fiber state. */
-      S_state[S_me] = FIBER_IDLE;
 
       /* XXX This is the only place we can safely break from this loop, since
        * this is the only point that we know that iteration i has been scheduled
