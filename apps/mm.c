@@ -27,14 +27,23 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <inttypes.h>
 
-/* EXIT_SUCCESS */
+/* rand, RAND_MAX, EXIT_SUCCESS */
 #include <stdlib.h>
+
+/* memset */
+#include <string.h>
 
 /* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
+
 /* OOC library */
 #include "src/ooc.h"
+
+
+#define SZ 512
 
 
 struct args
@@ -82,20 +91,25 @@ __ooc_defn ( static void mm )(size_t const i, void * const state)
 int
 main(void)
 {
-  size_t m, n, p, i;
+  int ret;
+  size_t m, n, p, i, j;
   struct args args;
   double * a, * b, * c;
 
-  m = 100;
-  n = 100;
-  p = 100;
+  m = SZ;
+  n = SZ;
+  p = SZ;
 
-  a = ooc_malloc(m*n*sizeof(*a));
-  assert(a);
-  b = ooc_malloc(n*p*sizeof(*b));
-  assert(b);
-  c = ooc_malloc(m*p*sizeof(*c));
-  assert(c);
+  /* Allocate memory. */
+  a = mmap(NULL, m*n*sizeof(*a), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != a);
+  b = mmap(NULL, n*p*sizeof(*b), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != b);
+  c = mmap(NULL, m*p*sizeof(*c), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != c);
 
   args.n = n;
   args.p = p;
@@ -103,16 +117,44 @@ main(void)
   args.b = b;
   args.c = c;
 
+  /* Populate matricies. */
+  for (i=0; i<m; ++i) {
+    for (j=0; j<n; ++j) {
+      a[i*n+j] = (double)rand()/RAND_MAX;
+    }
+  }
+  memset(b, 0, n*p*sizeof(*b));
+  for (i=0; i<n; ++i) {
+    b[i*p+i] = 1;
+  }
+  memset(c, 0, m*p*sizeof(*c));
+
+  /* Prepare OOC environment. */
+  ret = mprotect(a, m*n*sizeof(*a), PROT_NONE);
+  assert(!ret);
+  ret = mprotect(b, n*p*sizeof(*b), PROT_NONE);
+  assert(!ret);
+  ret = mprotect(c, m*p*sizeof(*c), PROT_NONE);
+  assert(!ret);
+
   #pragma omp parallel for num_threads(4)
   for (i=0; i<m; ++i) {
     mm(i, &args);
   }
-  OOC_FINAL /* Need this to wait for any outstanding fibers and remove the
-               signal handler. */
+  ooc_wait(); /* Need this to wait for any outstanding fibers. */
 
-  ooc_free(a);
-  ooc_free(b);
-  ooc_free(c);
+  for (i=0; i<m; ++i) {
+    for (j=0; j<n; ++j) {
+      assert(a[i*n+j] == c[i*n+j]);
+    }
+  }
+
+  ret = ooc_finalize(); /* Need this to and remove the signal handler. */
+  assert(!ret);
+
+  munmap(a, m*n*sizeof(*a));
+  munmap(b, n*p*sizeof(*b));
+  munmap(c, m*p*sizeof(*c));
 
   return EXIT_SUCCESS;
 }
