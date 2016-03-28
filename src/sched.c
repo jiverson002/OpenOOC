@@ -139,7 +139,7 @@ static __thread int S_is_init=0;
 struct sp_tree vma_tree;
 
 
-static inline int
+static int
 S_is_runnable(int const id)
 {
   int ret;
@@ -311,6 +311,7 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   S_addr[S_me] = si->si_addr;
 
+  memset(&tmp_uc, 0, sizeof(ucontext_t));
   ret = getcontext(&tmp_uc);
   assert(!ret);
   tmp_uc.uc_stack.ss_sp = tmp_stack;
@@ -393,6 +394,8 @@ S_init(void)
 
   S_ps = (uintptr_t)OOC_PAGE_SIZE;
 
+  memset(&S_main, 0, sizeof(ucontext_t));
+
   memset(&act, 0, sizeof(act));
   act.sa_sigaction = &S_sigsegv_trampoline;
   act.sa_flags = SA_SIGINFO;
@@ -400,6 +403,12 @@ S_init(void)
   assert(!ret);
 
   for (i=0; i<OOC_NUM_FIBERS; ++i) {
+    memset(&(S_stack[i]), 0, SIGSTKSZ);
+
+    memset(&(S_handler[i]), 0, sizeof(ucontext_t));
+    memset(&(S_trampoline[i]), 0, sizeof(ucontext_t));
+    memset(&(S_kern[i]), 0, sizeof(ucontext_t));
+
     ret = S_kern_init(i);
     assert(!ret);
 
