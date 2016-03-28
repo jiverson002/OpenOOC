@@ -99,7 +99,7 @@ THE SOFTWARE.
 
 
 /*! Create a new node. */
-static inline void
+static void
 S_sp_node_init(struct sp_node * const n)
 {
   int ret;
@@ -117,7 +117,7 @@ S_sp_node_init(struct sp_node * const n)
 
 
 /*! Destroy an existing node. */
-static inline void
+static void
 S_sp_node_free(struct sp_node * const n)
 {
   int ret;
@@ -130,7 +130,7 @@ S_sp_node_free(struct sp_node * const n)
 
 
 /*! Simple top down splay, not requiring vm_addr to be in the tree t. */
-static inline struct sp_node *
+static struct sp_node *
 S_sp_tree_splay(void * const vm_addr, struct sp_node * t)
 {
   struct sp_node n, * l, * r, * y;
@@ -194,7 +194,7 @@ S_sp_tree_splay(void * const vm_addr, struct sp_node * t)
 
 
 /*! Insert helper function to fixup pointers. */
-static inline void
+static void
 S_sp_tree_insert_helper(struct sp_tree * const sp, struct sp_node * t,
                         struct sp_node * z)
 {
@@ -222,7 +222,7 @@ S_sp_tree_insert_helper(struct sp_tree * const sp, struct sp_node * t,
 }
 
 
-static inline void
+static void
 S_sp_tree_remove_helper(struct sp_tree * const sp, struct sp_node * t)
 {
   struct sp_node * z;
