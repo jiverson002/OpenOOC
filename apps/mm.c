@@ -27,6 +27,9 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <inttypes.h>
 
+/* printf */
+#include <stdio.h>
+
 /* rand, RAND_MAX, EXIT_SUCCESS */
 #include <stdlib.h>
 
@@ -43,7 +46,9 @@ THE SOFTWARE.
 #include "src/ooc.h"
 
 
-#define SZ 512
+#define SZ_M 1024
+#define SZ_N 1024
+#define SZ_P 1
 
 
 struct args
@@ -54,37 +59,44 @@ struct args
 };
 
 
-__ooc_decl ( static void mm )(size_t const i, void * const state);
+static void mm_kern(size_t const i, void * const state);
 
 
-__ooc_defn ( static void mm )(size_t const i, void * const state)
+static void mm_kern(size_t const i, void * const state)
 {
   size_t n, p, j, k;
   double const * a, * b;
   double * c;
-  struct args * args;
+  struct args const * args;
 
-  args = (struct args*)state;
+  args = (struct args const*)state;
   n = args->n;
   p = args->p;
   a = args->a;
   b = args->b;
   c = args->c;
 
-#define a(R,C) a[R*n+C]
-#define b(R,C) b[R*p+C]
-#define c(R,C) c[R*p+C]
-
-  for (j=0; j<n; ++j) {
+  for (j=0; j<p; ++j) {
+    #define a(R,C) a[R*n+C]
+    #define b(R,C) b[R*p+C]
+    #define c(R,C) c[R*p+C]
     c(i,j) = a(i,0)*b(0,j);
-    for (k=1; k<p; ++k) {
+    for (k=1; k<n; ++k) {
       c(i,j) += a(i,k)*b(k,j);
     }
+    #undef a
+    #undef b
+    #undef c
   }
+}
 
-#undef a
-#undef b
-#undef c
+
+__ooc_decl ( static void mm )(size_t const i, void * const state);
+
+
+__ooc_defn ( static void mm )(size_t const i, void * const state)
+{
+  mm_kern(i, state);
 }
 
 
@@ -92,13 +104,14 @@ int
 main(void)
 {
   int ret;
-  size_t m, n, p, i, j;
+  size_t m, n, p, i, j, k;
+  double tmp;
   struct args args;
   double * a, * b, * c;
 
-  m = SZ;
-  n = SZ;
-  p = SZ;
+  m = SZ_M;
+  n = SZ_N;
+  p = SZ_P;
 
   /* Allocate memory. */
   a = mmap(NULL, m*n*sizeof(*a), PROT_READ|PROT_WRITE,\
@@ -117,15 +130,16 @@ main(void)
   args.b = b;
   args.c = c;
 
-  /* Populate matricies. */
+  /* Populate matrices. */
   for (i=0; i<m; ++i) {
     for (j=0; j<n; ++j) {
       a[i*n+j] = (double)rand()/RAND_MAX;
     }
   }
-  memset(b, 0, n*p*sizeof(*b));
   for (i=0; i<n; ++i) {
-    b[i*p+i] = 1;
+    for (j=0; j<p; ++j) {
+      b[i*p+j] = (double)rand()/RAND_MAX;
+    }
   }
   memset(c, 0, m*p*sizeof(*c));
 
@@ -137,15 +151,25 @@ main(void)
   ret = mprotect(c, m*p*sizeof(*c), PROT_NONE);
   assert(!ret);
 
-  #pragma omp parallel for num_threads(4)
+  /*#pragma omp parallel for num_threads(4)*/
   for (i=0; i<m; ++i) {
     mm(i, &args);
   }
   ooc_wait(); /* Need this to wait for any outstanding fibers. */
 
   for (i=0; i<m; ++i) {
-    for (j=0; j<n; ++j) {
-      assert(a[i*n+j] == c[i*n+j]);
+    for (j=0; j<p; ++j) {
+      #define a(R,C) a[R*n+C]
+      #define b(R,C) b[R*p+C]
+      #define c(R,C) c[R*p+C]
+      tmp = a(i,0)*b(0,j);
+      for (k=1; k<n; ++k) {
+        tmp += a(i,k)*b(k,j);
+      }
+      assert(tmp == c(i,j));
+      #undef a
+      #undef b
+      #undef c
     }
   }
 
