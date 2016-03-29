@@ -58,10 +58,6 @@ THE SOFTWARE.
 #define MEM_SIZE  (2*GB)
 
 
-/* System page size. */
-static uintptr_t S_ps;
-
-
 static inline void
 S_gettime(struct timespec * const t)
 {
@@ -89,65 +85,9 @@ S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
 
 
 static void
-S_sigsegv_handler(int const sig, siginfo_t * const si, void * const uc)
+S_sigsegv_handler(int unused)
 {
-  int ret;
-  void * page;
-
-  /* Page align the offending address. */
-  page = (void*)((uintptr_t)si->si_addr&(~(S_ps-1)));
-
-  /* Apply updates to page containing offending address. */
-  ret = mprotect(page, S_ps, PROT_READ|PROT_WRITE);
-  assert(!ret);
-
-  if (sig || uc) { (void)0; }
-}
-
-
-static void
-S_touch_mem(char * const mem, size_t const * const map, int const write)
-{
-  size_t j, k, l, m, n, o, p, jj, kk, ll, mm, nn, oo, pp, idx;
-  size_t const lmap[8] = { 5, 3, 7, 1, 0, 2, 6, 4 };
-
-  /* Pick a 4KB chunk */
-  for (jj=0; jj<8; ++jj) {
-    j = lmap[jj];
-    /* Pick a 32KB chunk */
-    for (kk=0; kk<8; ++kk) {
-      k = lmap[kk];
-      /* Pick a 256KB chunk */
-      for (ll=0; ll<8; ++ll) {
-        l = lmap[ll];
-        /* Pick a 2MB chunk */
-        for (mm=0; mm<8; ++mm) {
-          m = lmap[mm];
-          /* Pick a 16MB chunk */
-          for (nn=0; nn<8; ++nn) {
-            n = lmap[nn];
-            /* Pick a 128MB chunk */
-            for (oo=0; oo<8; ++oo) {
-              o = lmap[oo];
-              /* Pick a 1GB chunk */
-              for (pp=0; pp<MEM_SIZE/GB; ++pp) {
-                p = map[pp];
-
-                idx = p*GB+o*128*MB+n*16*MB+m*2*MB+l*256*KB+k*32*KB+j*4*KB;
-
-                if (write) {
-                  mem[idx] = (char)idx;
-                }
-                else {
-                  assert((char)idx == mem[idx]);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  if (unused) { (void)0; }
 }
 
 
@@ -155,67 +95,30 @@ int
 main(void)
 {
   int ret;
-  unsigned long r_nsec, w_nsec;
-  size_t p, pp, tmp, n_pages;
+  unsigned long t_nsec;
+  size_t i, n_pages;
   struct sigaction act;
   struct timespec ts, te;
-  char * mem;
-  size_t map[MEM_SIZE/GB];
-
-  S_ps = (uintptr_t)sysconf(_SC_PAGESIZE);
 
   memset(&act, 0, sizeof(act));
-  act.sa_sigaction = &S_sigsegv_handler;
+  act.sa_handler = &S_sigsegv_handler;
   act.sa_flags = SA_SIGINFO;
   ret = sigaction(SIGSEGV, &act, NULL);
   assert(!ret);
 
-  mem = mmap(NULL, MEM_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
-    -1, 0);
-  assert(MAP_FAILED != mem);
-
   n_pages = MEM_SIZE/(4*KB);
 
-  for (p=0; p<MEM_SIZE/GB; ++p) {
-    map[p] = p;
-  }
-  for (p=0; p<MEM_SIZE/GB; ++p) {
-    pp = (size_t)rand()%(MEM_SIZE/GB);
-    tmp = map[pp];
-    map[pp] = map[p];
-    map[p] = tmp;
-  }
-
-  ret = madvise(mem, MEM_SIZE, MADV_RANDOM);
-  assert(!ret);
-
-  /* Touch mem once to make sure it is populated so that it must be swapped. */
-  S_touch_mem(mem, map, 1);
-
-  ret = mprotect(mem, MEM_SIZE, PROT_NONE);
-  assert(!ret);
-                                                                                 
   /* Testing */
   S_gettime(&ts);
-  S_touch_mem(mem, map, 0);
+  for (i=0; i<n_pages; ++i) {
+    ret = raise(SIGSEGV);
+    assert(!ret);
+  }
   S_gettime(&te);
-  r_nsec = S_getelapsed(&ts, &te);
-
-  ret = mprotect(mem, MEM_SIZE, PROT_NONE);
-  assert(!ret);
-
-  S_gettime(&ts);
-  S_touch_mem(mem, map, 1);
-  S_gettime(&te);
-  w_nsec = S_getelapsed(&ts, &te);
-
-  /* Teardown */
-  ret = munmap(mem, MEM_SIZE);
-  assert(!ret);
+  t_nsec = S_getelapsed(&ts, &te);
 
   /* Output results */
-  printf("Segmentation fault read latency (ns):  %.2f\n", (double)r_nsec/(double)n_pages);
-  printf("Segmentation fault write latency (ns): %.2f\n", (double)w_nsec/(double)n_pages);
+  printf("Segmentation fault latency (ns):  %.2f\n", (double)t_nsec/(double)n_pages);
 
   return EXIT_SUCCESS;
 }
