@@ -30,14 +30,18 @@ THE SOFTWARE.
 /* EXIT_SUCCESS */
 #include<stdlib.h>
 
-/* mprotect, PROT_READ, PROT_WRITE, MAP_PRIVATE, MAP_ANONYMOUS */
+/* mmap, PROT_READ, PROT_WRITE, MAP_PRIVATE, MAP_ANONYMOUS */
 #include <sys/mman.h>
 
 /* CLOCK_MONOTONIC, struct timespec, clock_gettime */
 #include <time.h>
 
 
-#define NUM_ITERS (1<<13) /* 8192 */
+#define KB        (1lu<<10) /* 1KB */
+#define MB        (1lu<<20) /* 1MB */
+#define GB        (1lu<<30) /* 1GB */
+#define MEM_SIZE  (64*GB)   /* 1GB */
+#define NUM_ITERS (8*KB)    /* 8192 */
 
 
 static inline void
@@ -66,8 +70,88 @@ S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
 }
 
 
+static void
+S_touch_mem(char * const mem, size_t const * const map, int const write)
+{
+  size_t j, k, l, m, n, nn, idx;
+
+  /* Pick a 4KB chunk */
+  for (j=0; j<16; ++j) {
+    /* Pick a 256KB chunk */
+    for (k=0; k<16; ++k) {
+      /* Pick a 4MB chunk */
+      for (l=0; l<16; ++l) {
+        /* Pick a 64MB chunk */
+        for (m=0; m<16; ++m) {
+          /* Pick a 1GB chunk */
+          for (nn=0,n=map[nn]; nn<MEM_SIZE/GB; n=map[++nn]) {
+            idx = n*GB+m*64*MB+l*4*MB+k*256*KB+j*4*KB;
+
+            if (write) {
+              mem[idx] = (char)idx;
+            }
+            else {
+              assert((char)idx == mem[idx]);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
 int
 main(void)
 {
+  int ret;
+  unsigned long r_nsec, w_nsec;
+  size_t i, n, nn, tmp, n_pages;
+  struct timespec ts, te;
+  char * mem;
+  size_t map[MEM_SIZE/GB];
+
+  mem = mmap(NULL, MEM_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
+    -1, 0);
+  assert(MAP_FAILED != mem);
+
+  n_pages = MEM_SIZE/(4*KB);
+
+  for (n=0; n<MEM_SIZE/GB; ++n) {
+    map[n] = n;
+  }
+  for (n=0; n<MEM_SIZE/GB; ++n) {
+    nn = (size_t)rand()%(MEM_SIZE/GB);
+    tmp = map[nn];
+    map[nn] = map[n];
+    map[n] = tmp;
+  }
+
+  /* Touch mem once to make sure it is populated so that it must be swapped. */
+  S_touch_mem(mem, map, 1);
+
+  /* Testing */
+  S_gettime(&ts);
+  for (i=0; i<NUM_ITERS; ++i) {
+    S_touch_mem(mem, map, 0);
+  }
+  S_gettime(&te);
+  r_nsec = S_getelapsed(&ts, &te);
+
+  S_gettime(&ts);
+  for (i=0; i<NUM_ITERS; ++i) {
+    S_touch_mem(mem, map, 1);
+  }
+  S_gettime(&te);
+  w_nsec = S_getelapsed(&ts, &te);
+
+  /* Teardown */
+  ret = munmap(mem, MEM_SIZE);
+  assert(!ret);
+
+  /* Output results */
+  printf("Page read latency (ns):  %.2f\n", (double)r_nsec/(double)(NUM_ITERS*n_pages));
+  printf("Page write latency (ns): %.2f\n", (double)w_nsec/(double)(NUM_ITERS*n_pages));
+
   return EXIT_SUCCESS;
 }
