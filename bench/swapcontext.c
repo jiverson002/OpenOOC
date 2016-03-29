@@ -39,6 +39,12 @@ THE SOFTWARE.
 /* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
+/* Fix for architectures which do not implement MAP_STACK. In these cases, it
+ * should add nothing to the bitmask. */
+#ifndef MAP_STACK
+  #define MAP_STACK 0
+#endif
+
 
 #define NUM_ITERS  (1<<13) /* 8192 */
 #define NUM_FIBERS (1<<10) /* 1024 */

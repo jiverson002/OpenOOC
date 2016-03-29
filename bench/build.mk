@@ -1,4 +1,5 @@
 bench_PROGRAMS := dram longjmp micro siglongjmp sigsegv swapcontext
+bench_LDLIBS = -lrt
 
 dram_SOURCES := dram.c
 

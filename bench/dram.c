@@ -40,11 +40,11 @@ THE SOFTWARE.
 #define KB        (1lu<<10) /* 1KB */
 #define MB        (1lu<<20) /* 1MB */
 #define GB        (1lu<<30) /* 1GB */
-#define MEM_SIZE  (8*GB)
+#define MEM_SIZE  (1*GB)
 #define NUM_ITERS (3)
 
 
-static inline void
+static void
 S_gettime(struct timespec * const t)
 {
   struct timespec tt;
@@ -54,7 +54,7 @@ S_gettime(struct timespec * const t)
 }
 
 
-static inline unsigned long
+static unsigned long
 S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
 {
   struct timespec t;
