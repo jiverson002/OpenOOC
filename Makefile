@@ -74,7 +74,7 @@ LDFLAGS  :=
 ROOTDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # Date of compilation
-DATE := $(shell date)
+DATE := $(shell date "+%a %b %d %T %Y")
 
 # Git commit of compilation
 COMMIT := $(shell cd $(ROOTDIR) && git rev-parse --short HEAD)
