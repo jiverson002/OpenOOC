@@ -24,24 +24,42 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* SIGSEGV */
+#include <errno.h>
+
+/* uintptr_t */
+#include <inttypes.h>
+
+/* struct sigaction, sigaction */
+#include <signal.h>
+
 /* printf */
 #include <stdio.h>
 
-/* EXIT_SUCCESS */
-#include<stdlib.h>
+/* NULL */
+#include <stdlib.h>
 
-/* mmap, PROT_READ, PROT_WRITE, MAP_PRIVATE, MAP_ANONYMOUS */
+/* memset */
+#include <string.h>
+
+/* mprotect, PROT_READ, PROT_WRITE */
 #include <sys/mman.h>
 
 /* CLOCK_MONOTONIC, struct timespec, clock_gettime */
 #include <time.h>
 
+/* sysconf, _SC_PAGESIZE */
+#include <unistd.h>
+
 
 #define KB        (1lu<<10) /* 1KB */
 #define MB        (1lu<<20) /* 1MB */
 #define GB        (1lu<<30) /* 1GB */
-#define MEM_SIZE  (8*GB)
-#define NUM_ITERS (3)
+#define MEM_SIZE  (2*GB)
+
+
+/* System page size. */
+static uintptr_t S_ps;
 
 
 static inline void
@@ -67,6 +85,23 @@ S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
     t.tv_sec = te->tv_sec - ts->tv_sec;
   }
   return (unsigned long)(t.tv_sec * 1000000000L + t.tv_nsec);
+}
+
+
+static void
+S_sigsegv_handler(int const sig, siginfo_t * const si, void * const uc)
+{
+  int ret;
+  void * page;
+
+  /* Page align the offending address. */
+  page = (void*)((uintptr_t)si->si_addr&(~(S_ps-1)));
+
+  /* Apply updates to page containing offending address. */
+  ret = mprotect(page, S_ps, PROT_READ|PROT_WRITE);
+  assert(!ret);
+
+  if (sig || uc) { (void)0; }
 }
 
 
@@ -121,10 +156,19 @@ main(void)
 {
   int ret;
   unsigned long r_nsec, w_nsec;
-  size_t i, p, pp, tmp, n_pages;
+  size_t p, pp, tmp, n_pages;
+  struct sigaction act;
   struct timespec ts, te;
   char * mem;
   size_t map[MEM_SIZE/GB];
+
+  S_ps = (uintptr_t)sysconf(_SC_PAGESIZE);
+
+  memset(&act, 0, sizeof(act));
+  act.sa_sigaction = &S_sigsegv_handler;
+  act.sa_flags = SA_SIGINFO;
+  ret = sigaction(SIGSEGV, &act, NULL);
+  assert(!ret);
 
   mem = mmap(NULL, MEM_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
     -1, 0);
@@ -148,18 +192,20 @@ main(void)
   /* Touch mem once to make sure it is populated so that it must be swapped. */
   S_touch_mem(mem, map, 1);
 
+  ret = mprotect(mem, MEM_SIZE, PROT_NONE);
+  assert(!ret);
+                                                                                 
   /* Testing */
   S_gettime(&ts);
-  for (i=0; i<NUM_ITERS; ++i) {
-    S_touch_mem(mem, map, 0);
-  }
+  S_touch_mem(mem, map, 0);
   S_gettime(&te);
   r_nsec = S_getelapsed(&ts, &te);
 
+  ret = mprotect(mem, MEM_SIZE, PROT_NONE);
+  assert(!ret);
+
   S_gettime(&ts);
-  for (i=0; i<NUM_ITERS; ++i) {
-    S_touch_mem(mem, map, 1);
-  }
+  S_touch_mem(mem, map, 1);
   S_gettime(&te);
   w_nsec = S_getelapsed(&ts, &te);
 
@@ -168,8 +214,8 @@ main(void)
   assert(!ret);
 
   /* Output results */
-  printf("Page read latency (ns):  %.2f\n", (double)r_nsec/(double)(NUM_ITERS*n_pages));
-  printf("Page write latency (ns): %.2f\n", (double)w_nsec/(double)(NUM_ITERS*n_pages));
+  printf("Segmentation fault read latency (ns):  %.2f\n", (double)r_nsec/(double)n_pages);
+  printf("Segmentation fault write latency (ns): %.2f\n", (double)w_nsec/(double)n_pages);
 
   return EXIT_SUCCESS;
 }
