@@ -223,9 +223,9 @@ S_swap_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # SysPages       = %10lu\n", NUM_SWAP_ITERS*n_pages);
   fprintf(stderr, "  SysPages/s       = %10.0f\n",\
-    (double)NUM_SWAP_ITERS*n_pages/t_nsec*10e9);
+    (double)(NUM_SWAP_ITERS*n_pages)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
-    (double)t_nsec/NUM_SWAP_ITERS/n_pages);
+    (double)t_nsec/NUM_SWAP_ITERS/(double)n_pages);
   fprintf(stderr, "\n");
 }
 
@@ -323,9 +323,9 @@ S_mprotect_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # SysPages       = %10lu\n", NUM_SWAP_ITERS*n_pages);
   fprintf(stderr, "  SysPages/s       = %10.0f\n",\
-    (double)NUM_SWAP_ITERS*n_pages/t_nsec*10e9);
+    (double)(NUM_SWAP_ITERS*n_pages)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
-    (double)t_nsec/NUM_SWAP_ITERS/n_pages);
+    (double)t_nsec/NUM_SWAP_ITERS/(double)n_pages);
   fprintf(stderr, "\n");
 }
 
@@ -372,9 +372,9 @@ S_sigsegv_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # segfault       = %10lu\n", NUM_SWAP_ITERS*n_pages);
   fprintf(stderr, "  segfault/s       = %10.0f\n",\
-    (double)n_pages*NUM_SWAP_ITERS/t_nsec*10e9);
+    (double)(n_pages*NUM_SWAP_ITERS)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
-    (double)t_nsec/NUM_SWAP_ITERS/n_pages);
+    (double)t_nsec/NUM_SWAP_ITERS/(double)n_pages);
   fprintf(stderr, "\n");
 }
 
@@ -457,7 +457,7 @@ S_longjmp_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # longjmp        = %10u\n", NUM_FIBER_ITERS*n_fibers);
   fprintf(stderr, "  longjmp/s        = %10.0f\n",\
-    (double)NUM_FIBER_ITERS*n_fibers*2/t_nsec*10e9);
+    (double)(NUM_FIBER_ITERS*n_fibers*2)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
     (double)t_nsec/NUM_FIBER_ITERS/n_fibers/2);
   fprintf(stderr, "\n");
@@ -542,7 +542,7 @@ S_siglongjmp_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # siglongjmp     = %10u\n", NUM_FIBER_ITERS*n_fibers);
   fprintf(stderr, "  siglongjmp/s     = %10.0f\n",\
-    (double)NUM_FIBER_ITERS*n_fibers*2/t_nsec*10e9);
+    (double)(NUM_FIBER_ITERS*n_fibers*2)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
     (double)t_nsec/NUM_FIBER_ITERS/n_fibers/2);
   fprintf(stderr, "\n");
@@ -615,7 +615,7 @@ S_swapcontext_run(void)
   fprintf(stderr, "  Time (s)         = %10.5f\n", (double)t_nsec/10e9);
   fprintf(stderr, "  # swapcontext    = %10u\n", NUM_FIBER_ITERS*n_fibers);
   fprintf(stderr, "  swapcontext/s    = %10.0f\n",\
-    (double)NUM_FIBER_ITERS*n_fibers*2/t_nsec*10e9);
+    (double)(NUM_FIBER_ITERS*n_fibers*2)/(double)t_nsec*10e9);
   fprintf(stderr, "  Latency          = %10.0f\n",\
     (double)t_nsec/NUM_FIBER_ITERS/n_fibers/2);
   fprintf(stderr, "\n");
