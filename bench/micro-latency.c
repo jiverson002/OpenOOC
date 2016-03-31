@@ -81,7 +81,6 @@ static long unsigned int S_siglongjmp_ctr=0;
 static long unsigned int S_swapcontext_ctr=0;
 
 
-
 static void
 S_gettime(struct timespec * const t)
 {

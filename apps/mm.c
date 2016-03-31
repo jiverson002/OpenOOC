@@ -24,31 +24,27 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
-/* uintptr_t */
-#include <inttypes.h>
-
-/* printf */
+/* printf, fprintf, stderr */
 #include <stdio.h>
 
-/* rand, RAND_MAX, EXIT_SUCCESS */
+/* rand_r, RAND_MAX, EXIT_SUCCESS */
 #include <stdlib.h>
 
 /* memset */
 #include <string.h>
 
-/* mmap, munmap, PROT_NONE, MAP_PRIVATE, MAP_ANONYMOUS */
+/* mmap, munmap, mprotect, PROT_READ, PROT_WRITE, PROT_NONE, MAP_PRIVATE,
+ * MAP_ANONYMOUS */
 #include <sys/mman.h>
 
-/* sysconf, _SC_PAGESIZE */
+/* CLOCK_MONOTONIC, struct timespec, clock_gettime */
+#include <time.h>
+
+/* getopt */
 #include <unistd.h>
 
 /* OOC library */
 #include "src/ooc.h"
-
-
-#define SZ_M 1024
-#define SZ_N 1024
-#define SZ_P 1
 
 
 struct args
@@ -59,10 +55,34 @@ struct args
 };
 
 
-static void mm_kern(size_t const i, void * const state);
+static void
+S_gettime(struct timespec * const t)
+{
+  struct timespec tt;
+  clock_gettime(CLOCK_MONOTONIC, &tt);
+  t->tv_sec = tt.tv_sec;
+  t->tv_nsec = tt.tv_nsec;
+}
 
 
-static void mm_kern(size_t const i, void * const state)
+static unsigned long
+S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
+{
+  struct timespec t;
+  if (te->tv_nsec < ts->tv_nsec) {
+    t.tv_nsec = 1000000000L + te->tv_nsec - ts->tv_nsec;
+    t.tv_sec = te->tv_sec - 1 - ts->tv_sec;
+  }
+  else {
+    t.tv_nsec = te->tv_nsec - ts->tv_nsec;
+    t.tv_sec = te->tv_sec - ts->tv_sec;
+  }
+  return (unsigned long)(t.tv_sec * 1000000000L + t.tv_nsec);
+}
+
+
+static void
+S_mm_kern(size_t const i, void * const state)
 {
   size_t n, p, j, k;
   double const * a, * b;
@@ -91,27 +111,58 @@ static void mm_kern(size_t const i, void * const state)
 }
 
 
-__ooc_decl ( static void mm )(size_t const i, void * const state);
+__ooc_decl ( static void S_mm )(size_t const i, void * const state);
 
 
-__ooc_defn ( static void mm )(size_t const i, void * const state)
+__ooc_defn ( static void S_mm )(size_t const i, void * const state)
 {
-  mm_kern(i, state);
+  S_mm_kern(i, state);
 }
 
 
 int
-main(void)
+main(int argc, char * argv[])
 {
-  int ret;
+  int ret, opt, use_ooc, num_threads;
+  unsigned int seed;
+  unsigned long t1_nsec, t2_nsec, t3_nsec;
   size_t m, n, p, i, j, k;
   double tmp;
   struct args args;
+  struct timespec ts, te;
   double * a, * b, * c;
 
-  m = SZ_M;
-  n = SZ_N;
-  p = SZ_P;
+  m = 32768;
+  n = 32768;
+  p = 1;
+  use_ooc = 0;
+  num_threads = 1;
+  while (-1 != (opt=getopt(argc, argv, "om:n:p:t:"))) {
+    switch (opt) {
+    case 'o':
+      use_ooc = 1;
+      break;
+    case 'm':
+      m = (size_t)atol(optarg);
+      break;
+    case 'n':
+      n = (size_t)atol(optarg);
+      break;
+    case 'p':
+      p = (size_t)atol(optarg);
+      break;
+    case 't':
+      num_threads = atoi(optarg);
+      break;
+    default: /* '?' */
+      fprintf(stderr, "Usage: %s [-o] [-m m dim] [-n n dim] [-p p dim] "\
+        "[-t num_threads]\n", argv[0]);
+      return EXIT_FAILURE;
+    }
+  }
+
+  /* Validate input. */
+  assert(num_threads > 0);
 
   /* Allocate memory. */
   a = mmap(NULL, m*n*sizeof(*a), PROT_READ|PROT_WRITE,\
@@ -130,33 +181,72 @@ main(void)
   args.b = b;
   args.c = c;
 
+  printf("m=%zu, n=%zu, p=%zu, use_ooc=%d, num_threads=%d\n", m, n, p, use_ooc,\
+    num_threads);
+
+  printf("Generating matrices...\n");
+  S_gettime(&ts);
   /* Populate matrices. */
+  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
+    private(seed,j)
   for (i=0; i<m; ++i) {
     for (j=0; j<n; ++j) {
-      a[i*n+j] = (double)rand()/RAND_MAX;
+      #define a(R,C) a[R*n+C]
+      a[i*n+j] = (double)rand_r(&seed)/RAND_MAX;
+      #undef a
     }
   }
+  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
+    private(seed,j)
   for (i=0; i<n; ++i) {
     for (j=0; j<p; ++j) {
-      b[i*p+j] = (double)rand()/RAND_MAX;
+      #define b(R,C) a[R*p+C]
+      b[i*p+j] = (double)rand_r(&seed)/RAND_MAX;
+      #undef b
     }
   }
   memset(c, 0, m*p*sizeof(*c));
+  S_gettime(&te);
+  t1_nsec = S_getelapsed(&ts, &te);
 
-  /* Prepare OOC environment. */
-  ret = mprotect(a, m*n*sizeof(*a), PROT_NONE);
-  assert(!ret);
-  ret = mprotect(b, n*p*sizeof(*b), PROT_NONE);
-  assert(!ret);
-  ret = mprotect(c, m*p*sizeof(*c), PROT_NONE);
-  assert(!ret);
-
-  /*#pragma omp parallel for num_threads(4)*/
-  for (i=0; i<m; ++i) {
-    mm(i, &args);
+  if (use_ooc) {
+    /* Prepare OOC environment. */
+    ret = mprotect(a, m*n*sizeof(*a), PROT_NONE);
+    assert(!ret);
+    ret = mprotect(b, n*p*sizeof(*b), PROT_NONE);
+    assert(!ret);
+    ret = mprotect(c, m*p*sizeof(*c), PROT_NONE);
+    assert(!ret);
   }
-  ooc_wait(); /* Need this to wait for any outstanding fibers. */
 
+  printf("Computing matrix multiplication...\n");
+  S_gettime(&ts);
+  #pragma omp parallel num_threads(num_threads) if(num_threads > 1)
+  {
+    if (use_ooc) {
+      #pragma omp for nowait
+      for (i=0; i<m; ++i) {
+        S_mm(i, &args);
+      }
+      ooc_wait(); /* Need this to wait for any outstanding fibers. */
+      #pragma omp barrier
+      ret = ooc_finalize(); /* Need this to and remove the signal handler. */
+      assert(!ret);
+    }
+    else {
+      #pragma omp for
+      for (i=0; i<m; ++i) {
+        S_mm_kern(i, &args);
+      }
+    }
+  }
+  S_gettime(&te);
+  t2_nsec = S_getelapsed(&ts, &te);
+
+  printf("Validating results...\n");
+  S_gettime(&ts);
+  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
+    private(j,k,tmp)
   for (i=0; i<m; ++i) {
     for (j=0; j<p; ++j) {
       #define a(R,C) a[R*n+C]
@@ -172,9 +262,12 @@ main(void)
       #undef c
     }
   }
+  S_gettime(&te);
+  t3_nsec = S_getelapsed(&ts, &te);
 
-  ret = ooc_finalize(); /* Need this to and remove the signal handler. */
-  assert(!ret);
+  fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/10e9);
+  fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/10e9);
+  fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/10e9);
 
   munmap(a, m*n*sizeof(*a));
   munmap(b, n*p*sizeof(*b));

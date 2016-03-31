@@ -36,7 +36,7 @@ THE SOFTWARE.
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 /*! Maximum number of fibers per thread. */
-#define OOC_NUM_FIBERS 10
+#define OOC_NUM_FIBERS 32
 
 /*! Protection flags. */
 #define VM_PROT_NONE  0x0LU
