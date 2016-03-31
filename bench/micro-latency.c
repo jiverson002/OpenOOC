@@ -64,7 +64,7 @@ THE SOFTWARE.
 #define KB              (1lu<<10) /* 1KB */
 #define MB              (1lu<<20) /* 1MB */
 #define GB              (1lu<<30) /* 1GB */
-#define MEM_SIZE        (1*GB)
+#define MEM_SIZE        (16*GB)
 #define NUM_FIBERS      (1<<10)   /* 1024 */
 #define NUM_SWAP_ITERS  3
 #define NUM_FIBER_ITERS (1<<13)   /* 8192 */
@@ -647,7 +647,7 @@ main(void)
   fprintf(stderr, "  Options          = ");
   fprintf(stderr, "\n\n");
 
-  /*S_swap_run();*/
+  S_swap_run();
   S_mprotect_run();
   S_sigsegv_run();
   S_longjmp_run();
