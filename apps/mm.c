@@ -86,6 +86,21 @@ S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
 
 
 static void
+S_matfill(size_t const n, size_t const m, double * const a)
+{
+  size_t i, j;
+
+  for (i=0; i<n; ++i) {
+    for (j=0; j<m; ++j) {
+      #define a(R,C) a[R*m+C]
+      a(i,j) = (double)rand()/RAND_MAX;
+      #undef a
+    }
+  }
+}
+
+
+static void
 S_matmult_kern(size_t const bid, void * const state)
 {
   size_t n, m, p, q, r, s;
@@ -171,32 +186,22 @@ __ooc_defn ( static void S_matmult_ooc )(size_t const bid, void * const state)
 }
 
 
-static void
-S_matfill(size_t const n, size_t const m, double * const a)
-{
-  size_t i, j;
-
-  for (i=0; i<n; ++i) {
-    for (j=0; j<m; ++j) {
-      #define a(R,C) a[R*m+C]
-      a(i,j) = (double)rand()/RAND_MAX;
-      #undef a
-    }
-  }
-}
-
-
 int
 main(int argc, char * argv[])
 {
   int ret, opt, use_ooc, num_threads, validate;
-  unsigned long t1_nsec, t2_nsec, t3_nsec;
+  unsigned long t1_nsec, t2_nsec, t3_nsec, t4_nsec;
   size_t n, m, p, q, r, s;
   size_t i, j, k, bid;
   double tmp;
   struct args args;
-  struct timespec ts, te;
+  struct timespec ts, te, ts1, te1;
   double * a, * b, * c;
+
+  t1_nsec = 0;
+  t2_nsec = 0;
+  t3_nsec = 0;
+  t4_nsec = 0;
 
   use_ooc = 0;
   validate = 0;
@@ -264,8 +269,9 @@ main(int argc, char * argv[])
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c);
 
-  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, s=%zu, use_ooc=%d, "\
-    "num_threads=%d, validate=%d\n", n, m, p, q, r, s, use_ooc, num_threads,\
+  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, s=%zu\n", n, m, p, q, r, s);
+  printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
+  printf("use_ooc=%d, num_threads=%d, validate=%d\n", use_ooc, num_threads,\
     validate);
 
   printf("Generating matrices...\n");
@@ -298,14 +304,21 @@ main(int argc, char * argv[])
 
   printf("Computing matrix multiplication...\n");
   S_gettime(&ts);
-  #pragma omp parallel num_threads(num_threads) if(num_threads > 1)
+  #pragma omp parallel num_threads(num_threads) if(num_threads > 1)\
+    private(ts1,te1)
   {
     if (use_ooc) {
       #pragma omp for nowait schedule(static)
       for (bid=0; bid<q*r; ++bid) {
         S_matmult_ooc(bid, &args);
       }
+      S_gettime(&ts1);
       ooc_wait(); /* Need this to wait for any outstanding fibers. */
+      S_gettime(&te1);
+      #pragma omp critical
+      if (S_getelapsed(&ts1, &te1) > t4_nsec) {
+        t4_nsec = S_getelapsed(&ts1, &te1);
+      }
       #pragma omp barrier
       ret = ooc_finalize(); /* Need this to and remove the signal handler. */
       assert(!ret);
@@ -344,6 +357,9 @@ main(int argc, char * argv[])
 
   fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/1e9);
   fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/1e9);
+  if (use_ooc) {
+    fprintf(stderr, "Wait time (s)     = %.5f\n", (double)t4_nsec/1e9);
+  }
   if (validate) {
     fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/1e9);
   }
