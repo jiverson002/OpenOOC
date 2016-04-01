@@ -47,9 +47,13 @@ THE SOFTWARE.
 #include "src/ooc.h"
 
 
+#define CEILDIV(X,Y) (1+(((X)-1)/(Y)))
+
+
 struct args
 {
-  size_t n, p, i;
+  size_t n, m, p;
+  size_t q, r, s;
   double const * a, * b;
   double * c;
 };
@@ -82,81 +86,159 @@ S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
 
 
 static void
-S_mm_kern(size_t const i, void * const state)
+S_matmult_kern(size_t const bid, void * const state)
 {
-  size_t n, p, j, k;
+  size_t n, m, p, q, r, s;
+  size_t i, j, k, ii, jj, kk, ie, je, ke, ib, jb, iis, iie, jjs, jje;
+  double sum;
   double const * a, * b;
   double * c;
   struct args const * args;
 
   args = (struct args const*)state;
   n = args->n;
+  m = args->m;
   p = args->p;
+  q = args->q;
+  r = args->r;
+  s = args->s;
   a = args->a;
   b = args->b;
   c = args->c;
 
-  for (j=0; j<p; ++j) {
-    #define a(R,C) a[R*n+C]
-    #define b(R,C) b[R*p+C]
-    #define c(R,C) c[R*p+C]
-    c(i,j) = a(i,0)*b(0,j);
-    for (k=1; k<n; ++k) {
-      c(i,j) += a(i,k)*b(k,j);
+  ib = bid/r;
+  jb = bid%r;
+
+  iis = ib*CEILDIV(n, q);
+  iie = (ib < q-1) ? ((ib+1)*CEILDIV(n, q)) : n;
+  jjs = jb*CEILDIV(p, r);
+  jje = (jb < r-1) ? ((jb+1)*CEILDIV(p, r)) : p;
+
+  if (1 == s) {
+    /* Standard. */
+    for (i=iis; i<iie; ++i) {
+      for (j=jjs; j<jje; ++j) {
+        #define a(R,C) a[R*m+C]
+        #define b(R,C) b[R*m+C]
+        #define c(R,C) c[R*p+C]
+        sum = 0.0;
+        for (k=0; k<m; ++k) {
+          sum += a(i,k)*b(j,k);
+        }
+        c(i,j) = sum;
+        #undef a
+        #undef b
+        #undef c
+      }
     }
-    #undef a
-    #undef b
-    #undef c
+  }
+  else {
+    /* Cache blocked. */
+    for (ii=iis; ii<iie; ii+=s) {
+      ie = ii+s < n ? ii+s : n;
+      for (jj=jjs; jj<jje; jj+=s) {
+        je = jj+s < p ? jj+s : p;
+        for (i=ii; i<ie; ++i) {
+          for (j=jj; j<je; ++j) {
+            #define a(R,C) a[R*m+C]
+            #define b(R,C) b[R*m+C]
+            #define c(R,C) c[R*p+C]
+            sum = 0.0;
+            for (kk=0; kk<m; kk+=s) {
+              ke = kk+s < m ? kk+s : m;
+              for (k=kk; k<ke; ++k) {
+                sum += a(i,k)*b(j,k);
+              }
+            }
+            c(i,j) = sum;
+            #undef a
+            #undef b
+            #undef c
+          }
+        }
+      }
+    }
   }
 }
 
 
-__ooc_decl ( static void S_mm )(size_t const i, void * const state);
+__ooc_decl ( static void S_matmult_ooc )(size_t const bid, void * const state);
 
 
-__ooc_defn ( static void S_mm )(size_t const i, void * const state)
+__ooc_defn ( static void S_matmult_ooc )(size_t const bid, void * const state)
 {
-  S_mm_kern(i, state);
+  S_matmult_kern(bid, state);
+}
+
+
+static void
+S_matfill(size_t const n, size_t const m, double * const a)
+{
+  size_t i, j;
+
+  for (i=0; i<n; ++i) {
+    for (j=0; j<m; ++j) {
+      #define a(R,C) a[R*m+C]
+      a(i,j) = (double)rand()/RAND_MAX;
+      #undef a
+    }
+  }
 }
 
 
 int
 main(int argc, char * argv[])
 {
-  int ret, opt, use_ooc, num_threads;
-  unsigned int seed;
+  int ret, opt, use_ooc, num_threads, validate;
   unsigned long t1_nsec, t2_nsec, t3_nsec;
-  size_t m, n, p, i, j, k;
+  size_t n, m, p, q, r, s;
+  size_t i, j, k, bid;
   double tmp;
   struct args args;
   struct timespec ts, te;
   double * a, * b, * c;
 
-  m = 32768;
-  n = 32768;
-  p = 1;
   use_ooc = 0;
+  validate = 0;
+  n = 32768;
+  m = 32768;
+  p = 1;
+  q = 1;
+  r = 1;
+  s = 1;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "om:n:p:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:s:t:"))) {
     switch (opt) {
     case 'o':
       use_ooc = 1;
       break;
-    case 'm':
-      m = (size_t)atol(optarg);
-      break;
     case 'n':
       n = (size_t)atol(optarg);
+      break;
+    case 'm':
+      m = (size_t)atol(optarg);
       break;
     case 'p':
       p = (size_t)atol(optarg);
       break;
+    case 'q':
+      q = (size_t)atol(optarg);
+      break;
+    case 'r':
+      r = (size_t)atol(optarg);
+      break;
+    case 's':
+      s = (size_t)atol(optarg);
+      break;
     case 't':
       num_threads = atoi(optarg);
       break;
+    case 'v':
+      validate = 1;
+      break;
     default: /* '?' */
-      fprintf(stderr, "Usage: %s [-o] [-m m dim] [-n n dim] [-p p dim] "\
-        "[-t num_threads]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-ov] [-n n dim] [-m m dim] [-p p dim] "\
+        "[-q q dim] [-r r dim] [-s blksz] [-t num_threads]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -164,69 +246,64 @@ main(int argc, char * argv[])
   /* Validate input. */
   assert(num_threads > 0);
 
+  /* Fix-up input. */
+  q = (q < n) ? q : n;
+  r = (r < p) ? r : p;
+  s = (s < n) ? s : n;
+  s = (s < m) ? s : m;
+  s = (s < p) ? s : p;
+
   /* Allocate memory. */
-  a = mmap(NULL, m*n*sizeof(*a), PROT_READ|PROT_WRITE,\
+  a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != a);
-  b = mmap(NULL, n*p*sizeof(*b), PROT_READ|PROT_WRITE,\
+  b = mmap(NULL, m*p*sizeof(*b), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != b);
-  c = mmap(NULL, m*p*sizeof(*c), PROT_READ|PROT_WRITE,\
+  c = mmap(NULL, n*p*sizeof(*c), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c);
 
-  args.n = n;
-  args.p = p;
-  args.a = a;
-  args.b = b;
-  args.c = c;
-
-  printf("m=%zu, n=%zu, p=%zu, use_ooc=%d, num_threads=%d\n", m, n, p, use_ooc,\
-    num_threads);
+  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, s=%zu, use_ooc=%d, "\
+    "num_threads=%d, validate=%d\n", n, m, p, q, r, s, use_ooc, num_threads,\
+    validate);
 
   printf("Generating matrices...\n");
   S_gettime(&ts);
-  /* Populate matrices. */
-  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
-    private(seed,j)
-  for (i=0; i<m; ++i) {
-    for (j=0; j<n; ++j) {
-      #define a(R,C) a[R*n+C]
-      a[i*n+j] = (double)rand_r(&seed)/RAND_MAX;
-      #undef a
-    }
-  }
-  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
-    private(seed,j)
-  for (i=0; i<n; ++i) {
-    for (j=0; j<p; ++j) {
-      #define b(R,C) a[R*p+C]
-      b[i*p+j] = (double)rand_r(&seed)/RAND_MAX;
-      #undef b
-    }
-  }
-  memset(c, 0, m*p*sizeof(*c));
+  S_matfill(n, m, a);
+  S_matfill(m, p, b);
   S_gettime(&te);
   t1_nsec = S_getelapsed(&ts, &te);
 
   if (use_ooc) {
     /* Prepare OOC environment. */
-    ret = mprotect(a, m*n*sizeof(*a), PROT_NONE);
+    ret = mprotect(a, n*m*sizeof(*a), PROT_NONE);
     assert(!ret);
-    ret = mprotect(b, n*p*sizeof(*b), PROT_NONE);
+    ret = mprotect(b, m*p*sizeof(*b), PROT_NONE);
     assert(!ret);
-    ret = mprotect(c, m*p*sizeof(*c), PROT_NONE);
+    ret = mprotect(c, n*p*sizeof(*c), PROT_NONE);
     assert(!ret);
   }
+
+  /* Setup args struct. */
+  args.n = n;
+  args.m = m;
+  args.p = p;
+  args.q = q;
+  args.r = r;
+  args.s = s;
+  args.a = a;
+  args.b = b;
+  args.c = c;
 
   printf("Computing matrix multiplication...\n");
   S_gettime(&ts);
   #pragma omp parallel num_threads(num_threads) if(num_threads > 1)
   {
     if (use_ooc) {
-      #pragma omp for nowait
-      for (i=0; i<m; ++i) {
-        S_mm(i, &args);
+      #pragma omp for nowait schedule(static)
+      for (bid=0; bid<q*r; ++bid) {
+        S_matmult_ooc(bid, &args);
       }
       ooc_wait(); /* Need this to wait for any outstanding fibers. */
       #pragma omp barrier
@@ -234,44 +311,46 @@ main(int argc, char * argv[])
       assert(!ret);
     }
     else {
-      #pragma omp for
-      for (i=0; i<m; ++i) {
-        S_mm_kern(i, &args);
+      #pragma omp for schedule(static)
+      for (bid=0; bid<q*r; ++bid) {
+        S_matmult_kern(bid, &args);
       }
     }
   }
   S_gettime(&te);
   t2_nsec = S_getelapsed(&ts, &te);
 
-  printf("Validating results...\n");
-  S_gettime(&ts);
-  #pragma omp parallel for num_threads(num_threads) if(num_threads > 1)\
-    private(j,k,tmp)
-  for (i=0; i<m; ++i) {
-    for (j=0; j<p; ++j) {
-      #define a(R,C) a[R*n+C]
-      #define b(R,C) b[R*p+C]
-      #define c(R,C) c[R*p+C]
-      tmp = a(i,0)*b(0,j);
-      for (k=1; k<n; ++k) {
-        tmp += a(i,k)*b(k,j);
+  if (validate) {
+    printf("Validating results...\n");
+    S_gettime(&ts);
+    for (i=0; i<n; ++i) {
+      for (j=0; j<p; ++j) {
+        #define a(R,C) a[R*m+C]
+        #define b(R,C) b[R*m+C]
+        #define c(R,C) c[R*p+C]
+        tmp = 0.0;
+        for (k=0; k<m; ++k) {
+          tmp += a(i,k)*b(j,k);
+        }
+        assert(tmp == c(i,j));
+        #undef a
+        #undef b
+        #undef c
       }
-      assert(tmp == c(i,j));
-      #undef a
-      #undef b
-      #undef c
     }
+    S_gettime(&te);
+    t3_nsec = S_getelapsed(&ts, &te);
   }
-  S_gettime(&te);
-  t3_nsec = S_getelapsed(&ts, &te);
 
-  fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/10e9);
-  fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/10e9);
-  fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/10e9);
+  fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/1e9);
+  fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/1e9);
+  if (validate) {
+    fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/1e9);
+  }
 
-  munmap(a, m*n*sizeof(*a));
-  munmap(b, n*p*sizeof(*b));
-  munmap(c, m*p*sizeof(*c));
+  munmap(a, n*m*sizeof(*a));
+  munmap(b, m*p*sizeof(*b));
+  munmap(c, n*p*sizeof(*c));
 
   return EXIT_SUCCESS;
 }
