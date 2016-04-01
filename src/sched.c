@@ -64,11 +64,6 @@ THE SOFTWARE.
 #include "common.h"
 
 
-/*! Fiber state flags. */
-#define FIBER_IDLE 0x1LU
-#define FIBER_WAIT 0x2LU
-
-
 /******************************************************************************/
 /*
  *  Page flag bits flow chart for S_sigsegv_handler
@@ -109,7 +104,6 @@ THE SOFTWARE.
  * the various fields to simplify things like passing all fibers' async-io
  * requests to library functions, i.e., aio_suspend(). */
 static __thread size_t S_iter[OOC_NUM_FIBERS];
-static __thread unsigned char S_state[OOC_NUM_FIBERS];
 static __thread void * S_args[OOC_NUM_FIBERS];
 static __thread void (*S_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
 static __thread void * S_addr[OOC_NUM_FIBERS];
@@ -117,6 +111,12 @@ static __thread ucontext_t S_handler[OOC_NUM_FIBERS];
 static __thread ucontext_t S_trampoline[OOC_NUM_FIBERS];
 static __thread ucontext_t S_kern[OOC_NUM_FIBERS];
 static __thread char S_stack[OOC_NUM_FIBERS][SIGSTKSZ];
+
+/* Fiber state lists. */
+static __thread int S_n_idle;
+static __thread int S_n_wait;
+static __thread int S_idle_list[OOC_NUM_FIBERS];
+static __thread int S_wait_list[OOC_NUM_FIBERS];
 
 /* My fiber id. */
 static __thread int S_me;
@@ -128,14 +128,12 @@ static __thread struct sigaction S_old_act;
 static __thread uintptr_t S_ps;
 
 /* The main context, i.e., the context which spawned all of the fibers. */
-/* TODO Need to convince myself that we don't need a main context for each
- * fiber? */
 static __thread ucontext_t S_main;
 
 /* Indicator variable for library initialization. */
 static __thread int S_is_init=0;
 
-/* System page table. */
+/* Per-process system page table. */
 struct sp_tree vma_tree;
 
 
@@ -187,8 +185,8 @@ S_sigsegv_handler1(void)
     ret = madvise(page, S_ps, MADV_WILLNEED);
     assert(!ret);
 
-    /* Mark fiber as waiting. */
-    S_state[S_me] = FIBER_WAIT;
+    /* Put myself on idle list. */
+    S_wait_list[S_n_wait++] = S_me;
 
     dbg_printf("[%5d.%.3d]     Not runnable, switching to S_main\n",\
       (int)syscall(SYS_gettid), S_me);
@@ -350,13 +348,13 @@ S_kernel_trampoline(int const i)
 {
   S_kernel[i](S_iter[i], S_args[i]);
 
-  /* TODO Before this context returns, it should call a `flush function` where
-   * the data it accessed is flushed to disk. */
+  /* Before this context returns, it should call a `flush function` where the
+   * data it accessed is flushed to disk. */
   /* FIXME POC */
   S_flush1();
 
-  /* Update my fiber state. */
-  S_state[i] = FIBER_IDLE;
+  /* Put myself on idle list. */
+  S_idle_list[S_n_idle++] = i;
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
   setcontext(&S_main);
@@ -412,7 +410,7 @@ S_init(void)
     ret = S_kern_init(i);
     assert(!ret);
 
-    S_state[i] = FIBER_IDLE;
+    S_idle_list[S_n_idle++] = i;
   }
 
   S_is_init = 1;
@@ -437,45 +435,35 @@ ooc_finalize(void)
 void
 ooc_wait(void)
 {
-  int ret, wait, done;
+  int ret, j, wait;
 
   dbg_printf("[%5d.***] Waiting for outstanding fibers\n",\
     (int)syscall(SYS_gettid));
 
-  for (;;) {
-    /* TODO Could maintain a list of runnable and idle fibers instead of
-     * searching through entire set of fibers. */
-    /* Search for a fiber that is waiting. */
-    for (wait=0,done=1; wait<OOC_NUM_FIBERS; ++wait) {
-      dbg_printf("[%5d.%.3d]   State = %d\n", (int)syscall(SYS_gettid), wait,\
-        S_state[wait]);
-
-      if (FIBER_WAIT == S_state[wait]) {
-        done = 0;
-
+  while (S_n_wait) {
+    /* Check wait list for an available fiber. */
+    for (j=0,wait=-1; j<S_n_wait; ++j) {
+      if (S_is_runnable(S_wait_list[j])) {
         dbg_printf("[%5d.%.3d]   Outstanding\n", (int)syscall(SYS_gettid),\
-          wait);
+          S_wait_list[j]);
 
-        if (S_is_runnable(wait)) {
-          break;
-        }
-        else {
-          /* TODO POC */
-          /* XXX Force the scheduler to schedule a fiber, since in the POC,
-           * until a thread actually access the pages which are not in core,
-           * they will not be faulted in. */
-          break;
-        }
+        /* Remove entry j from wait list and replace entry j with entry
+         * n_wait-1. */
+        wait = S_wait_list[j];
+        S_wait_list[j] = S_wait_list[--S_n_wait];
+        break;
       }
     }
 
-    if (done) {
-      dbg_printf("[%5d.***]   No outstanding fibers, break\n",\
-        (int)syscall(SYS_gettid));
-      break;
+    /* FIXME POC */
+    /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
+     * thread actually access the pages which are not in core, they will not be
+     * faulted in. */
+    if (-1 == wait) {
+      wait = S_wait_list[--S_n_wait];
     }
 
-    if (OOC_NUM_FIBERS != wait) {
+    if (-1 != wait) {
       dbg_printf("[%5d.%.3d]   Runnable, switching to S_handler\n",\
         (int)syscall(SYS_gettid), wait);
 
@@ -503,22 +491,31 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
   dbg_printf("[%5d.***] Scheduling a new fiber\n", (int)syscall(SYS_gettid));
 
   for (;;) {
-    /* Search for a fiber that is either waiting or idle. */
-    for (j=0,wait=-1,idle=-1; j<OOC_NUM_FIBERS; ++j) {
-      switch (S_state[j]) {
-        case FIBER_WAIT:
-        if (S_is_runnable(j)) {
-          wait = j;
-        }
-        break;
+    idle = wait = -1;
 
-        case FIBER_IDLE:
-        idle = j;
-        break;
+    /* Check idle list for an available fiber. */
+    if (S_n_idle) {
+      /* Remove from idle list. */
+      idle = S_idle_list[--S_n_idle];
+    }
+    /* Check wait list for an available fiber. */
+    if (-1 == idle) {
+      for (j=0; j<S_n_wait; ++j) {
+        if (S_is_runnable(S_wait_list[j])) {
+          /* Remove entry j from wait list and replace entry j with entry
+           * n_wait-1. */
+          wait = S_wait_list[j];
+          S_wait_list[j] = S_wait_list[--S_n_wait];
+          break;
+        }
       }
 
-      if (-1 != wait || -1 != idle) {
-        break;
+      /* FIXME POC */
+      /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
+       * thread actually access the pages which are not in core, they will not
+       * be faulted in. */
+      if (-1 == wait) {
+        wait = S_wait_list[--S_n_wait];
       }
     }
 
@@ -539,18 +536,17 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       S_iter[idle] = i;
       S_kernel[idle] = kern;
       S_args[idle] = args;
-      S_state[idle] = 0;
 
-      dbg_printf("[%5d.%.3d]   Switching to S_kern\n",\
-        (int)syscall(SYS_gettid), idle);
+      dbg_printf("[%5d.%.3d]   Switching to S_kern for iter %zu\n",\
+        (int)syscall(SYS_gettid), idle, i);
 
       /* Switch fibers. */
       S_me = idle;
       ret = swapcontext(&S_main, &(S_kern[S_me]));
       assert(!ret);
 
-      dbg_printf("[%5d.%.3d]   Returned from S_kern\n",\
-        (int)syscall(SYS_gettid), idle);
+      dbg_printf("[%5d.%.3d]   Returned from S_kern for iter %zu\n",\
+        (int)syscall(SYS_gettid), idle, i);
 
       /* XXX At this point the fiber S_me has either successfully completed its
        * execution of the kernel S_kern[S_me] or it received a SIGSEGV and
