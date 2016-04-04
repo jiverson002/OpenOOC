@@ -111,6 +111,7 @@ static __thread ucontext_t S_handler[OOC_NUM_FIBERS];
 static __thread ucontext_t S_trampoline[OOC_NUM_FIBERS];
 static __thread ucontext_t S_kern[OOC_NUM_FIBERS];
 static __thread char S_stack[OOC_NUM_FIBERS][SIGSTKSZ];
+static __thread aioreq_t S_aioreq[OOC_NUM_FIBERS];
 
 /* Fiber state lists. */
 static __thread int S_n_idle;
@@ -181,8 +182,8 @@ S_sigsegv_handler1(void)
   page = (void*)((uintptr_t)S_addr[S_me]&(~(S_ps-1)));
 
   if (!S_is_runnable(S_me)) {
-    /* Advise kernel to fetch the page. */
-    ret = madvise(page, S_ps, MADV_WILLNEED);
+    /* Post an asynchronous fetch of the page. */
+    ret = aio_read(page, S_ps, &(S_aioreq[S_me]));
     assert(!ret);
 
     /* Put myself on idle list. */

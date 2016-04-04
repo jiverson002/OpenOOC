@@ -24,6 +24,8 @@ THE SOFTWARE.
 #ifndef OOC_COMMON_H
 #define OOC_COMMON_H
 
+/* size_t */
+#include <stddef.h>
 
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
@@ -78,6 +80,29 @@ typedef int lock_t;
 /*----------------------------------------------------------------------------*/
 /* */
 /*----------------------------------------------------------------------------*/
+#define aioctx   ooc_aioctx
+#define aioctx_t ooc_aioctx_t
+/*! Asynchronous i/o context. */
+struct aioctx
+{
+  int fixme;
+};
+typedef struct aioctx * aioctx_t;
+
+#define aioreq   ooc_aioreq
+#define aioreq_t ooc_aioreq_t
+/*! Asynchronous i/o request. */
+struct ooc_aioreq
+{
+  /* The order of these fields is implementation-dependent */
+
+  void *          aio_buf;   /* Location of buffer */
+  volatile size_t aio_count; /* Length of transfer */
+  volatile int    aio_error; /* Request error */
+  int             aio_op;    /* Indicator of read(0) / write(1) operation */
+};
+typedef struct aioreq aioreq_t;
+
 #define vm_area ooc_vm_area
 #define sp_node ooc_vm_area
 /*! Virtual memory area. */
@@ -109,6 +134,36 @@ struct sp_tree
 /*----------------------------------------------------------------------------*/
 /* Function prototypes */
 /*----------------------------------------------------------------------------*/
+#define aio_setup ooc_aio_setup
+/*! Setup an asynchronous i/o context. */
+int aio_setup(unsigned int const nr, aioctx_t * const ctx);
+
+#define aio_destroy ooc_aio_destroy
+/*! Destroy an asynchronous i/o context. */
+int aio_destroy(aioctx_t ctx);
+
+#define aio_read ooc_aio_read
+/*! Post an asynchronous read request. */
+int aio_read(void * const buf, size_t const count, aioreq_t * const aioreq);
+
+#define aio_write ooc_aio_write
+/*! Post an asynchronous write request. */
+int aio_write(void const * const buf, size_t const count,
+              aioreq_t * const aioreq);
+
+#define aio_error ooc_aio_error
+/*! Check for completion of a request. */
+int aio_error(aioreq_t * const aioreq);
+
+#define aio_return ooc_aio_return
+/*! Get the return value of a completed request. */
+ssize_t aio_return(aioreq_t * const aioreq);
+
+#define aio_suspend ooc_aio_suspend
+/*! Suspend execution until some aio request completes. */
+int aio_suspend(void);
+
+
 /* sp_tree.c */
 #define sp_tree_init ooc_sp_tree_init
 /*! Initialize the linked list to an empty list. */
