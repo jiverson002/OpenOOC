@@ -51,15 +51,6 @@ THE SOFTWARE.
 /* OOC_NUM_FIBERS, function prototypes */
 #include "include/ooc.h"
 
-/* Debug print statements. */
-#if 0
-#include <stdio.h>
-#include <sys/syscall.h>
-#define dbg_printf(...) printf(__VA_ARGS__)
-#else
-#define dbg_printf(...)
-#endif
-
 /* */
 #include "common.h"
 
@@ -113,29 +104,32 @@ static __thread ucontext_t S_kern[OOC_NUM_FIBERS];
 static __thread char S_stack[OOC_NUM_FIBERS][SIGSTKSZ];
 static __thread aioreq_t S_aioreq[OOC_NUM_FIBERS];
 
-/* Fiber state lists. */
+/*! Fiber state lists. */
 static __thread int S_n_idle;
 static __thread int S_n_wait;
 static __thread int S_idle_list[OOC_NUM_FIBERS];
 static __thread int S_wait_list[OOC_NUM_FIBERS];
 
-/* My fiber id. */
+/*! My fiber id. */
 static __thread int S_me;
 
-/* The old sigaction to be replaced when we are done. */
+/*! The old sigaction to be replaced when we are done. */
 static __thread struct sigaction S_old_act;
 
-/* System page size. */
-static __thread uintptr_t S_ps;
-
-/* The main context, i.e., the context which spawned all of the fibers. */
+/*! The main context, i.e., the context which spawned all of the fibers. */
 static __thread ucontext_t S_main;
 
-/* Indicator variable for library initialization. */
+/*! Indicator variable for library initialization. */
 static __thread int S_is_init=0;
 
-/* Per-process system page table. */
+/*! Asynchronous I/O context. */
+static __thread aioctx_t S_aioctx;
+
+/*! Per-process system page table. */
 struct sp_tree vma_tree;
+
+/* System page size. */
+__thread uintptr_t ps;
 
 
 static int
@@ -145,14 +139,22 @@ S_is_runnable(int const id)
   unsigned char incore=0;
   void * page;
 
-  /* Page align the offending address. */
-  page = (void*)((uintptr_t)S_addr[id]&(~(S_ps-1)));
+  /* Check if there is a request and if it has completed. */
+  if (-1 == (ret=aio_error(&(S_aioreq[id])))) {
+    assert(EINVAL == errno);
 
-  /* Check if the page is resident. */
-  ret = mincore(page, S_ps, &incore);
-  assert(!ret);
+    /* Page align the offending address. */
+    page = (void*)((uintptr_t)S_addr[id]&(~(ps-1)));
 
-  return incore;
+    /* Check if the page is resident. */
+    ret = mincore(page, ps, &incore);
+    assert(!ret);
+
+    return incore;
+  }
+  assert(EINPROGRESS == ret || 0 == ret);
+
+  return (0 == ret);
 }
 
 
@@ -160,6 +162,7 @@ static void
 S_sigsegv_handler1(void)
 {
   int ret;
+  ssize_t retval;
   void * page;
 
   /* When a thread receives a SIGSEGV, it checks to see if this is the second
@@ -179,11 +182,11 @@ S_sigsegv_handler1(void)
    * fibers resuming execution. */
 
   /* Page align the offending address. */
-  page = (void*)((uintptr_t)S_addr[S_me]&(~(S_ps-1)));
+  page = (void*)((uintptr_t)S_addr[S_me]&(~(ps-1)));
 
   if (!S_is_runnable(S_me)) {
     /* Post an asynchronous fetch of the page. */
-    ret = aio_read(page, S_ps, &(S_aioreq[S_me]));
+    ret = aio_read(page, ps, &(S_aioreq[S_me]));
     assert(!ret);
 
     /* Put myself on idle list. */
@@ -195,13 +198,17 @@ S_sigsegv_handler1(void)
     /* Switch back to main context to allow another fiber to execute. */
     ret = swapcontext(&(S_handler[S_me]), &S_main);
     assert(!ret);
+
+    /* Retrieve and validate the return value for the request. */
+    retval = aio_return(&(S_aioreq[S_me]));
+    assert((ssize_t)ps == retval);
   }
   else {
     dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), S_me);
   }
 
   /* Apply updates to page containing offending address. */
-  ret = mprotect(page, S_ps, PROT_READ|PROT_WRITE);
+  ret = mprotect(page, ps, PROT_READ|PROT_WRITE);
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */
@@ -276,8 +283,8 @@ S_sigsegv_handler2(void)
   }
 
   /* Apply updates to page containing offending address. */
-  addr = (uintptr_t)S_addr[S_me]&(~(S_ps-1)); /* page align */
-  ret = mprotect((void*)addr, S_ps, prot);
+  addr = (uintptr_t)S_addr[S_me]&(~(ps-1)); /* page align */
+  ret = mprotect((void*)addr, ps, prot);
   assert(!ret);
 
   /* Unlock the vma. */
@@ -391,7 +398,10 @@ S_init(void)
   int ret, i;
   struct sigaction act;
 
-  S_ps = (uintptr_t)OOC_PAGE_SIZE;
+  ps = (uintptr_t)OOC_PAGE_SIZE;
+
+  dbg_printf("[%5d.***] Library initialized -- pagesize=%lu\n",\
+    (int)syscall(SYS_gettid), (long unsigned)ps);
 
   memset(&S_main, 0, sizeof(ucontext_t));
 
@@ -408,11 +418,17 @@ S_init(void)
     memset(&(S_trampoline[i]), 0, sizeof(ucontext_t));
     memset(&(S_kern[i]), 0, sizeof(ucontext_t));
 
+    memset(&(S_aioreq[i]), 0, sizeof(aioreq_t));
+
     ret = S_kern_init(i);
     assert(!ret);
 
     S_idle_list[S_n_idle++] = i;
   }
+
+  /* Setup async-i/o context. */
+  ret = aio_setup(OOC_NUM_FIBERS, &S_aioctx);
+  assert(!ret);
 
   S_is_init = 1;
 
@@ -426,6 +442,10 @@ ooc_finalize(void)
   int ret;
 
   ret = sigaction(SIGSEGV, &S_old_act, NULL);
+
+  /* Destroy async-i/o context. */
+  ret = aio_destroy(S_aioctx);
+  assert(!ret);
 
   S_is_init = 0;
 
@@ -460,9 +480,9 @@ ooc_wait(void)
     /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
      * thread actually access the pages which are not in core, they will not be
      * faulted in. */
-    if (-1 == wait) {
+    /*if (-1 == wait) {
       wait = S_wait_list[--S_n_wait];
-    }
+    }*/
 
     if (-1 != wait) {
       dbg_printf("[%5d.%.3d]   Runnable, switching to S_handler\n",\
@@ -471,6 +491,15 @@ ooc_wait(void)
       /* Switch fibers. */
       S_me = wait;
       ret = swapcontext(&S_main, &(S_handler[S_me]));
+      assert(!ret);
+    }
+    else {
+      /* TODO Have aio_suspend() return the runnable fiber 'somehow', so that we
+       * do not have to subsequently search the wait list to find it. */
+      /* Wait for a fiber to become runnable. Since we are in the `main`
+       * context, all fibers must be blocked on async-io, thus no fiber will
+       * become idle, so we just wait on async-io. */
+      ret = aio_suspend();
       assert(!ret);
     }
   }
@@ -515,9 +544,9 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
        * thread actually access the pages which are not in core, they will not
        * be faulted in. */
-      if (-1 == wait) {
+      /*if (-1 == wait) {
         wait = S_wait_list[--S_n_wait];
-      }
+      }*/
     }
 
     if (-1 != wait) {
@@ -558,6 +587,15 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
        * this is the only point that we know that iteration i has been scheduled
        * to a fiber. */
       break;
+    }
+    else {
+      /* TODO Have aio_suspend() return the runnable fiber 'somehow', so that we
+       * do not have to subsequently search the wait list to find it. */
+      /* Wait for a fiber to become runnable. Since we are in the `main`
+       * context, all fibers must be blocked on async-io, thus no fiber will
+       * become idle, so we just wait on async-io. */
+      ret = aio_suspend();
+      assert(!ret);
     }
   }
 }

@@ -24,6 +24,10 @@ THE SOFTWARE.
 #ifndef OOC_COMMON_H
 #define OOC_COMMON_H
 
+
+/* uintptr_t */
+#include <inttypes.h>
+
 /* size_t */
 #include <stddef.h>
 
@@ -44,6 +48,14 @@ THE SOFTWARE.
 #define VM_PROT_NONE  0x0LU
 #define VM_PROT_READ  0x1LU
 #define VM_PROT_WRITE 0x3LU
+
+
+/*----------------------------------------------------------------------------*/
+/* Implementation variables */
+/*----------------------------------------------------------------------------*/
+/*! System page size. */
+#define ps ooc_ps
+extern __thread uintptr_t ps;
 
 
 /*----------------------------------------------------------------------------*/
@@ -225,6 +237,18 @@ void vma_gpool_show(void);
 /*! OOC Virtual Memory Area (VMA) tree - shared by all threads in a process,
  * since said threads all share the same address space. */
 extern struct sp_tree vma_tree;
+
+
+/*----------------------------------------------------------------------------*/
+/* Debug print statements. */
+/*----------------------------------------------------------------------------*/
+#if 0
+#include <stdio.h>
+#include <sys/syscall.h>
+#define dbg_printf(...) printf(__VA_ARGS__)
+#else
+#define dbg_printf(...)
+#endif
 
 
 #endif /* OOC_COMMON_H */

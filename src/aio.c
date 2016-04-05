@@ -41,7 +41,7 @@ THE SOFTWARE.
   /* assert */
   #include <assert.h>
 
-  /* EAGAIN */
+  /* EINPROGRESS */
   #include <errno.h>
 
   /* pthread_create, pthread_join */
@@ -50,8 +50,14 @@ THE SOFTWARE.
   /* sem_t, sem_wait, sem_post, sem_init, sem_destroy */
   #include <semaphore.h>
 
+  /* calloc */
+  #include <stdlib.h>
+
   /* FIXME POC memcmp */
   #include <string.h>
+
+  /* mprotect, PROT_READ, PROT_WRITE */
+  #include <sys/mman.h>
 
 
   /*! Maximum number of outstanding async-i/o requests. */
@@ -66,8 +72,12 @@ THE SOFTWARE.
   static __thread pthread_t S_aiothread;
 
   /*! Asynchronous i/o request queue. */
-  static __thread struct {
-    sem_t num_aioos;                          /*!< Number of outstanding aio requests. */
+  #define aioq ooc_aioq
+  static __thread struct ooc_aioq {
+    int head;
+    int tail;
+    sem_t lock;                               /*!< Structure lock. */
+    sem_t dctr;                               /*!< Number of outstanding aio requests. */
     sem_t full;                               /*!< Indicator of full queue. */
     sem_t empty;                              /*!< Indicator of empty queue. */
     struct ooc_aioreq * aioreq[AIO_MAX_REQS]; /*!< Array of requests. */
@@ -93,10 +103,24 @@ THE SOFTWARE.
 
 #if !defined(WITH_NATIVE_AIO) && !defined(WITH_POSIX_AIO)
 static void *
-S_aiothread_func(void * const unused)
+S_aiothread_func(void * const state)
 {
   int ret;
-  aioreq_t * aioreq;
+  size_t i;
+  ooc_aioreq_t * aioreq;
+  char * zpage;
+  struct aioq * q;
+
+  /* Set system page size */
+  ps = (uintptr_t)OOC_PAGE_SIZE;
+
+  dbg_printf("[%5d.aio]   Async I/O thread alive\n",\
+    (int)syscall(SYS_gettid));
+
+  q = (struct aioq*)state;
+
+  zpage = calloc(1, ps);
+  assert(zpage);
 
   for (;;) {
     /*
@@ -106,31 +130,57 @@ S_aiothread_func(void * const unused)
       - Unlock queue
       - Post to full semaphore
     */
-    ret = sem_wait(&(S_q.empty));
+    dbg_printf("[%5d.aio]   Waiting for empty indicator\n",\
+      (int)syscall(SYS_gettid));
+    ret = sem_wait(&(q->empty));
     assert(!ret);
-    /* Lock queue */
-    /* Dequeue */
-    /* Unlock queue */
-    ret = sem_post(&(S_q.full));
+    dbg_printf("[%5d.aio]   Waiting for lock\n",\
+      (int)syscall(SYS_gettid));
+    ret = sem_wait(&(q->lock));
+    assert(!ret);
+    aioreq = q->aioreq[q->head++];
+    dbg_printf("[%5d.aio]   Request dequeued\n", (int)syscall(SYS_gettid));
+    if (AIO_MAX_REQS == q->head) {
+      q->head = 0;
+    }
+    ret = sem_post(&(q->lock));
+    assert(!ret);
+    ret = sem_post(&(q->full));
     assert(!ret);
 
+    dbg_printf("[%5d.aio]   Processing request %p,%zu,%lu\n",\
+      (int)syscall(SYS_gettid), (void*)aioreq->aio_buf, aioreq->aio_count, ps);
     /*
       - Process request
     */
     /* FIXME POC */
-    /*switch (aioreq->aio_op) {
+    switch (aioreq->aio_op) {
       case 0:
-      ret = memcmp(aioreq->buf, zpage, S_ps);
-      aioreq->error = 0;
+      /* FIXME Need to give buffer read access, since it will not have it
+       * otherwise, since a buffer is only enqueued if it is known to be swapped
+       * out. */
+      ret = mprotect(aioreq->aio_buf, aioreq->aio_count, PROT_READ);
+      assert(!ret);
+      /* Touch the pages. */
+      for (i=0; i<aioreq->aio_count; i+=ps) {
+        ret = memcmp((char*)aioreq->aio_buf+i, zpage, ps);
+        (void)ret;
+      }
+      aioreq->aio_error = 0;
       break;
+
       case 1:
       break;
-    }*/
+    }
+
+    ret = sem_post(&(q->dctr));
+    assert(!ret);
+    dbg_printf("[%5d.aio]   Request processed\n", (int)syscall(SYS_gettid));
   }
 
-  return NULL;
+  free(zpage);
 
-  if (unused) { (void)0; }
+  return NULL;
 }
 #endif
 
@@ -147,7 +197,31 @@ ooc_aio_setup(unsigned int const nr, ooc_aioctx_t * const ctx)
 
   if (nr || ctx) {}
 #else
-  ret = pthread_create(&S_aiothread, NULL, &S_aiothread_func, NULL);
+  dbg_printf("[%5d.***] Setting up async i/o context\n",\
+    (int)syscall(SYS_gettid));
+
+  S_q.head = 0;
+  S_q.tail = 0;
+  ret = sem_init(&(S_q.lock), 0, 1);
+  if (ret) {
+    return ret;
+  }
+  ret = sem_init(&(S_q.dctr), 0, 0);
+  if (ret) {
+    return ret;
+  }
+  ret = sem_init(&(S_q.empty), 0, 0);
+  if (ret) {
+    return ret;
+  }
+  ret = sem_init(&(S_q.full), 0, AIO_MAX_REQS);
+  if (ret) {
+    return ret;
+  }
+  ret = pthread_create(&S_aiothread, NULL, &S_aiothread_func, &S_q);
+  if (ret) {
+    return ret;
+  }
 
   if (nr || ctx) {}
 #endif
@@ -168,7 +242,30 @@ ooc_aio_destroy(ooc_aioctx_t ctx)
 
   if (ctx) {}
 #else
-  ret = pthread_join(S_aiothread, NULL);
+  dbg_printf("[%5d.***] Destroying async i/o context\n",\
+    (int)syscall(SYS_gettid));
+
+  ret = sem_destroy(&(S_q.lock));
+  if (ret) {
+    return ret;
+  }
+  ret = sem_destroy(&(S_q.dctr));
+  if (ret) {
+    return ret;
+  }
+  ret = sem_destroy(&(S_q.empty));
+  if (ret) {
+    return ret;
+  }
+  ret = sem_destroy(&(S_q.full));
+  if (ret) {
+    return ret;
+  }
+  /* FIXME Send S_aiothread some type of cancel message. */
+  /*ret = pthread_join(S_aiothread, NULL);
+  if (ret) {
+    return ret;
+  }*/
 
   if (ctx) {}
 #endif
@@ -203,20 +300,28 @@ ooc_aio_read(void * const buf, size_t const count, ooc_aioreq_t * const aioreq)
 #else
   aioreq->aio_buf = buf;
   aioreq->aio_count = count;
-  aioreq->aio_error = EAGAIN;
+  aioreq->aio_error = EINPROGRESS;
   aioreq->aio_op = 0;
 
   /* TODO Enqueue page read. */
   /*
     - Wait on full semaphore
-    - Lock queue
+    x Do not need to lock, since iteration will only occur from this thread.
     - Enqueue
-    - Unlock queue
     - Post to empty semaphore
   */
+  ret = sem_wait(&(S_q.full));
+  assert(!ret);
+  S_q.aioreq[S_q.tail++] = aioreq;
+  if (AIO_MAX_REQS == S_q.tail) {
+    S_q.tail = 0;
+  }
+  ret = sem_post(&(S_q.empty));
+  assert(!ret);
 
-  /* FIXME Not fully implemented. */
-  ret = -1;
+  dbg_printf("[%5d.***]   Read request enqueued\n", (int)syscall(SYS_gettid));
+
+  ret = 0;
 #endif
 
   return ret;
@@ -250,17 +355,24 @@ ooc_aio_write(void const * const buf, size_t const count,
 #else
   aioreq->aio_buf = (void*)buf;
   aioreq->aio_count = count;
-  aioreq->aio_error = EAGAIN;
+  aioreq->aio_error = EINPROGRESS;
   aioreq->aio_op = 1;
 
   /* TODO Enqueue page write. */
   /*
     - Wait on full semaphore
-    - Lock queue
+    x Do not need to lock, since iteration will only occur from this thread.
     - Enqueue
-    - Unlock queue
     - Post to empty semaphore
   */
+  ret = sem_wait(&(S_q.full));
+  assert(!ret);
+  S_q.aioreq[S_q.tail++] = aioreq;
+  if (AIO_MAX_REQS == S_q.tail) {
+    S_q.tail = 0;
+  }
+  ret = sem_post(&(S_q.empty));
+  assert(!ret);
 
   /* FIXME Not fully implemented. */
   ret = -1;
@@ -283,8 +395,13 @@ ooc_aio_error(ooc_aioreq_t * const aioreq)
 #elif defined(WITH_POSIX_AIO)
   ret = aio_error(aioreq);
 #else
-  /* FIXME Check completed status of request. */
-  ret = aioreq->aio_error;
+  if (0 == aioreq->aio_count) {
+    ret = -1;
+    errno = EINVAL;
+  }
+  else {
+    ret = aioreq->aio_error;
+  }
 #endif
 
   return ret;
@@ -310,6 +427,7 @@ ooc_aio_return(ooc_aioreq_t * const aioreq)
   else {
     ret = (ssize_t)aioreq->aio_count;
   }
+  aioreq->aio_count = 0; /* Reset aioreq. */
 #endif
 
   return ret;
@@ -329,7 +447,7 @@ ooc_aio_suspend(void)
   ret = aio_suspend(aioreq_list, (int)nr, timeout);
 #else
   /* Wait for a completed request. */
-  ret = sem_wait(&(S_q.num_aioos));
+  ret = sem_wait(&(S_q.dctr));
   if (-1 == ret) {
     return ret;
   }
@@ -340,9 +458,16 @@ ooc_aio_suspend(void)
     - iterate queue and get pointer to completed request
     - unlock queue
   */
+  /*ret = sem_wait(&(S_q.lock));
+  assert(!ret);*/
+  /*for (i=S_q.head; i!=S_q.tail;) {
+    
+  }*/
+  /*ret = sem_post(&(S_q.lock));
+  assert(!ret);*/
 
   /* FIXME Not fully implemented. */
-  ret = -1;
+  /*ret = -1;*/
 #endif
 
   return ret;
