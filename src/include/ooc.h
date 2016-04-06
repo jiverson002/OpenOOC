@@ -79,6 +79,7 @@ void ooc_free(void * ptr);
 /* sched.c */
 void ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
                void * const args);
+void ooc_set_num_fibers(unsigned int const num_fibers);
 
 #ifdef __cplusplus
 }

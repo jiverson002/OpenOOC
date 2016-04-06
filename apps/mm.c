@@ -189,7 +189,7 @@ __ooc_defn ( static void S_matmult_ooc )(size_t const bid, void * const state)
 int
 main(int argc, char * argv[])
 {
-  int ret, opt, use_ooc, num_threads, validate;
+  int ret, opt, use_ooc, num_fibers, num_threads, validate;
   unsigned long t1_nsec, t2_nsec, t3_nsec, t4_nsec;
   size_t n, m, p, q, r, s;
   size_t i, j, k, bid;
@@ -211,9 +211,13 @@ main(int argc, char * argv[])
   q = 1;
   r = 1;
   s = 1;
+  num_fibers = 1;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:s:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:s:f:t:"))) {
     switch (opt) {
+    case 'f':
+      num_fibers = atoi(optarg);
+      break;
     case 'o':
       use_ooc = 1;
       break;
@@ -271,8 +275,8 @@ main(int argc, char * argv[])
 
   printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, s=%zu\n", n, m, p, q, r, s);
   printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
-  printf("use_ooc=%d, num_threads=%d, validate=%d\n", use_ooc, num_threads,\
-    validate);
+  printf("use_ooc=%d, num_fibers=%d, num_threads=%d, validate=%d\n", use_ooc,\
+    num_fibers, num_threads, validate);
 
   printf("Generating matrices...\n");
   S_gettime(&ts);
@@ -283,6 +287,8 @@ main(int argc, char * argv[])
 
   if (use_ooc) {
     /* Prepare OOC environment. */
+    ooc_set_num_fibers((unsigned int)num_fibers);
+
     ret = mprotect(a, n*m*sizeof(*a), PROT_NONE);
     assert(!ret);
     ret = mprotect(b, m*p*sizeof(*b), PROT_NONE);

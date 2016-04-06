@@ -426,8 +426,8 @@ ooc_wait(void)
   int ret, wait;
   aioreq_t * aioreq;
 
-  dbg_printf("[%5d.***] Waiting for outstanding fibers\n",\
-    (int)syscall(SYS_gettid));
+  dbg_printf("[%5d.***] Waiting for outstanding %d fibers\n",\
+    (int)syscall(SYS_gettid), T_n_wait);
 
   while (T_n_wait) {
     /* Wait for a fiber to become runnable. Since we are in the `main`
@@ -470,6 +470,10 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
   }
 
   dbg_printf("[%5d.***] Scheduling a new fiber\n", (int)syscall(SYS_gettid));
+  dbg_printf("[%5d.***]   %d fibers idle\n", (int)syscall(SYS_gettid),\
+    T_n_idle);
+  dbg_printf("[%5d.***]   %d fibers waiting\n", (int)syscall(SYS_gettid),\
+    T_n_wait);
 
   for (;;) {
     idle = wait = -1;
@@ -534,6 +538,31 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       assert(0);
     }
   }
+}
+
+
+void
+ooc_set_num_fibers(unsigned int const num_fibers)
+{
+  int ret, i;
+
+  /* Make sure that library has been initialized. */
+  if (!T_is_init) {
+    ret = S_init();
+    assert(!ret);
+  }
+
+  T_num_fibers = num_fibers;
+
+  /* Setup per-thread fibers. */
+  T_n_idle = 0;
+  for (i=0; i<(int)T_num_fibers; ++i) {
+    /* Add fiber to idle list. */
+    T_idle_list[T_n_idle++] = i;
+  }
+
+  dbg_printf("[%5d.***] Set number of fibers to %u / %d\n",\
+    (int)syscall(SYS_gettid), T_num_fibers, T_n_idle);
 }
 
 
