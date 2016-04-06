@@ -48,7 +48,7 @@ THE SOFTWARE.
 /* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
-/* OOC_NUM_FIBERS, function prototypes */
+/* function prototypes */
 #include "include/ooc.h"
 
 /* */
@@ -90,45 +90,11 @@ THE SOFTWARE.
 /******************************************************************************/
 
 
-/* Together these arrays make up an out-of-core execution context, henceforth
- * known simply as a fiber. Multiple arrays are used instead of a struct with
- * the various fields to simplify things like passing all fibers' async-io
- * requests to library functions, i.e., aio_suspend(). */
-static __thread size_t S_iter[OOC_NUM_FIBERS];
-static __thread void * S_args[OOC_NUM_FIBERS];
-static __thread void (*S_kernel[OOC_NUM_FIBERS])(size_t const, void * const);
-static __thread void * S_addr[OOC_NUM_FIBERS];
-static __thread ucontext_t S_handler[OOC_NUM_FIBERS];
-static __thread ucontext_t S_trampoline[OOC_NUM_FIBERS];
-static __thread ucontext_t S_kern[OOC_NUM_FIBERS];
-static __thread char S_stack[OOC_NUM_FIBERS][SIGSTKSZ];
-static __thread aioreq_t S_aioreq[OOC_NUM_FIBERS];
+/*! Thread context. */
+__thread struct thread thread = { .is_init=0 };
 
-/*! Fiber state lists. */
-static __thread int S_n_idle;
-static __thread int S_n_wait;
-static __thread int S_idle_list[OOC_NUM_FIBERS];
-
-/*! My fiber id. */
-static __thread int S_me;
-
-/*! The old sigaction to be replaced when we are done. */
-static __thread struct sigaction S_old_act;
-
-/*! The main context, i.e., the context which spawned all of the fibers. */
-static __thread ucontext_t S_main;
-
-/*! Indicator variable for library initialization. */
-static __thread int S_is_init=0;
-
-/*! Asynchronous I/O context. */
-static __thread aioctx_t S_aioctx;
-
-/*! Per-process system page table. */
-struct sp_tree vma_tree;
-
-/* System page size. */
-__thread uintptr_t ps;
+/*! Process context. */
+struct process process;
 
 
 static int
@@ -139,14 +105,14 @@ S_is_runnable(int const id)
   void * page;
 
   /* Check if there is a request and if it has completed. */
-  if (-1 == (ret=aio_error(&(S_aioreq[id])))) {
+  if (-1 == (ret=aio_error(&(F_aioreq(id))))) {
     assert(EINVAL == errno);
 
     /* Page align the offending address. */
-    page = (void*)((uintptr_t)S_addr[id]&(~(ps-1)));
+    page = (void*)((uintptr_t)F_addr(id)&(~(T_ps-1)));
 
     /* Check if the page is resident. */
-    ret = mincore(page, ps, &incore);
+    ret = mincore(page, T_ps, &incore);
     assert(!ret);
 
     return incore;
@@ -181,41 +147,41 @@ S_sigsegv_handler1(void)
    * fibers resuming execution. */
 
   /* Page align the offending address. */
-  page = (void*)((uintptr_t)S_addr[S_me]&(~(ps-1)));
+  page = (void*)((uintptr_t)F_addr(T_me)&(~(T_ps-1)));
 
-  if (!S_is_runnable(S_me)) {
+  if (!S_is_runnable(T_me)) {
     /* Post an asynchronous fetch of the page. */
-    S_aioreq[S_me].aio_id = S_me;
-    ret = aio_read(page, ps, &(S_aioreq[S_me]));
+    F_aioreq(T_me).aio_id = T_me;
+    ret = aio_read(page, T_ps, &(F_aioreq(T_me)));
     assert(!ret);
 
     /* Increment count of waiting fibers. */
-    S_n_wait++;
+    T_n_wait++;
 
-    dbg_printf("[%5d.%.3d]     Not runnable, switching to S_main\n",\
-      (int)syscall(SYS_gettid), S_me);
+    dbg_printf("[%5d.%.3d]     Not runnable, switching to T_main\n",\
+      (int)syscall(SYS_gettid), T_me);
 
     /* Switch back to main context to allow another fiber to execute. */
-    ret = swapcontext(&(S_handler[S_me]), &S_main);
+    ret = swapcontext(&(F_handler(T_me)), &T_main);
     assert(!ret);
 
     /* Decrement count of waiting fibers. */
-    S_n_wait--;
+    T_n_wait--;
 
     /* Retrieve and validate the return value for the request. */
-    retval = aio_return(&(S_aioreq[S_me]));
-    assert((ssize_t)ps == retval);
+    retval = aio_return(&(F_aioreq(T_me)));
+    assert((ssize_t)T_ps == retval);
   }
   else {
-    dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), S_me);
+    dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), T_me);
 
     /* Apply updates to page containing offending address. */
-    ret = mprotect(page, ps, PROT_READ|PROT_WRITE);
+    ret = mprotect(page, T_ps, PROT_READ|PROT_WRITE);
     assert(!ret);
   }
 
   /* Switch back to trampoline context, so that it may return. */
-  setcontext(&(S_trampoline[S_me]));
+  setcontext(&(F_trampoline(T_me)));
 
   /* It is erroneous to reach this point. */
   abort();
@@ -257,7 +223,7 @@ S_sigsegv_handler2(void)
    * next fiber will deadlock when it tries to relock the vma. */
 
   /* Find the vma corresponding to the offending address and lock it. */
-  ret = sp_tree_find_and_lock(&vma_tree, S_addr[S_me], (void*)&vma);
+  ret = sp_tree_find_and_lock(&vma_tree, F_addr(T_me), (void*)&vma);
   assert(!ret);
 
   if (!(vma->vm_flags&0x1)) {
@@ -266,7 +232,7 @@ S_sigsegv_handler2(void)
       /*aio_read(...);*/
 
       if (/* FIXME async-io has not finished */0) {
-        ret = swapcontext(&(S_handler[S_me]), &S_main);
+        ret = swapcontext(&(F_handler(T_me)), &T_main);
         assert(!ret);
       }
     }
@@ -286,8 +252,8 @@ S_sigsegv_handler2(void)
   }
 
   /* Apply updates to page containing offending address. */
-  addr = (uintptr_t)S_addr[S_me]&(~(ps-1)); /* page align */
-  ret = mprotect((void*)addr, ps, prot);
+  addr = (uintptr_t)F_addr(T_me)&(~(T_ps-1)); /* page align */
+  ret = mprotect((void*)addr, T_ps, prot);
   assert(!ret);
 
   /* Unlock the vma. */
@@ -295,7 +261,7 @@ S_sigsegv_handler2(void)
   assert(!ret);
 
   /* Switch back to trampoline context, so that it may return. */
-  setcontext(&(S_trampoline[S_me]));
+  setcontext(&(F_trampoline(T_me)));
 
   /* It is erroneous to reach this point. */
   abort();
@@ -314,11 +280,11 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   assert(SIGSEGV == sig);
 
-  dbg_printf("[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), S_me);
-  dbg_printf("[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), S_me,\
+  dbg_printf("[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), T_me);
+  dbg_printf("[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), T_me,\
     si->si_addr);
 
-  S_addr[S_me] = si->si_addr;
+  F_addr(T_me) = si->si_addr;
 
   memset(&tmp_uc, 0, sizeof(ucontext_t));
   ret = getcontext(&tmp_uc);
@@ -326,15 +292,15 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   tmp_uc.uc_stack.ss_sp = tmp_stack;
   tmp_uc.uc_stack.ss_size = SIGSTKSZ;
   tmp_uc.uc_stack.ss_flags = 0;
-  memcpy(&(tmp_uc.uc_sigmask), &(S_main.uc_sigmask), sizeof(S_main.uc_sigmask));
+  memcpy(&(tmp_uc.uc_sigmask), &(T_main.uc_sigmask), sizeof(T_main.uc_sigmask));
 
   /* FIXME POC */
   makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler1, 0);
 
   dbg_printf("[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
-    (int)syscall(SYS_gettid), S_me);
+    (int)syscall(SYS_gettid), T_me);
 
-  swapcontext(&(S_trampoline[S_me]), &tmp_uc);
+  swapcontext(&(F_trampoline(T_me)), &tmp_uc);
 
   if (uc) {}
 }
@@ -349,17 +315,17 @@ S_flush(void)
 static void
 S_kernel_trampoline(int const i)
 {
-  S_kernel[i](S_iter[i], S_args[i]);
+  F_kernel(i)(F_iter(i), F_args(i));
 
   /* Before this context returns, it should call a `flush function` where the
    * data it accessed is flushed to disk. */
   S_flush();
 
   /* Put myself on idle list. */
-  S_idle_list[S_n_idle++] = i;
+  T_idle_list[T_n_idle++] = i;
 
   /* Switch back to main context, so that a new fiber gets scheduled. */
-  setcontext(&S_main);
+  setcontext(&T_main);
 
   /* It is erroneous to reach this point. */
   abort();
@@ -367,20 +333,20 @@ S_kernel_trampoline(int const i)
 
 
 /* Moved this into its own function to prevent the following gcc error:
-   variable ‘i’ might be clobbered by ‘longjmp’ or ‘vfork’ [-Werror=clobbered]
+ * variable ‘i’ might be clobbered by ‘longjmp’ or ‘vfork’ [-Werror=clobbered]
  */
 static int
 S_kern_init(int const i)
 {
   int ret;
 
-  ret = getcontext(&(S_kern[i]));
+  ret = getcontext(&(F_kern(i)));
   assert(!ret);
-  S_kern[i].uc_stack.ss_sp = S_stack[i];
-  S_kern[i].uc_stack.ss_size = SIGSTKSZ;
-  S_kern[i].uc_stack.ss_flags = 0;
+  F_kern(i).uc_stack.ss_sp = F_stack(i);
+  F_kern(i).uc_stack.ss_size = SIGSTKSZ;
+  F_kern(i).uc_stack.ss_flags = 0;
 
-  makecontext(&(S_kern[i]), (void (*)(void))&S_kernel_trampoline, 1, i);
+  makecontext(&(F_kern(i)), (void (*)(void))&S_kernel_trampoline, 1, i);
 
   return 0;
 }
@@ -392,39 +358,44 @@ S_init(void)
   int ret, i;
   struct sigaction act;
 
-  ps = (uintptr_t)OOC_PAGE_SIZE;
+  /* Clear thread context. */
+  memset(&thread, 0, sizeof(struct thread));
 
-  dbg_printf("[%5d.***] Library initialized -- pagesize=%lu\n",\
-    (int)syscall(SYS_gettid), (long unsigned)ps);
+  /* Set per-thread system page size. */
+  T_ps = (uintptr_t)OOC_PAGE_SIZE;
 
-  memset(&S_main, 0, sizeof(ucontext_t));
+  /* Set per-thread fiber count. */
+  T_num_fibers = OOC_MAX_FIBERS;
 
+  /* Set per-thread SIGSEGV handler. */
   memset(&act, 0, sizeof(act));
   act.sa_sigaction = &S_sigsegv_trampoline;
   act.sa_flags = SA_SIGINFO;
-  ret = sigaction(SIGSEGV, &act, &S_old_act);
+  ret = sigaction(SIGSEGV, &act, &T_old_act);
   assert(!ret);
 
-  for (i=0; i<OOC_NUM_FIBERS; ++i) {
-    memset(&(S_stack[i]), 0, SIGSTKSZ);
+  /* Setup per-thread fibers. */
+  for (i=0; i<(int)T_num_fibers; ++i) {
+    /* Clear fiber context. */
+    memset(&(T_fiber[i]), 0, sizeof(struct fiber));
 
-    memset(&(S_handler[i]), 0, sizeof(ucontext_t));
-    memset(&(S_trampoline[i]), 0, sizeof(ucontext_t));
-    memset(&(S_kern[i]), 0, sizeof(ucontext_t));
-
-    memset(&(S_aioreq[i]), 0, sizeof(aioreq_t));
-
+    /* Initialize fiber kernel. */
     ret = S_kern_init(i);
     assert(!ret);
 
-    S_idle_list[S_n_idle++] = i;
+    /* Add fiber to idle list. */
+    T_idle_list[T_n_idle++] = i;
   }
 
-  /* Setup async-i/o context. */
-  ret = aio_setup(OOC_NUM_FIBERS, &S_aioctx);
+  /* Setup per-thread async-io context. */
+  ret = aio_setup(T_num_fibers, &T_aioctx);
   assert(!ret);
 
-  S_is_init = 1;
+  /* Mark thread as initialized. */
+  T_is_init = 1;
+
+  dbg_printf("[%5d.***] Library initialized -- pagesize=%lu\n",\
+    (int)syscall(SYS_gettid), (long unsigned)T_ps);
 
   return ret;
 }
@@ -435,13 +406,15 @@ ooc_finalize(void)
 {
   int ret;
 
-  ret = sigaction(SIGSEGV, &S_old_act, NULL);
+  /* Remove per-thread SIGSEGV handler. */
+  ret = sigaction(SIGSEGV, &T_old_act, NULL);
 
-  /* Destroy async-i/o context. */
-  ret = aio_destroy(S_aioctx);
+  /* Destroy per-thread async-io context. */
+  ret = aio_destroy(T_aioctx);
   assert(!ret);
 
-  S_is_init = 0;
+  /* Mark thread as uninitialized. */
+  T_is_init = 0;
 
   return ret;
 }
@@ -456,7 +429,7 @@ ooc_wait(void)
   dbg_printf("[%5d.***] Waiting for outstanding fibers\n",\
     (int)syscall(SYS_gettid));
 
-  while (S_n_wait) {
+  while (T_n_wait) {
     /* Wait for a fiber to become runnable. Since we are in the `main`
      * context, all fibers must be blocked on async-io, thus no fiber will
      * become idle, so we just wait on async-io. */
@@ -467,12 +440,12 @@ ooc_wait(void)
     wait = aioreq->aio_id;
 
     if (-1 != wait) {
-      dbg_printf("[%5d.%.3d]   Runnable, switching to S_handler\n",\
+      dbg_printf("[%5d.%.3d]   Runnable, switching to F_handler\n",\
         (int)syscall(SYS_gettid), wait);
 
       /* Switch fibers. */
-      S_me = wait;
-      ret = swapcontext(&S_main, &(S_handler[S_me]));
+      T_me = wait;
+      ret = swapcontext(&T_main, &(F_handler(T_me)));
       assert(!ret);
     }
     else {
@@ -491,7 +464,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
   aioreq_t * aioreq;
 
   /* Make sure that library has been initialized. */
-  if (!S_is_init) {
+  if (!T_is_init) {
     ret = S_init();
     assert(!ret);
   }
@@ -502,9 +475,9 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     idle = wait = -1;
 
     /* Check idle list for an available fiber. */
-    if (S_n_idle) {
+    if (T_n_idle) {
       /* Remove from idle list. */
-      idle = S_idle_list[--S_n_idle];
+      idle = T_idle_list[--T_n_idle];
     }
     /* Wait for a fiber to become runnable. */
     else {
@@ -519,24 +492,24 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
 
     if (-1 != idle) {
       /* Setup fiber environment. */
-      S_iter[idle] = i;
-      S_kernel[idle] = kern;
-      S_args[idle] = args;
+      F_iter(idle) = i;
+      F_kernel(idle) = kern;
+      F_args(idle) = args;
 
-      dbg_printf("[%5d.%.3d]   Switching to S_kern for iter %zu\n",\
+      dbg_printf("[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
       /* Switch fibers. */
-      S_me = idle;
-      ret = swapcontext(&S_main, &(S_kern[S_me]));
+      T_me = idle;
+      ret = swapcontext(&T_main, &(F_kern(T_me)));
       assert(!ret);
 
-      dbg_printf("[%5d.%.3d]   Returned from S_kern for iter %zu\n",\
+      dbg_printf("[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
-      /* XXX At this point the fiber S_me has either successfully completed its
-       * execution of the kernel S_kern[S_me] or it received a SIGSEGV and
-       * populated the signal handler context S_handler[S_me], so that it can
+      /* XXX At this point the fiber T_me has either successfully completed its
+       * execution of the kernel F_kern(T_me) or it received a SIGSEGV and
+       * populated the signal handler context F_handler(T_me), so that it can
        * resume execution from the point it received SIGSEGV at a later time. */
 
       /* XXX This is the only place we can safely break from this loop, since
@@ -546,13 +519,13 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     }
     else if (-1 != wait) {
       /* Switch fibers. */
-      S_me = wait;
-      ret = swapcontext(&S_main, &(S_handler[S_me]));
+      T_me = wait;
+      ret = swapcontext(&T_main, &(F_handler(T_me)));
       assert(!ret);
 
-      /* XXX At this point the fiber S_me has either successfully completed its
-       * execution of the kernel S_kern[S_me] or it received another SIGSEGV and
-       * repopulated the signal handler context S_handler[S_me], so that it can
+      /* XXX At this point the fiber T_me has either successfully completed its
+       * execution of the kernel F_kern(T_me) or it received another SIGSEGV and
+       * repopulated the signal handler context F_handler(T_me), so that it can
        * resume execution from the point it received the latest SIGSEGV at a
        * later time. */
     }
@@ -584,10 +557,10 @@ void kern(size_t const i, void * const state)
   char * mem=(char*)state;
 
   mem[0] = 'a'; /* Raise a SIGSEGV. */
-  assert(&(mem[0]) == (void*)S_addr[S_me]);
+  assert(&(mem[0]) == (void*)F_addr(T_me));
 
   mem[1] = 'b'; /* Should not raise SIGSEGV. */
-  assert(&(mem[0]) == (void*)S_addr[S_me]);
+  assert(&(mem[0]) == (void*)F_addr(T_me));
 
   var = mem[1]; /* Should not raise SIGSEGV. */
   assert(var = 'b');
@@ -599,13 +572,12 @@ int
 main(void)
 {
   int ret;
-  size_t ps;
   char * mem;
 
-  ps = (size_t)sysconf(_SC_PAGESIZE);
-  assert((size_t)-1 != ps);
+  T_ps = (size_t)sysconf(_SC_PAGESIZE);
+  assert((size_t)-1 != T_ps);
 
-  mem = mmap(NULL, ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  mem = mmap(NULL, T_ps, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != mem);
 
   ooc_sched(&kern, 0, mem);
@@ -614,7 +586,7 @@ main(void)
   ret = ooc_finalize();
   assert(!ret);
 
-  ret = munmap(mem, ps);
+  ret = munmap(mem, T_ps);
   assert(!ret);
 
   return EXIT_SUCCESS;

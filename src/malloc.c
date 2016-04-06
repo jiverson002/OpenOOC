@@ -73,7 +73,7 @@ ooc_malloc(size_t const size)
   vma->vm_end   = (void*)((char*)vma->vm_start+size);
 
   /* Insert new vma into page table. */
-  ret = sp_tree_insert(&vma_tree, vma);
+  ret = sp_tree_insert(&P_vma_tree, vma);
   if (ret) {
     goto fn_cleanup;
   }
@@ -100,12 +100,12 @@ ooc_free(void * ptr)
   struct vm_area * vma;
 
   /* Find the node corresponding to the offending address. */
-  ret = sp_tree_find_and_lock(&vma_tree, ptr, (void*)&vma);
+  ret = sp_tree_find_and_lock(&P_vma_tree, ptr, (void*)&vma);
   assert(!ret);
 
   /* Remove from splay tree. This will be fast, since sp_tree_find_and_lock will
    * splay vma to top of tree. */
-  ret = sp_tree_remove(&vma_tree, vma->vm_start);
+  ret = sp_tree_remove(&P_vma_tree, vma->vm_start);
   assert(!ret);
 
   /* Compute segment sizes. */
@@ -123,7 +123,7 @@ ooc_free(void * ptr)
 /* EXIT_SUCCESS */
 #include <stdlib.h>
 
-struct sp_tree vma_tree;
+struct sp_tree P_vma_tree;
 
 int
 main(void)

@@ -28,8 +28,14 @@ THE SOFTWARE.
 /* uintptr_t */
 #include <inttypes.h>
 
+/* struct sigaction, SIGSTKSZ */
+#include <signal.h>
+
 /* size_t */
 #include <stddef.h>
+
+/* ucontext_t */
+#include <ucontext.h>
 
 /* sysconf, _SC_PAGESIZE */
 #include <unistd.h>
@@ -42,20 +48,12 @@ THE SOFTWARE.
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 /*! Maximum number of fibers per thread. */
-#define OOC_NUM_FIBERS 16
+#define OOC_MAX_FIBERS 16
 
 /*! Protection flags. */
 #define VM_PROT_NONE  0x0LU
 #define VM_PROT_READ  0x1LU
 #define VM_PROT_WRITE 0x3LU
-
-
-/*----------------------------------------------------------------------------*/
-/* Implementation variables */
-/*----------------------------------------------------------------------------*/
-/*! System page size. */
-#define ps ooc_ps
-extern __thread uintptr_t ps;
 
 
 /*----------------------------------------------------------------------------*/
@@ -104,13 +102,13 @@ typedef struct aioctx * aioctx_t;
 #define aioreq   ooc_aioreq
 #define aioreq_t ooc_aioreq_t
 /*! Asynchronous i/o request. */
-struct ooc_aioreq
+struct aioreq
 {
   /* The order of these fields is implementation-dependent */
 
   int             aio_id;    /*! Fiber ID */
   void *          aio_buf;   /*! Location of buffer */
-  volatile size_t aio_count; /*! Length of transfer */
+  size_t          aio_count; /*! Length of transfer */
   volatile int    aio_error; /*! Request error */
   int             aio_op;    /*! Indicator of read(0) / write(1) operation */
 };
@@ -141,6 +139,77 @@ struct sp_tree
 {
   struct sp_node * root;      /* root of tree */
   lock_t         lock;        /* struct lock */
+};
+
+
+/*----------------------------------------------------------------------------*/
+/* */
+/*----------------------------------------------------------------------------*/
+/*! Out-of-core execution context, henceforth known simply as a fiber. */
+#define fiber ooc_fiber
+struct fiber
+{
+  size_t     iter;
+  aioreq_t   aioreq;
+  ucontext_t handler;
+  ucontext_t trampoline;
+  ucontext_t kern;
+  void *     args;
+  void *     addr;
+  char       stack[SIGSTKSZ];
+  void       (*kernel)(size_t const, void * const);
+
+  #define F_iter(id)       (T_fiber[id].iter)
+  #define F_aioreq(id)     (T_fiber[id].aioreq)
+  #define F_handler(id)    (T_fiber[id].handler)
+  #define F_trampoline(id) (T_fiber[id].trampoline)
+  #define F_kern(id)       (T_fiber[id].kern)
+  #define F_args(id)       (T_fiber[id].args)
+  #define F_addr(id)       (T_fiber[id].addr)
+  #define F_stack(id)      (T_fiber[id].stack)
+  #define F_kernel(id)     (T_fiber[id].kernel)
+};
+
+
+/*! Thread context. */
+#define thread ooc_thread
+struct thread
+{
+  int              is_init;                   /*!< Indicator of library init. */
+  int              me;                        /*!< Current fiber id. */
+  int              n_wait;                    /*!< Waiting fiber counter. */
+  int              n_idle;                    /*!< Idle fiber counter. */
+  unsigned int     num_fibers;                /*!< Number of fibers. */
+  uintptr_t        ps;                        /*!< System page size. */
+  aioctx_t         aioctx;                    /*!< Async I/O context. */
+  ucontext_t       main;                      /*!< The main context. */
+  struct sigaction old_act;                   /*!< Old sigaction. */
+  int              idle_list[OOC_MAX_FIBERS]; /*!< List of idle fibers. */
+  struct fiber     fiber[OOC_MAX_FIBERS];     /*!< Fibers. */
+
+  #define T_is_init    (thread.is_init)
+  #define T_me         (thread.me)
+  #define T_n_wait     (thread.n_wait)
+  #define T_n_idle     (thread.n_idle)
+  #define T_num_fibers (thread.num_fibers)
+  #define T_ps         (thread.ps)
+  #define T_aioctx     (thread.aioctx)
+  #define T_main       (thread.main)
+  #define T_old_act    (thread.old_act)
+  #define T_idle_list  (thread.idle_list)
+  #define T_fiber      (thread.fiber)
+};
+
+
+#define process ooc_process
+/*! Process context. */
+struct process
+{
+  /*! OOC Virtual Memory Area (VMA) tree - shared by all threads in a process,
+   * since said threads all share the same address space. */
+  struct sp_tree vma_tree; /*!< Per-process system page table. */
+
+  #define P_vma_tree process.vma_tree
 };
 
 
@@ -234,10 +303,13 @@ void vma_gpool_show(void);
 /*----------------------------------------------------------------------------*/
 /* Extern variables */
 /*----------------------------------------------------------------------------*/
-#define vma_tree ooc_vma_tree
-/*! OOC Virtual Memory Area (VMA) tree - shared by all threads in a process,
- * since said threads all share the same address space. */
-extern struct sp_tree vma_tree;
+#define thread ooc_thread
+/*! Thread context. */
+extern __thread struct thread thread;
+
+#define process ooc_process
+/*! Process context. */
+extern struct process process;
 
 
 /*----------------------------------------------------------------------------*/
