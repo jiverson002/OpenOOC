@@ -196,11 +196,12 @@ S_aiothread_func(void * const state)
 {
   int ret;
   unsigned char incore;
+  unsigned long ps;
   ooc_aioreq_t * aioreq;
   struct ooc_aioargs * args;
   struct ooc_aioq * oq, * cq;
 
-  /* Set system page size */
+  /* Get system page size */
   ps = (uintptr_t)OOC_PAGE_SIZE;
 
   dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
