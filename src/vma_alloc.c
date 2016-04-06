@@ -56,14 +56,16 @@ THE SOFTWARE.
 #endif
 
 #ifdef USE_MEMALIGN
-  #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-    #define _POSIX_C_SOURCE 200112L
-  #elif defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE < 200112L
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 200112L
-  #elif defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600
-    #undef _XOPEN_SOURCE
-    #define _XOPEN_SOURCE 600
+  #if !defined(_DEFAULT_SOURCE) && !defined(_GNU_SOURCE)
+    #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+      #define _POSIX_C_SOURCE 200112L
+    #elif defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE < 200112L
+      #undef _POSIX_C_SOURCE
+      #define _POSIX_C_SOURCE 200112L
+    #elif defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600
+      #undef _XOPEN_SOURCE
+      #define _XOPEN_SOURCE 600
+    #endif
   #endif
   /* posix_memalign, free */
   #include <stdlib.h>
