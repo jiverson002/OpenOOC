@@ -108,7 +108,6 @@ static __thread aioreq_t S_aioreq[OOC_NUM_FIBERS];
 static __thread int S_n_idle;
 static __thread int S_n_wait;
 static __thread int S_idle_list[OOC_NUM_FIBERS];
-static __thread int S_wait_list[OOC_NUM_FIBERS];
 
 /*! My fiber id. */
 static __thread int S_me;
@@ -186,11 +185,12 @@ S_sigsegv_handler1(void)
 
   if (!S_is_runnable(S_me)) {
     /* Post an asynchronous fetch of the page. */
+    S_aioreq[S_me].aio_id = S_me;
     ret = aio_read(page, ps, &(S_aioreq[S_me]));
     assert(!ret);
 
-    /* Put myself on idle list. */
-    S_wait_list[S_n_wait++] = S_me;
+    /* Increment count of waiting fibers. */
+    S_n_wait++;
 
     dbg_printf("[%5d.%.3d]     Not runnable, switching to S_main\n",\
       (int)syscall(SYS_gettid), S_me);
@@ -199,17 +199,20 @@ S_sigsegv_handler1(void)
     ret = swapcontext(&(S_handler[S_me]), &S_main);
     assert(!ret);
 
+    /* Decrement count of waiting fibers. */
+    S_n_wait--;
+
     /* Retrieve and validate the return value for the request. */
     retval = aio_return(&(S_aioreq[S_me]));
     assert((ssize_t)ps == retval);
   }
   else {
     dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), S_me);
-  }
 
-  /* Apply updates to page containing offending address. */
-  ret = mprotect(page, ps, PROT_READ|PROT_WRITE);
-  assert(!ret);
+    /* Apply updates to page containing offending address. */
+    ret = mprotect(page, ps, PROT_READ|PROT_WRITE);
+    assert(!ret);
+  }
 
   /* Switch back to trampoline context, so that it may return. */
   setcontext(&(S_trampoline[S_me]));
@@ -338,17 +341,9 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
 
 static void
-S_flush1(void)
+S_flush(void)
 {
 }
-
-
-#if 0
-static void
-S_flush2(void)
-{
-}
-#endif
 
 
 static void
@@ -358,8 +353,7 @@ S_kernel_trampoline(int const i)
 
   /* Before this context returns, it should call a `flush function` where the
    * data it accessed is flushed to disk. */
-  /* FIXME POC */
-  S_flush1();
+  S_flush();
 
   /* Put myself on idle list. */
   S_idle_list[S_n_idle++] = i;
@@ -456,33 +450,21 @@ ooc_finalize(void)
 void
 ooc_wait(void)
 {
-  int ret, j, wait;
+  int ret, wait;
+  aioreq_t * aioreq;
 
   dbg_printf("[%5d.***] Waiting for outstanding fibers\n",\
     (int)syscall(SYS_gettid));
 
   while (S_n_wait) {
-    /* Check wait list for an available fiber. */
-    for (j=0,wait=-1; j<S_n_wait; ++j) {
-      if (S_is_runnable(S_wait_list[j])) {
-        dbg_printf("[%5d.%.3d]   Outstanding\n", (int)syscall(SYS_gettid),\
-          S_wait_list[j]);
+    /* Wait for a fiber to become runnable. Since we are in the `main`
+     * context, all fibers must be blocked on async-io, thus no fiber will
+     * become idle, so we just wait on async-io. */
+    aioreq = aio_suspend();
+    assert(aioreq);
 
-        /* Remove entry j from wait list and replace entry j with entry
-         * n_wait-1. */
-        wait = S_wait_list[j];
-        S_wait_list[j] = S_wait_list[--S_n_wait];
-        break;
-      }
-    }
-
-    /* FIXME POC */
-    /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
-     * thread actually access the pages which are not in core, they will not be
-     * faulted in. */
-    /*if (-1 == wait) {
-      wait = S_wait_list[--S_n_wait];
-    }*/
+    /* Get fiber id. */
+    wait = aioreq->aio_id;
 
     if (-1 != wait) {
       dbg_printf("[%5d.%.3d]   Runnable, switching to S_handler\n",\
@@ -494,13 +476,8 @@ ooc_wait(void)
       assert(!ret);
     }
     else {
-      /* TODO Have aio_suspend() return the runnable fiber 'somehow', so that we
-       * do not have to subsequently search the wait list to find it. */
-      /* Wait for a fiber to become runnable. Since we are in the `main`
-       * context, all fibers must be blocked on async-io, thus no fiber will
-       * become idle, so we just wait on async-io. */
-      ret = aio_suspend();
-      assert(!ret);
+      /* Erroneous. */
+      assert(0);
     }
   }
 }
@@ -510,7 +487,8 @@ void
 ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
           void * const args)
 {
-  int ret, j, wait, idle;
+  int ret, wait, idle;
+  aioreq_t * aioreq;
 
   /* Make sure that library has been initialized. */
   if (!S_is_init) {
@@ -528,40 +506,18 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       /* Remove from idle list. */
       idle = S_idle_list[--S_n_idle];
     }
-    /* Check wait list for an available fiber. */
-    if (-1 == idle) {
-      for (j=0; j<S_n_wait; ++j) {
-        if (S_is_runnable(S_wait_list[j])) {
-          /* Remove entry j from wait list and replace entry j with entry
-           * n_wait-1. */
-          wait = S_wait_list[j];
-          S_wait_list[j] = S_wait_list[--S_n_wait];
-          break;
-        }
-      }
+    /* Wait for a fiber to become runnable. */
+    else {
+      /* Since we are in the `main` context and no fibers are idle, all fibers
+       * must be blocked on async-io, thus we just wait on async-io. */
+      aioreq = aio_suspend();
+      assert(aioreq);
 
-      /* FIXME POC */
-      /* XXX Force the scheduler to schedule a fiber, since in the POC, until a
-       * thread actually access the pages which are not in core, they will not
-       * be faulted in. */
-      /*if (-1 == wait) {
-        wait = S_wait_list[--S_n_wait];
-      }*/
+      /* Get fiber id. */
+      wait = aioreq->aio_id;
     }
 
-    if (-1 != wait) {
-      /* Switch fibers. */
-      S_me = wait;
-      ret = swapcontext(&S_main, &(S_handler[S_me]));
-      assert(!ret);
-
-      /* XXX At this point the fiber S_me has either successfully completed its
-       * execution of the kernel S_kern[S_me] or it received another SIGSEGV and
-       * repopulated the signal handler context S_handler[S_me], so that it can
-       * resume execution from the point it received the latest SIGSEGV at a
-       * later time. */
-    }
-    else if (-1 != idle) {
+    if (-1 != idle) {
       /* Setup fiber environment. */
       S_iter[idle] = i;
       S_kernel[idle] = kern;
@@ -588,74 +544,24 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
        * to a fiber. */
       break;
     }
-    else {
-      /* TODO Have aio_suspend() return the runnable fiber 'somehow', so that we
-       * do not have to subsequently search the wait list to find it. */
-      /* Wait for a fiber to become runnable. Since we are in the `main`
-       * context, all fibers must be blocked on async-io, thus no fiber will
-       * become idle, so we just wait on async-io. */
-      ret = aio_suspend();
-      assert(!ret);
-    }
-  }
-}
-
-
-#if 0
-void
-ooc_sched2(void (*kern)(size_t const, void * const), size_t const i,
-           void * const args)
-{
-  int ret, j, run, idle;
-
-  /* Make sure that library has been initialized. */
-  if (!S_is_init) {
-    ret = S_init();
-    assert(!ret);
-  }
-
-  for (;;) {
-    /* Search for a fiber that is either blocked or idle. */
-    for (j=0,run=-1,idle=-1; j<OOC_NUM_FIBERS; ++j) {
-      if (/* FIXME is runnable */0) {
-        run = j;
-        break;
-      }
-      else if (/* FIXME is idle */1) {
-        idle = j;
-        break;
-      }
-    }
-
-    if (-1 != run) {
-      S_me = run;
+    else if (-1 != wait) {
+      /* Switch fibers. */
+      S_me = wait;
       ret = swapcontext(&S_main, &(S_handler[S_me]));
       assert(!ret);
-    }
-    else if (-1 != idle) {
-      S_iter[idle] = i;
-      S_kernel[idle] = kern;
-      S_args[idle] = args;
 
-      S_me = idle;
-      ret = swapcontext(&S_main, &(S_kern[S_me]));
-      assert(!ret);
-
-      /* This is the only place we can safely break from this loop, since this
-       * is the only point that we know that iteration i has been assigned to a
-       * fiber. */
-      break;
+      /* XXX At this point the fiber S_me has either successfully completed its
+       * execution of the kernel S_kern[S_me] or it received another SIGSEGV and
+       * repopulated the signal handler context S_handler[S_me], so that it can
+       * resume execution from the point it received the latest SIGSEGV at a
+       * later time. */
     }
     else {
-      /* TODO Wait for a fiber to become runnable. Since we are in the `main`
-       * context, all fibers must be blocked on async-io, thus no fiber will
-       * become idle, so we just wait on async-io. */
-      /*ret = aio_suspend(_aiolist, OOC_NUM_FIBERS, NULL);
-      assert(!ret);*/
+      /* Erroneous. */
+      assert(0);
     }
   }
 }
-#endif
 
 
 #ifdef TEST

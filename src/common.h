@@ -42,7 +42,7 @@ THE SOFTWARE.
 #define OOC_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 /*! Maximum number of fibers per thread. */
-#define OOC_NUM_FIBERS 16
+#define OOC_NUM_FIBERS 32
 
 /*! Protection flags. */
 #define VM_PROT_NONE  0x0LU
@@ -108,10 +108,11 @@ struct ooc_aioreq
 {
   /* The order of these fields is implementation-dependent */
 
-  void *          aio_buf;   /* Location of buffer */
-  volatile size_t aio_count; /* Length of transfer */
-  volatile int    aio_error; /* Request error */
-  int             aio_op;    /* Indicator of read(0) / write(1) operation */
+  int             aio_id;    /*! Fiber ID */
+  void *          aio_buf;   /*! Location of buffer */
+  volatile size_t aio_count; /*! Length of transfer */
+  volatile int    aio_error; /*! Request error */
+  int             aio_op;    /*! Indicator of read(0) / write(1) operation */
 };
 typedef struct aioreq aioreq_t;
 
@@ -173,7 +174,7 @@ ssize_t aio_return(aioreq_t * const aioreq);
 
 #define aio_suspend ooc_aio_suspend
 /*! Suspend execution until some aio request completes. */
-int aio_suspend(void);
+aioreq_t * aio_suspend(void);
 
 
 /* sp_tree.c */
