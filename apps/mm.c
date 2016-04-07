@@ -53,7 +53,8 @@ THE SOFTWARE.
 struct args
 {
   size_t n, m, p;
-  size_t q, r, s;
+  size_t q, r;
+  size_t x, y, z;
   double const * a, * b;
   double * c;
 };
@@ -103,7 +104,7 @@ S_matfill(size_t const n, size_t const m, double * const a)
 static void
 S_matmult_kern(size_t const bid, void * const state)
 {
-  size_t n, m, p, q, r, s;
+  size_t n, m, p, q, r, x, y, z;
   size_t i, j, k, ii, jj, kk, ie, je, ke, ib, jb, iis, iie, jjs, jje;
   double sum;
   double const * a, * b;
@@ -116,7 +117,9 @@ S_matmult_kern(size_t const bid, void * const state)
   p = args->p;
   q = args->q;
   r = args->r;
-  s = args->s;
+  y = args->y;
+  x = args->x;
+  z = args->z;
   a = args->a;
   b = args->b;
   c = args->c;
@@ -129,7 +132,7 @@ S_matmult_kern(size_t const bid, void * const state)
   jjs = jb*CEILDIV(p, r);
   jje = (jb < r-1) ? ((jb+1)*CEILDIV(p, r)) : p;
 
-  if (1 == s) {
+  if (1 == x && 1 == y && 1 == z) {
     /* Standard. */
     for (i=iis; i<iie; ++i) {
       for (j=jjs; j<jje; ++j) {
@@ -149,28 +152,77 @@ S_matmult_kern(size_t const bid, void * const state)
   }
   else {
     /* Cache blocked. */
-    for (ii=iis; ii<iie; ii+=s) {
-      ie = ii+s < n ? ii+s : n;
-      for (jj=jjs; jj<jje; jj+=s) {
-        je = jj+s < p ? jj+s : p;
-        for (i=ii; i<ie; ++i) {
-          for (j=jj; j<je; ++j) {
-            #define a(R,C) a[R*m+C]
-            #define b(R,C) b[R*m+C]
-            #define c(R,C) c[R*p+C]
-            sum = 0.0;
-            for (kk=0; kk<m; kk+=s) {
-              ke = kk+s < m ? kk+s : m;
+    for (ii=iis; ii<iie; ii+=y) {
+      ie = ii+y < n ? ii+y : n;
+      for (jj=jjs; jj<jje; jj+=z) {
+        je = jj+z < p ? jj+z : p;
+        for (kk=0; kk<m; kk+=x) {
+          ke = kk+x < m ? kk+x : m;
+          for (i=ii; i<ie; ++i) {
+            for (j=jj; j<je; ++j) {
+              #define a(R,C) a[R*m+C]
+              #define b(R,C) b[R*m+C]
+              #define c(R,C) c[R*p+C]
               for (k=kk; k<ke; ++k) {
-                sum += a(i,k)*b(j,k);
+                c(i,j) += a(i,k)*b(j,k);
               }
+              #undef a
+              #undef b
+              #undef c
             }
-            c(i,j) = sum;
-            #undef a
-            #undef b
-            #undef c
           }
         }
+      }
+    }
+  }
+}
+
+
+static void
+S_matmult_kern1(size_t const i, void * const state)
+{
+  size_t m, p;
+  size_t j, k, js, ks, je, ke;
+  double const * a, * b;
+  double * c;
+  struct args const * args;
+
+  args = (struct args const*)state;
+  m = args->m;
+  p = args->p;
+  /*js = args->jj;
+  je = args->je;
+  ks = args->kk;
+  ke = args->ke;*/
+  a = args->a;
+  b = args->b;
+  c = args->c;
+
+  if (1 == args->x && 1 == args->y && 1 == args->z) {
+    /* Standard. */
+    for (j=js; j<je; ++j) {
+      for (k=0; k<m; ++k) {
+        #define a(R,C) a[R*m+C]
+        #define b(R,C) b[R*m+C]
+        #define c(R,C) c[R*p+C]
+        c(i,j) += a(i,k)*b(j,k);
+        #undef a
+        #undef b
+        #undef c
+      }
+    }
+  }
+  else {
+    /* Cache blocked. */
+    for (j=js; j<je; ++j) {
+      for (k=ks; k<ke; ++k) {
+        #define a(R,C) a[R*m+C]
+        #define b(R,C) b[R*m+C]
+        #define c(R,C) c[R*p+C]
+        c(i,j) += a(i,k)*b(j,k);
+        #undef a
+        #undef b
+        #undef c
       }
     }
   }
@@ -191,7 +243,7 @@ main(int argc, char * argv[])
 {
   int ret, opt, use_ooc, num_fibers, num_threads, validate;
   unsigned long t1_nsec, t2_nsec, t3_nsec, t4_nsec;
-  size_t n, m, p, q, r, s;
+  size_t n, m, p, q, r, x, y, z;
   size_t i, j, k, bid;
   double tmp;
   struct args args;
@@ -210,10 +262,12 @@ main(int argc, char * argv[])
   p = 1;
   q = 1;
   r = 1;
-  s = 1;
+  x = 1;
+  y = 1;
+  z = 1;
   num_fibers = 1;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:s:f:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:x:y:z:f:t:"))) {
     switch (opt) {
     case 'f':
       num_fibers = atoi(optarg);
@@ -236,18 +290,25 @@ main(int argc, char * argv[])
     case 'r':
       r = (size_t)atol(optarg);
       break;
-    case 's':
-      s = (size_t)atol(optarg);
-      break;
     case 't':
       num_threads = atoi(optarg);
       break;
     case 'v':
       validate = 1;
       break;
+    case 'x':
+      x = (size_t)atol(optarg);
+      break;
+    case 'y':
+      y = (size_t)atol(optarg);
+      break;
+    case 'z':
+      z = (size_t)atol(optarg);
+      break;
     default: /* '?' */
       fprintf(stderr, "Usage: %s [-ov] [-n n dim] [-m m dim] [-p p dim] "\
-        "[-q q dim] [-r r dim] [-s blksz] [-t num_threads]\n", argv[0]);
+        "[-q q dim] [-r r dim] [-x x dim] [-y y dim] [-z z dim] "\
+        "[-f num_fibers] [-t num_threads]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -258,9 +319,9 @@ main(int argc, char * argv[])
   /* Fix-up input. */
   q = (q < n) ? q : n;
   r = (r < p) ? r : p;
-  s = (s < n) ? s : n;
-  s = (s < m) ? s : m;
-  s = (s < p) ? s : p;
+  x = (x < n) ? x : n;
+  y = (y < p) ? y : p;
+  z = (z < m) ? z : m;
 
   /* Allocate memory. */
   a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
@@ -273,7 +334,8 @@ main(int argc, char * argv[])
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c);
 
-  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, s=%zu\n", n, m, p, q, r, s);
+  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, y=%zu, x=%zu, z=%zu\n", n, m, p,\
+    q, r, y, x, z);
   printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
   printf("use_ooc=%d, num_fibers=%d, num_threads=%d, validate=%d\n", use_ooc,\
     num_fibers, num_threads, validate);
@@ -303,7 +365,9 @@ main(int argc, char * argv[])
   args.p = p;
   args.q = q;
   args.r = r;
-  args.s = s;
+  args.x = x;
+  args.y = y;
+  args.z = z;
   args.a = a;
   args.b = b;
   args.c = c;
@@ -314,6 +378,31 @@ main(int argc, char * argv[])
     private(ts1,te1)
   {
     if (use_ooc) {
+#if 0
+      for (ii=iis; ii<iie; ii+=y) {
+        ie = ii+y < n ? ii+y : n;
+        for (jj=jjs; jj<jje; jj+=z) {
+          je = jj+z < p ? jj+z : p;
+          for (kk=0; kk<m; kk+=x) {
+            ke = kk+x < m ? kk+x : m;
+            for (i=ii; i<ie; ++i) {
+              for (j=jj; j<je; ++j) {
+                #define a(R,C) a[R*m+C]
+                #define b(R,C) b[R*m+C]
+                #define c(R,C) c[R*p+C]
+                for (k=kk; k<ke; ++k) {
+                  c(i,j) += a(i,k)*b(j,k);
+                }
+                #undef a
+                #undef b
+                #undef c
+              }
+            }
+          }
+        }
+      }
+#endif
+
       #pragma omp for nowait schedule(static)
       for (bid=0; bid<q*r; ++bid) {
         S_matmult_ooc(bid, &args);
