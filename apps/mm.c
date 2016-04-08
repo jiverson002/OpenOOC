@@ -27,7 +27,7 @@ THE SOFTWARE.
 /* fabs */
 #include <math.h>
 
-/* printf, fprintf, stderr */
+/* printf */
 #include <stdio.h>
 
 /* rand_r, RAND_MAX, EXIT_SUCCESS */
@@ -48,6 +48,10 @@ THE SOFTWARE.
 
 /* OOC library */
 #include "src/ooc.h"
+
+
+#define XSTR(X) #X
+#define STR(X)  XSTR(X)
 
 
 struct args
@@ -176,9 +180,12 @@ main(int argc, char * argv[])
   size_t n, m, p, y, x, z;
   size_t i, j, k;
   size_t is, ie, js, je;
+  time_t now;
   struct args args;
   struct timespec ts, te;
   double * a, * b, * c, * v;
+
+  now = time(NULL);
 
   t1_nsec = 0;
   t2_nsec = 0;
@@ -253,12 +260,36 @@ main(int argc, char * argv[])
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != v);
 
-  printf("n=%zu, m=%zu, p=%zu, y=%zu, x=%zu, z=%zu\n", n, m, p, y, x, z);
-  printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
-  printf("num_fibers=%d, num_threads=%d, validate=%d\n", num_fibers,\
-    num_threads, validate);
+  /* Output build info. */
+  printf("==========================\n");
+  printf(" General =================\n");
+  printf("==========================\n");
+  printf("  Machine info = %s\n", STR(UNAME));
+  printf("  GCC version  = %s\n", STR(GCCV));
+  printf("  Build date   = %s\n", STR(DATE));
+  printf("  Run date     = %s", ctime(&now));
+  printf("  Git commit   = %9s\n", STR(COMMIT));
+  printf("  SysPage size = %9lu\n", sysconf(_SC_PAGESIZE));
+  printf("\n");
 
-  printf("Generating matrices...\n");
+  /* Output problem info. */
+  printf("==========================\n");
+  printf(" Problem =================\n");
+  printf("==========================\n");
+  printf("  n            = %9zu\n", n);
+  printf("  m            = %9zu\n", m);
+  printf("  p            = %9zu\n", p);
+  printf("  y            = %9zu\n", y);
+  printf("  x            = %9zu\n", x);
+  printf("  z            = %9zu\n", z);
+  printf("  # fibers     = %9d\n", num_fibers);
+  printf("  # threads    = %9d\n", num_threads);
+  printf("\n");
+
+  printf("==========================\n");
+  printf(" Status ==================\n");
+  printf("==========================\n");
+  printf("  Generating matrices...\n");
   S_gettime(&ts);
   S_matfill(n, m, a);
   S_matfill(m, p, b);
@@ -288,7 +319,7 @@ main(int argc, char * argv[])
   args.b = b;
   args.c = c;
 
-  printf("Computing matrix multiplication...\n");
+  printf("  Computing matrix multiplication...\n");
   S_gettime(&ts);
   if (1 == y && 1 == x && 1 == z) { /* standard */
     args.js = 0;
@@ -357,7 +388,7 @@ main(int argc, char * argv[])
   t2_nsec = S_getelapsed(&ts, &te);
 
   if (validate) {
-    printf("Validating results...\n");
+    printf("  Validating results...\n");
     S_gettime(&ts);
     #pragma omp parallel for num_threads(num_threads)
     for (i=0; i<n; ++i) {
@@ -372,10 +403,14 @@ main(int argc, char * argv[])
     t3_nsec = S_getelapsed(&ts, &te);
   }
 
-  fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/1e9);
-  fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/1e9);
+  printf("\n");
+  printf("==========================\n");
+  printf(" Timing (s) ==============\n");
+  printf("==========================\n");
+  printf("  Generate     = %9.5f\n", (double)t1_nsec/1e9);
+  printf("  Compute      = %9.5f\n", (double)t2_nsec/1e9);
   if (validate) {
-    fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/1e9);
+    printf("  Validate     = %9.5f\n", (double)t3_nsec/1e9);
   }
 
   munmap(a, n*m*sizeof(*a));

@@ -27,8 +27,8 @@ V := 0
 # Program variables
 AR := ar crs
 RM := rm -rvf
-CC := cc
-LD := cc
+CC := gcc
+LD := gcc
 
 AT_0 = @
 AT_1 =
@@ -79,6 +79,12 @@ DATE := $(shell date "+%a %b %d %T %Y")
 # Git commit of compilation
 COMMIT := $(shell cd $(ROOTDIR) && git rev-parse --short HEAD)
 
+# OS information
+UNAME := $(shell uname -nr)
+
+# GCC version
+GCCV := $(shell gcc --version | head -n 1)
+
 # Aggregation of all files
 ALLFILES := $(addprefix $(ROOTDIR),$(MODULES) $(AUXFILES))
 
@@ -111,7 +117,8 @@ obj/$(1)/%.o: $(ROOTDIR)$(1)/%.c $(ROOTDIR)Makefile $(ROOTDIR)$(1)/build.mk
 	$(AT)(test -d obj/`dirname $(1)/$$*` || mkdir -p obj/`dirname $(1)/$$*`) &&\
     (test -d dep/`dirname $(1)/$$*` || mkdir -p dep/`dirname $(1)/$$*`)
 	$(ATCC) $$($(1)_CFLAGS) $$(CFLAGS) -I include -MMD -MP -MF dep/$(1)/$$*.d\
-    -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -c $$< -o $$@
+    -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" -DUNAME="$(UNAME)" -DGCCV="$(GCCV)"\
+    -c $$< -o $$@
 #}}}2
 endef
 
@@ -125,9 +132,9 @@ test/$(1)/%: $(ROOTDIR)$(1)/%.c\
 	$(AT)(test -d test/`dirname $(1)/$$*` || mkdir -p test/`dirname $(1)/$$*`) &&\
     (test -d dep/test/`dirname $(1)/$$*` || mkdir -p dep/test/`dirname $(1)/$$*`)
 	$(ATCCLD) $$($(1)_CFLAGS) $$(CFLAGS) $$($(1)_LDFLAGS) $$(LDFLAGS)\
-    -I include -MMD -MP -MF dep/test/$(1)/$$*.d\
-    -DTEST -DDATE="$(DATE)" -DCOMMIT="$(COMMIT)" $$^ $$($(1)_LDLIBS) $$(LDLIBS)\
-    -o $$@
+    -I include -MMD -MP -MF dep/test/$(1)/$$*.d -DTEST -DDATE="$(DATE)"\
+    -DCOMMIT="$(COMMIT)" -DUNAME="$(UNAME)"-DGCCV="$(GCCV)" $$^\
+    $$($(1)_LDLIBS) $$(LDLIBS) -o $$@
 #}}}2
 endef
  
