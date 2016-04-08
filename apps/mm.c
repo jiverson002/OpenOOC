@@ -171,7 +171,7 @@ __ooc_defn ( static void S_matmult_ooc )(size_t const i, void * const state)
 int
 main(int argc, char * argv[])
 {
-  int ret, opt, use_ooc, num_fibers, num_threads, validate;
+  int ret, opt, num_fibers, num_threads, validate;
   unsigned long t1_nsec, t2_nsec, t3_nsec;
   size_t n, m, p, y, x, z;
   size_t i, j, k;
@@ -184,7 +184,6 @@ main(int argc, char * argv[])
   t2_nsec = 0;
   t3_nsec = 0;
 
-  use_ooc = 0;
   validate = 0;
   n = 32768;
   m = 32768;
@@ -192,15 +191,12 @@ main(int argc, char * argv[])
   x = 1;
   y = 1;
   z = 1;
-  num_fibers = 1;
+  num_fibers = 0;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "ovm:n:p:q:r:x:y:z:f:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "vm:n:p:q:r:x:y:z:f:t:"))) {
     switch (opt) {
     case 'f':
       num_fibers = atoi(optarg);
-      break;
-    case 'o':
-      use_ooc = 1;
       break;
     case 'n':
       n = (size_t)atol(optarg);
@@ -236,6 +232,7 @@ main(int argc, char * argv[])
 
   /* Validate input. */
   assert(num_threads > 0);
+  assert(num_fibers >= 0);
 
   /* Fix-up input. */
   x = (x < n) ? x : n;
@@ -258,8 +255,8 @@ main(int argc, char * argv[])
 
   printf("n=%zu, m=%zu, p=%zu, y=%zu, x=%zu, z=%zu\n", n, m, p, y, x, z);
   printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
-  printf("use_ooc=%d, num_fibers=%d, num_threads=%d, validate=%d\n", use_ooc,\
-    num_fibers, num_threads, validate);
+  printf("num_fibers=%d, num_threads=%d, validate=%d\n", num_fibers,\
+    num_threads, validate);
 
   printf("Generating matrices...\n");
   S_gettime(&ts);
@@ -268,7 +265,7 @@ main(int argc, char * argv[])
   S_gettime(&te);
   t1_nsec = S_getelapsed(&ts, &te);
 
-  if (use_ooc) {
+  if (num_fibers) {
     /* Prepare OOC environment. */
     ooc_set_num_fibers((unsigned int)num_fibers);
 
@@ -296,7 +293,7 @@ main(int argc, char * argv[])
   if (1 == y && 1 == x && 1 == z) { /* standard */
     args.js = 0;
     args.je = p;
-    if (use_ooc) {
+    if (num_fibers) {
       #pragma omp parallel num_threads(num_threads)
       {
         #pragma omp for nowait
@@ -317,7 +314,7 @@ main(int argc, char * argv[])
     }
   }
   else {                            /* tiled */
-    if (use_ooc) {
+    if (num_fibers) {
       #pragma omp parallel num_threads(num_threads) private(is,ie,js,je)
       {
         for (is=0; is<n; is+=y) {
