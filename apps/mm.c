@@ -24,6 +24,9 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* fabs */
+#include <math.h>
+
 /* printf, fprintf, stderr */
 #include <stdio.h>
 
@@ -47,16 +50,15 @@ THE SOFTWARE.
 #include "src/ooc.h"
 
 
-#define CEILDIV(X,Y) (1+(((X)-1)/(Y)))
-
-
 struct args
 {
   size_t n, m, p;
   size_t q, r;
   size_t x, y, z;
-  double const * a, * b;
-  double * c;
+  size_t js, je;
+  double const * restrict a;
+  double const * restrict b;
+  double       * restrict c;
 };
 
 
@@ -93,136 +95,64 @@ S_matfill(size_t const n, size_t const m, double * const a)
 
   for (i=0; i<n; ++i) {
     for (j=0; j<m; ++j) {
-      #define a(R,C) a[R*m+C]
-      a(i,j) = (double)rand()/RAND_MAX;
-      #undef a
+      a[i*m+j] = (double)rand()/RAND_MAX;
     }
   }
 }
 
 
 static void
-S_matmult_kern(size_t const bid, void * const state)
+S_matmult_kern(size_t const i, void * const state)
 {
-  size_t n, m, p, q, r, x, y, z;
-  size_t i, j, k, ii, jj, kk, ie, je, ke, ib, jb, iis, iie, jjs, jje;
-  double sum;
-  double const * a, * b;
-  double * c;
+  size_t m, p, x, js, je, ks, ke;
+  double cv;
+  double const * restrict a, * ap, * as, * ae;
+  double const * restrict b, * bp, * bs;
+  double       * restrict c, * cp, * cs, * ce;
   struct args const * args;
 
   args = (struct args const*)state;
-  n = args->n;
   m = args->m;
   p = args->p;
-  q = args->q;
-  r = args->r;
-  y = args->y;
   x = args->x;
-  z = args->z;
-  a = args->a;
-  b = args->b;
-  c = args->c;
-
-  ib = bid/r;
-  jb = bid%r;
-
-  iis = ib*CEILDIV(n, q);
-  iie = (ib < q-1) ? ((ib+1)*CEILDIV(n, q)) : n;
-  jjs = jb*CEILDIV(p, r);
-  jje = (jb < r-1) ? ((jb+1)*CEILDIV(p, r)) : p;
-
-  if (1 == x && 1 == y && 1 == z) {
-    /* Standard. */
-    for (i=iis; i<iie; ++i) {
-      for (j=jjs; j<jje; ++j) {
-        #define a(R,C) a[R*m+C]
-        #define b(R,C) b[R*m+C]
-        #define c(R,C) c[R*p+C]
-        sum = 0.0;
-        for (k=0; k<m; ++k) {
-          sum += a(i,k)*b(j,k);
-        }
-        c(i,j) = sum;
-        #undef a
-        #undef b
-        #undef c
-      }
-    }
-  }
-  else {
-    /* Cache blocked. */
-    for (ii=iis; ii<iie; ii+=y) {
-      ie = ii+y < n ? ii+y : n;
-      for (jj=jjs; jj<jje; jj+=z) {
-        je = jj+z < p ? jj+z : p;
-        for (kk=0; kk<m; kk+=x) {
-          ke = kk+x < m ? kk+x : m;
-          for (i=ii; i<ie; ++i) {
-            for (j=jj; j<je; ++j) {
-              #define a(R,C) a[R*m+C]
-              #define b(R,C) b[R*m+C]
-              #define c(R,C) c[R*p+C]
-              for (k=kk; k<ke; ++k) {
-                c(i,j) += a(i,k)*b(j,k);
-              }
-              #undef a
-              #undef b
-              #undef c
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-
-static void
-S_matmult_kern1(size_t const i, void * const state)
-{
-  size_t m, p;
-  size_t j, k, js, ks, je, ke;
-  double const * a, * b;
-  double * c;
-  struct args const * args;
-
-  args = (struct args const*)state;
-  m = args->m;
-  p = args->p;
-  /*js = args->jj;
+  js = args->js;
   je = args->je;
-  ks = args->kk;
-  ke = args->ke;*/
   a = args->a;
   b = args->b;
   c = args->c;
 
-  if (1 == args->x && 1 == args->y && 1 == args->z) {
-    /* Standard. */
-    for (j=js; j<je; ++j) {
-      for (k=0; k<m; ++k) {
-        #define a(R,C) a[R*m+C]
-        #define b(R,C) b[R*m+C]
-        #define c(R,C) c[R*p+C]
-        c(i,j) += a(i,k)*b(j,k);
-        #undef a
-        #undef b
-        #undef c
+  cs = c+i*p+js;
+  ce = c+i*p+je;
+  if (1 == x) { /* standard */
+    as = a+i*m+0;
+    ae = a+i*m+m;
+    bs = b+js*m+0;
+    cp = cs;
+    for (; cp<ce; ++cp,bs+=m) {
+      ap = as;
+      bp = bs;
+      cv = *cp;
+      for (; ap<ae; ++ap,++bp) {
+        cv += *ap * *bp;
       }
+      *cp = cv;
     }
   }
-  else {
-    /* Cache blocked. */
-    for (j=js; j<je; ++j) {
-      for (k=ks; k<ke; ++k) {
-        #define a(R,C) a[R*m+C]
-        #define b(R,C) b[R*m+C]
-        #define c(R,C) c[R*p+C]
-        c(i,j) += a(i,k)*b(j,k);
-        #undef a
-        #undef b
-        #undef c
+  else {        /* tiled */
+    for (ks=0; ks<m; ks+=x) {
+      ke = ks+x < m ? ks+x : m;
+      as = a+i*m+ks;
+      ae = a+i*m+ke;
+      bs = b+js*m+ks;
+      cp = cs;
+      for (; cp<ce; ++cp,bs+=m) {
+        ap = as;
+        bp = bs;
+        cv = *cp;
+        for (; ap<ae; ++ap,++bp) {
+          cv += *ap * *bp;
+        }
+        *cp = cv;
       }
     }
   }
@@ -232,9 +162,9 @@ S_matmult_kern1(size_t const i, void * const state)
 __ooc_decl ( static void S_matmult_ooc )(size_t const bid, void * const state);
 
 
-__ooc_defn ( static void S_matmult_ooc )(size_t const bid, void * const state)
+__ooc_defn ( static void S_matmult_ooc )(size_t const i, void * const state)
 {
-  S_matmult_kern(bid, state);
+  S_matmult_kern(i, state);
 }
 
 
@@ -242,26 +172,23 @@ int
 main(int argc, char * argv[])
 {
   int ret, opt, use_ooc, num_fibers, num_threads, validate;
-  unsigned long t1_nsec, t2_nsec, t3_nsec, t4_nsec;
-  size_t n, m, p, q, r, x, y, z;
-  size_t i, j, k, bid;
-  double tmp;
+  unsigned long t1_nsec, t2_nsec, t3_nsec;
+  size_t n, m, p, y, x, z;
+  size_t i, j, k;
+  size_t is, ie, js, je;
   struct args args;
-  struct timespec ts, te, ts1, te1;
-  double * a, * b, * c;
+  struct timespec ts, te;
+  double * a, * b, * c, * v;
 
   t1_nsec = 0;
   t2_nsec = 0;
   t3_nsec = 0;
-  t4_nsec = 0;
 
   use_ooc = 0;
   validate = 0;
   n = 32768;
   m = 32768;
   p = 1;
-  q = 1;
-  r = 1;
   x = 1;
   y = 1;
   z = 1;
@@ -284,12 +211,6 @@ main(int argc, char * argv[])
     case 'p':
       p = (size_t)atol(optarg);
       break;
-    case 'q':
-      q = (size_t)atol(optarg);
-      break;
-    case 'r':
-      r = (size_t)atol(optarg);
-      break;
     case 't':
       num_threads = atoi(optarg);
       break;
@@ -307,8 +228,8 @@ main(int argc, char * argv[])
       break;
     default: /* '?' */
       fprintf(stderr, "Usage: %s [-ov] [-n n dim] [-m m dim] [-p p dim] "\
-        "[-q q dim] [-r r dim] [-x x dim] [-y y dim] [-z z dim] "\
-        "[-f num_fibers] [-t num_threads]\n", argv[0]);
+        "[-x x dim] [-y y dim] [-z z dim] [-f num_fibers] [-t num_threads]\n",\
+        argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -317,8 +238,6 @@ main(int argc, char * argv[])
   assert(num_threads > 0);
 
   /* Fix-up input. */
-  q = (q < n) ? q : n;
-  r = (r < p) ? r : p;
   x = (x < n) ? x : n;
   y = (y < p) ? y : p;
   z = (z < m) ? z : m;
@@ -333,9 +252,11 @@ main(int argc, char * argv[])
   c = mmap(NULL, n*p*sizeof(*c), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c);
+  v = mmap(NULL, n*p*sizeof(*v), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != v);
 
-  printf("n=%zu, m=%zu, p=%zu, q=%zu, r=%zu, y=%zu, x=%zu, z=%zu\n", n, m, p,\
-    q, r, y, x, z);
+  printf("n=%zu, m=%zu, p=%zu, y=%zu, x=%zu, z=%zu\n", n, m, p, y, x, z);
   printf("a=%p, b=%p, c=%p\n", (void*)a, (void*)b, (void*)c);
   printf("use_ooc=%d, num_fibers=%d, num_threads=%d, validate=%d\n", use_ooc,\
     num_fibers, num_threads, validate);
@@ -363,8 +284,6 @@ main(int argc, char * argv[])
   args.n = n;
   args.m = m;
   args.p = p;
-  args.q = q;
-  args.r = r;
   args.x = x;
   args.y = y;
   args.z = z;
@@ -374,54 +293,66 @@ main(int argc, char * argv[])
 
   printf("Computing matrix multiplication...\n");
   S_gettime(&ts);
-  #pragma omp parallel num_threads(num_threads) if(num_threads > 1)\
-    private(ts1,te1)
-  {
+  if (1 == y && 1 == x && 1 == z) { /* standard */
+    args.js = 0;
+    args.je = p;
     if (use_ooc) {
-#if 0
-      for (ii=iis; ii<iie; ii+=y) {
-        ie = ii+y < n ? ii+y : n;
-        for (jj=jjs; jj<jje; jj+=z) {
-          je = jj+z < p ? jj+z : p;
-          for (kk=0; kk<m; kk+=x) {
-            ke = kk+x < m ? kk+x : m;
-            for (i=ii; i<ie; ++i) {
-              for (j=jj; j<je; ++j) {
-                #define a(R,C) a[R*m+C]
-                #define b(R,C) b[R*m+C]
-                #define c(R,C) c[R*p+C]
-                for (k=kk; k<ke; ++k) {
-                  c(i,j) += a(i,k)*b(j,k);
-                }
-                #undef a
-                #undef b
-                #undef c
-              }
-            }
-          }
+      #pragma omp parallel num_threads(num_threads)
+      {
+        #pragma omp for nowait
+        for (i=0; i<n; ++i) {
+          S_matmult_ooc(i, &args);
         }
+        ooc_wait(); /* Need this to wait for any outstanding fibers. */
+        #pragma omp barrier
+        ret = ooc_finalize(); /* Need this to and remove the signal handler. */
+        assert(!ret);
       }
-#endif
-
-      #pragma omp for nowait schedule(static)
-      for (bid=0; bid<q*r; ++bid) {
-        S_matmult_ooc(bid, &args);
-      }
-      S_gettime(&ts1);
-      ooc_wait(); /* Need this to wait for any outstanding fibers. */
-      S_gettime(&te1);
-      #pragma omp critical
-      if (S_getelapsed(&ts1, &te1) > t4_nsec) {
-        t4_nsec = S_getelapsed(&ts1, &te1);
-      }
-      #pragma omp barrier
-      ret = ooc_finalize(); /* Need this to and remove the signal handler. */
-      assert(!ret);
     }
     else {
-      #pragma omp for schedule(static)
-      for (bid=0; bid<q*r; ++bid) {
-        S_matmult_kern(bid, &args);
+      #pragma omp parallel for num_threads(num_threads)
+      for (i=0; i<n; ++i) {
+        S_matmult_kern(i, &args);
+      }
+    }
+  }
+  else {                            /* tiled */
+    if (use_ooc) {
+      #pragma omp parallel num_threads(num_threads) private(is,ie,js,je)
+      {
+        for (is=0; is<n; is+=y) {
+          ie = is+y < n ? is+y : n;
+          for (js=0; js<p; js+=z) {
+            je = js+z < p ? js+z : p;
+            #pragma omp single
+            {
+              args.js = js;
+              args.je = je;
+            }
+            #pragma omp for nowait
+            for (i=is; i<ie; ++i) {
+              S_matmult_ooc(i, &args);
+            }
+            ooc_wait(); /* Need this to wait for any outstanding fibers. */
+            #pragma omp barrier
+          }
+        }
+        ret = ooc_finalize(); /* Need this to and remove the signal handler. */
+        assert(!ret);
+      }
+    }
+    else {
+      for (is=0; is<n; is+=y) {
+        ie = is+y < n ? is+y : n;
+        for (js=0; js<p; js+=z) {
+          je = js+z < p ? js+z : p;
+          args.js = js;
+          args.je = je;
+          #pragma omp parallel for num_threads(num_threads)
+          for (i=is; i<ie; ++i) {
+            S_matmult_kern(i, &args);
+          }
+        }
       }
     }
   }
@@ -431,19 +362,13 @@ main(int argc, char * argv[])
   if (validate) {
     printf("Validating results...\n");
     S_gettime(&ts);
+    #pragma omp parallel for num_threads(num_threads)
     for (i=0; i<n; ++i) {
       for (j=0; j<p; ++j) {
-        #define a(R,C) a[R*m+C]
-        #define b(R,C) b[R*m+C]
-        #define c(R,C) c[R*p+C]
-        tmp = 0.0;
         for (k=0; k<m; ++k) {
-          tmp += a(i,k)*b(j,k);
+          v[i*p+j] += a[i*m+k]*b[j*m+k];
         }
-        assert(tmp == c(i,j));
-        #undef a
-        #undef b
-        #undef c
+        assert(v[i*p+j] == c[i*p+j]);
       }
     }
     S_gettime(&te);
@@ -452,9 +377,6 @@ main(int argc, char * argv[])
 
   fprintf(stderr, "Generate time (s) = %.5f\n", (double)t1_nsec/1e9);
   fprintf(stderr, "Compute time (s)  = %.5f\n", (double)t2_nsec/1e9);
-  if (use_ooc) {
-    fprintf(stderr, "Wait time (s)     = %.5f\n", (double)t4_nsec/1e9);
-  }
   if (validate) {
     fprintf(stderr, "Validate time (s) = %.5f\n", (double)t3_nsec/1e9);
   }
@@ -462,6 +384,7 @@ main(int argc, char * argv[])
   munmap(a, n*m*sizeof(*a));
   munmap(b, m*p*sizeof(*b));
   munmap(c, n*p*sizeof(*c));
+  munmap(v, n*p*sizeof(*v));
 
   return EXIT_SUCCESS;
 }
