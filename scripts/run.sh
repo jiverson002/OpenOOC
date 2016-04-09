@@ -7,7 +7,7 @@ hline="\n-----------------------------------------------------------------------
 
 function run() {
   echo "$@" >> $LOG
-  $@ >> $LOG
+  /usr/bin/time -ao $LOG $@ >> $LOG
 }
 
 run build/bin/mm -n1024 -m225280 -p1024                       -t4
