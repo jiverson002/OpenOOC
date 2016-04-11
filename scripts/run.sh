@@ -10,50 +10,25 @@ function run() {
   /usr/bin/time -ao $LOG $@ >> $LOG
 }
 
-run build/bin/mm -n1024 -m225280 -p1024                       -t4
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y64  -x225280 -z256  -t4
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y128 -x112640 -z512  -t4
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y256 -x56320  -z1024 -t4
+function build() {
+  run build/bin/mm -n1024 -m450560 -p3072                        -t4 $1
+  echo -e "$hline" >> $LOG
+  run build/bin/mm -n1024 -m450560 -p3072 -y64   -x450560 -z192  -t4 $1
+  echo -e "$hline" >> $LOG
+  run build/bin/mm -n1024 -m450560 -p3072 -y128  -x225280 -z384  -t4 $1
+  echo -e "$hline" >> $LOG
+  run build/bin/mm -n1024 -m450560 -p3072 -y256  -x112640 -z768  -t4 $1
+  echo -e "$hline" >> $LOG
+  run build/bin/mm -n1024 -m450560 -p3072 -y512  -x56320  -z1536 -t4 $1
+  echo -e "$hline" >> $LOG
+  run build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160  -z3072 -t4 $1
+  echo -e "$HLINE" >> $LOG
+}
 
-echo -e "$HLINE" >> $LOG
-
-run build/bin/mm -n1024 -m225280 -p1024                       -t4 -f1
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y64  -x225280 -z256  -t4 -f1
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y128 -x112640 -z512  -t4 -f1
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y256 -x56320  -z1024 -t4 -f1
-
-echo -e "$HLINE" >> $LOG
-
-run build/bin/mm -n1024 -m225280 -p1024                       -t4 -f16
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y64  -x225280 -z256  -t4 -f16
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y128 -x112640 -z512  -t4 -f16
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y256 -x56320  -z1024 -t4 -f16
-
-echo -e "$HLINE" >> $LOG
-
-run build/bin/mm -n1024 -m225280 -p1024                       -t4 -f32
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y64  -x225280 -z256  -t4 -f32
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y128 -x112640 -z512  -t4 -f32
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y256 -x56320  -z1024 -t4 -f32
-
-echo -e "$HLINE" >> $LOG
-
-run build/bin/mm -n1024 -m225280 -p1024                       -t4 -f64
-echo -e "$hline" >> $LOG
-run build/bin/mm -n1024 -m225280 -p1024 -y64  -x225280 -z256  -t4 -f64
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y128 -x112640 -z512  -t4 -f64
-echo -e "$hline" >> $LOG                                      
-run build/bin/mm -n1024 -m225280 -p1024 -y256 -x56320  -z1024 -t4 -f64
+build -f0
+build -f1
+build -f16
+build -f32
+build -f64
+build -f128
+build -f256
