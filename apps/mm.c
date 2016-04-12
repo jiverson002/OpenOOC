@@ -56,10 +56,8 @@ THE SOFTWARE.
 
 struct args
 {
-  size_t n, m, p;
-  size_t q, r;
-  size_t x, y, z;
-  size_t js, je;
+  size_t m, p;
+  size_t js, je, ks, ke;
   double const * restrict a;
   double const * restrict b;
   double       * restrict c;
@@ -108,7 +106,7 @@ S_matfill(size_t const n, size_t const m, double * const a)
 static void
 S_matmult_kern(size_t const i, void * const state)
 {
-  size_t m, p, x, js, je, ks, ke;
+  size_t m, p, js, je, ks, ke;
   double cv;
   double const * restrict a, * ap, * as, * ae;
   double const * restrict b, * bp, * bs;
@@ -118,47 +116,28 @@ S_matmult_kern(size_t const i, void * const state)
   args = (struct args const*)state;
   m = args->m;
   p = args->p;
-  x = args->x;
   js = args->js;
   je = args->je;
+  ks = args->ks;
+  ke = args->ke;
   a = args->a;
   b = args->b;
   c = args->c;
 
+  as = a+i*m+ks;
+  ae = a+i*m+ke;
+  bs = b+js*m+ks;
   cs = c+i*p+js;
   ce = c+i*p+je;
-  if (1 == x) { /* standard */
-    as = a+i*m+0;
-    ae = a+i*m+m;
-    bs = b+js*m+0;
-    cp = cs;
-    for (; cp<ce; ++cp,bs+=m) {
-      ap = as;
-      bp = bs;
-      cv = *cp;
-      for (; ap<ae; ++ap,++bp) {
-        cv += *ap * *bp;
-      }
-      *cp = cv;
+  cp = cs;
+  for (; cp<ce; ++cp,bs+=m) {
+    ap = as;
+    bp = bs;
+    cv = *cp;
+    for (; ap<ae; ++ap,++bp) {
+      cv += *ap * *bp;
     }
-  }
-  else {        /* tiled */
-    for (ks=0; ks<m; ks+=x) {
-      ke = ks+x < m ? ks+x : m;
-      as = a+i*m+ks;
-      ae = a+i*m+ke;
-      bs = b+js*m+ks;
-      cp = cs;
-      for (; cp<ce; ++cp,bs+=m) {
-        ap = as;
-        bp = bs;
-        cv = *cp;
-        for (; ap<ae; ++ap,++bp) {
-          cv += *ap * *bp;
-        }
-        *cp = cv;
-      }
-    }
+    *cp = cv;
   }
 }
 
@@ -179,7 +158,7 @@ main(int argc, char * argv[])
   unsigned long t1_nsec, t2_nsec, t3_nsec;
   size_t n, m, p, y, x, z;
   size_t i, j, k;
-  size_t is, ie, js, je;
+  size_t is, ie, js, je, ks, ke;
   time_t now;
   struct args args;
   struct timespec ts, te;
@@ -260,6 +239,14 @@ main(int argc, char * argv[])
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != v);
 
+  /* Try to disable readahead. */
+  ret = madvise(a, n*m*sizeof(*a), MADV_RANDOM);
+  assert(!ret);
+  ret = madvise(b, m*p*sizeof(*b), MADV_RANDOM);
+  assert(!ret);
+  ret = madvise(c, n*p*sizeof(*c), MADV_RANDOM);
+  assert(!ret);
+
   /* Output build info. */
   printf("==========================\n");
   printf(" General =================\n");
@@ -309,12 +296,8 @@ main(int argc, char * argv[])
   }
 
   /* Setup args struct. */
-  args.n = n;
   args.m = m;
   args.p = p;
-  args.x = x;
-  args.y = y;
-  args.z = z;
   args.a = a;
   args.b = b;
   args.c = c;
@@ -324,6 +307,8 @@ main(int argc, char * argv[])
   if (1 == y && 1 == x && 1 == z) { /* standard */
     args.js = 0;
     args.je = p;
+    args.ks = 0;
+    args.ke = m;
     if (num_fibers) {
       #pragma omp parallel num_threads(num_threads)
       {
@@ -350,6 +335,7 @@ main(int argc, char * argv[])
       {
         for (is=0; is<n; is+=y) {
           ie = is+y < n ? is+y : n;
+
           for (js=0; js<p; js+=z) {
             je = js+z < p ? js+z : p;
             #pragma omp single
@@ -357,12 +343,23 @@ main(int argc, char * argv[])
               args.js = js;
               args.je = je;
             }
-            #pragma omp for nowait
-            for (i=is; i<ie; ++i) {
-              S_matmult_ooc(i, &args);
+            
+            for (ks=0; ks<m; ks+=x) {
+              ke = ks+x < m ? ks+x : m;
+
+              #pragma omp single
+              {
+                args.ks = ks;
+                args.ke = ke;
+              }
+
+              #pragma omp for nowait
+              for (i=is; i<ie; ++i) {
+                S_matmult_ooc(i, &args);
+              }
+              ooc_wait(); /* Need this to wait for any outstanding fibers. */
+              #pragma omp barrier
             }
-            ooc_wait(); /* Need this to wait for any outstanding fibers. */
-            #pragma omp barrier
           }
         }
         ret = ooc_finalize(); /* Need this to and remove the signal handler. */
@@ -372,13 +369,21 @@ main(int argc, char * argv[])
     else {
       for (is=0; is<n; is+=y) {
         ie = is+y < n ? is+y : n;
+
         for (js=0; js<p; js+=z) {
           je = js+z < p ? js+z : p;
           args.js = js;
           args.je = je;
-          #pragma omp parallel for num_threads(num_threads)
-          for (i=is; i<ie; ++i) {
-            S_matmult_kern(i, &args);
+
+          for (ks=0; ks<m; ks+=x) {
+            ke = ks+x < m ? ks+x : m;
+            args.ks = ks;
+            args.ke = ke;
+
+            #pragma omp parallel for num_threads(num_threads)
+            for (i=is; i<ie; ++i) {
+              S_matmult_kern(i, &args);
+            }
           }
         }
       }
