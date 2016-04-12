@@ -360,6 +360,15 @@ main(int argc, char * argv[])
               ooc_wait(); /* Need this to wait for any outstanding fibers. */
               #pragma omp barrier
             }
+
+            #pragma omp single
+            {
+              /* `flush pages`, i.e., undo memory protections, so that fibers
+               * are able to be invoked the next iteration that this memory is
+               * touched. */
+              ret = mprotect(b+js*m, (je-js)*m*sizeof(*b), PROT_NONE);
+              assert(!ret);
+            }
           }
         }
         ret = ooc_finalize(); /* Need this to and remove the signal handler. */
