@@ -331,7 +331,7 @@ main(int argc, char * argv[])
   }
   else {                            /* tiled */
     if (num_fibers) {
-      #pragma omp parallel num_threads(num_threads) private(is,ie,js,je)
+      #pragma omp parallel num_threads(num_threads) private(is,ie,js,je,ks,ke)
       {
         for (is=0; is<n; is+=y) {
           ie = is+y < n ? is+y : n;
