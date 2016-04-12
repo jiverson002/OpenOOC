@@ -242,9 +242,9 @@ main(int argc, char * argv[])
   assert(num_fibers >= 0);
 
   /* Fix-up input. */
-  x = (x < n) ? x : n;
-  y = (y < p) ? y : p;
-  z = (z < m) ? z : m;
+  y = (y < n) ? y : n;
+  x = (x < m) ? x : m;
+  z = (z < p) ? z : p;
 
   /* Allocate memory. */
   a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
