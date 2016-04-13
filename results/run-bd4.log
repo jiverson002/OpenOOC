@@ -1,0 +1,1638 @@
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 13:38:12 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.58204
+  Compute      = 671.84503
+2699.37user 0.94system 11:25.47elapsed 393%CPU (0avgtext+0avgdata 14531668maxresident)k
+0inputs+16outputs (0major+137706minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 13:49:38 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.55915
+  Compute      = 639.33116
+2569.01user 1.00system 10:52.94elapsed 393%CPU (0avgtext+0avgdata 14531124maxresident)k
+0inputs+16outputs (0major+138287minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:00:31 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.58636
+  Compute      = 423.56868
+1704.53user 0.87system 7:17.21elapsed 390%CPU (0avgtext+0avgdata 14531604maxresident)k
+0inputs+16outputs (0major+138778minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:07:48 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.62018
+  Compute      = 302.34686
+1221.02user 0.95system 5:16.01elapsed 386%CPU (0avgtext+0avgdata 14531604maxresident)k
+0inputs+40outputs (0major+137310minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:13:04 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.66088
+  Compute      = 300.76329
+1215.36user 1.05system 5:14.47elapsed 386%CPU (0avgtext+0avgdata 14531580maxresident)k
+0inputs+16outputs (0major+137778minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:18:19 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.61592
+  Compute      = 298.29397
+1205.61user 0.89system 5:11.96elapsed 386%CPU (0avgtext+0avgdata 14531548maxresident)k
+0inputs+16outputs (0major+137540minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:23:31 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56505
+  Compute      = 935.15528
+3694.96user 30.21system 15:49.21elapsed 392%CPU (0avgtext+0avgdata 14620384maxresident)k
+0inputs+24outputs (0major+1071920minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 14:39:20 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.66466
+  Compute      = 1304.93830
+3139.11user 1162.49system 21:59.12elapsed 326%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+32outputs (0major+35251646minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:01:19 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.65923
+  Compute      = 865.38433
+2281.18user 588.86system 14:39.55elapsed 326%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+17464488minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:15:59 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.61145
+  Compute      = 513.17180
+1483.58user 295.58system 8:47.29elapsed 337%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+8947349minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:24:46 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56315
+  Compute      = 454.74961
+1463.96user 159.84system 7:48.81elapsed 346%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+40outputs (0major+4699675minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:32:35 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56116
+  Compute      = 391.44913
+1392.93user 84.62system 6:45.51elapsed 364%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+16outputs (0major+2570408minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:39:21 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.68412
+  Compute      = 995.93617
+3746.64user 24.97system 16:50.12elapsed 373%CPU (0avgtext+0avgdata 14620324maxresident)k
+0inputs+24outputs (0major+571491minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 15:56:11 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.66644
+  Compute      = 1334.38908
+3110.20user 1284.29system 22:28.58elapsed 325%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+48outputs (0major+39062549minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 16:18:39 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.60303
+  Compute      = 867.70820
+2295.59user 587.09system 14:41.83elapsed 326%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+16outputs (0major+17729211minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 16:33:21 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.57705
+  Compute      = 521.56490
+1498.50user 293.53system 8:55.64elapsed 334%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+16outputs (0major+8896190minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 16:42:17 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.64448
+  Compute      = 432.61897
+1416.38user 155.83system 7:26.79elapsed 351%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+4727040minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 16:49:44 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.67534
+  Compute      = 376.00133
+1359.06user 85.37system 6:30.18elapsed 370%CPU (0avgtext+0avgdata 14620784maxresident)k
+0inputs+40outputs (0major+2499806minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 16:56:14 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.59850
+  Compute      = 922.40708
+3609.50user 25.44system 15:36.51elapsed 388%CPU (0avgtext+0avgdata 14620276maxresident)k
+0inputs+24outputs (0major+570551minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 17:11:51 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.66839
+  Compute      = 1315.88082
+3085.54user 1255.59system 22:10.06elapsed 326%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+32outputs (0major+40072208minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 17:34:01 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.59494
+  Compute      = 877.26680
+2283.99user 645.35system 14:51.39elapsed 328%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+40outputs (0major+19386000minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 17:48:52 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.58575
+  Compute      = 539.27863
+1534.57user 296.82system 9:13.36elapsed 330%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+8913219minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 17:58:06 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.66983
+  Compute      = 423.19930
+1386.51user 155.45system 7:17.37elapsed 352%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+4768776minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 18:05:23 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.58353
+  Compute      = 390.23779
+1386.25user 84.96system 6:44.32elapsed 363%CPU (0avgtext+0avgdata 14620784maxresident)k
+0inputs+16outputs (0major+2534976minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 18:12:07 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.63445
+  Compute      = 1025.26990
+3765.39user 25.48system 17:19.41elapsed 364%CPU (0avgtext+0avgdata 14620152maxresident)k
+0inputs+48outputs (0major+575525minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 18:29:27 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.59700
+  Compute      = 1337.76992
+3115.47user 1276.38system 22:31.87elapsed 324%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+32outputs (0major+39902907minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 18:51:59 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.57744
+  Compute      = 861.39902
+2240.29user 637.65system 14:35.49elapsed 328%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+32outputs (0major+19412535minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 19:06:34 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56416
+  Compute      = 549.08790
+1525.78user 325.31system 9:23.16elapsed 328%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+40outputs (0major+9801208minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 19:15:58 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.65285
+  Compute      = 449.97991
+1453.41user 156.03system 7:44.14elapsed 346%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+4728572minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 19:23:42 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.59860
+  Compute      = 395.64324
+1397.01user 84.70system 6:49.74elapsed 361%CPU (0avgtext+0avgdata 14620784maxresident)k
+0inputs+16outputs (0major+2513522minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 19:30:32 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.65714
+  Compute      = 908.67348
+3563.99user 25.83system 15:22.83elapsed 389%CPU (0avgtext+0avgdata 14620120maxresident)k
+0inputs+16outputs (0major+566540minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 19:45:54 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.58766
+  Compute      = 1330.19874
+3096.23user 1283.82system 22:24.29elapsed 325%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+24outputs (0major+39050715minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 20:08:19 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.55803
+  Compute      = 881.37953
+2290.43user 643.54system 14:55.44elapsed 327%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+16outputs (0major+19088798minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 20:23:14 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.57169
+  Compute      = 522.54200
+1470.77user 322.94system 8:56.62elapsed 334%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+16outputs (0major+9664546minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 20:32:11 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56232
+  Compute      = 436.64499
+1411.43user 161.48system 7:30.71elapsed 348%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+40outputs (0major+4908941minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 20:39:42 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56667
+  Compute      = 393.28136
+1400.95user 83.93system 6:47.35elapsed 364%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+16outputs (0major+2519205minor)pagefaults 0swaps
+
+================================================================================
+
+build/bin/mm -n1024 -m450560 -p3072 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 20:46:29 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.56454
+  Compute      = 954.97362
+3537.38user 26.98system 16:09.04elapsed 367%CPU (0avgtext+0avgdata 14620196maxresident)k
+0inputs+16outputs (0major+575629minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y64 -x450560 -z192 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 21:02:38 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =        64
+  x            =    450560
+  z            =       192
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.62454
+  Compute      = 1323.99580
+3098.29user 1268.71system 22:18.14elapsed 326%CPU (0avgtext+0avgdata 14620784maxresident)k
+0inputs+32outputs (0major+39014475minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y128 -x225280 -z384 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 21:24:56 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       128
+  x            =    225280
+  z            =       384
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.62415
+  Compute      = 873.87732
+2299.42user 617.45system 14:48.01elapsed 328%CPU (0avgtext+0avgdata 14620784maxresident)k
+0inputs+16outputs (0major+18927774minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y256 -x112640 -z768 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 21:39:44 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       256
+  x            =    112640
+  z            =       768
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.69793
+  Compute      = 548.06290
+1544.69user 311.17system 9:22.27elapsed 330%CPU (0avgtext+0avgdata 14620780maxresident)k
+0inputs+16outputs (0major+9468391minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y512 -x56320 -z1536 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 21:49:07 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =       512
+  x            =     56320
+  z            =      1536
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.68480
+  Compute      = 435.11788
+1411.99user 157.45system 7:29.31elapsed 349%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+16outputs (0major+4927140minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/mm -n1024 -m450560 -p3072 -y1024 -x28160 -z3072 -t4 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd4-umh 3.13.0-85-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+  Build date   = Tue Apr 12 13:38:07 2016
+  Run date     = Tue Apr 12 21:56:36 2016
+  Git commit   =   901549e
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =      1024
+  m            =    450560
+  p            =      3072
+  y            =      1024
+  x            =     28160
+  z            =      3072
+  # fibers     =       256
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =  13.70893
+  Compute      = 400.03197
+1412.18user 85.34system 6:54.24elapsed 361%CPU (0avgtext+0avgdata 14620776maxresident)k
+0inputs+56outputs (0major+2495976minor)pagefaults 0swaps
+
+================================================================================
+
