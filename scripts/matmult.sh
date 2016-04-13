@@ -9,14 +9,14 @@ function build() {
   N=$((T*2**GLG))
   M=$((28835840*GB/T/2**LLG))
   P=$((T*3*2**GLG))
-  run build/bin/mm -n$N -m$M -p$P -t$T -f$1
+  run build/bin/matmult -n$N -m$M -p$P -t$T -f$1
   echo -e "$hline" >> $LOG
   for ((i=$LLG; i<=$GLG; ++i)) ; do
     Y=$((N/2**(GLG-i)))
     X=$((M/2**(i-LLG)))
     Z=$((P/2**(GLG-i)))
     if (($1*$T<=$Y)) ; then
-      run build/bin/mm -n$N -m$M -p$P -y$Y -x$X -z$Z -t$T -f$1
+      run build/bin/matmult -n$N -m$M -p$P -y$Y -x$X -z$Z -t$T -f$1
       echo -e "$hline" >> $LOG
     fi
   done

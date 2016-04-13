@@ -142,7 +142,7 @@ S_matmult_kern(size_t const i, void * const state)
 }
 
 
-__ooc_decl ( static void S_matmult_ooc )(size_t const bid, void * const state);
+__ooc_decl ( static void S_matmult_ooc )(size_t const i, void * const state);
 
 
 __ooc_defn ( static void S_matmult_ooc )(size_t const i, void * const state)
@@ -179,16 +179,16 @@ main(int argc, char * argv[])
   z = 1;
   num_fibers = 0;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "vm:n:p:q:r:x:y:z:f:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "vm:n:p:x:y:z:f:t:"))) {
     switch (opt) {
     case 'f':
       num_fibers = atoi(optarg);
       break;
-    case 'n':
-      n = (size_t)atol(optarg);
-      break;
     case 'm':
       m = (size_t)atol(optarg);
+      break;
+    case 'n':
+      n = (size_t)atol(optarg);
       break;
     case 'p':
       p = (size_t)atol(optarg);
@@ -209,7 +209,7 @@ main(int argc, char * argv[])
       z = (size_t)atol(optarg);
       break;
     default: /* '?' */
-      fprintf(stderr, "Usage: %s [-ov] [-n n dim] [-m m dim] [-p p dim] "\
+      fprintf(stderr, "Usage: %s [-v] [-n n dim] [-m m dim] [-p p dim] "\
         "[-x x dim] [-y y dim] [-z z dim] [-f num_fibers] [-t num_threads]\n",\
         argv[0]);
       return EXIT_FAILURE;
