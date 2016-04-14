@@ -6,17 +6,13 @@ function run() {
 }
 
 function build() {
-  N=$((T*2**GLG))
-  M=$((28835840*GB/T/2**LLG))
-  P=$((T*3*2**GLG))
-  run build/bin/matmult -n$N -m$M -p$P -t$T -f$1
+  N=$((GB*1024**3/8))
+  run build/bin/vecsort -n$N -t$T -f$1
   echo -e "$hline" >> $LOG
   for ((i=$LLG; i<=$GLG; ++i)) ; do
-    Y=$((N/2**(GLG-i)))
-    X=$((M/2**(i-LLG)))
-    Z=$((P/2**(GLG-i)))
-    if (($1*$T<=$Y)) ; then
-      run build/bin/matmult -n$N -m$M -p$P -y$Y -x$X -z$Z -t$T -f$1
+    Y=$((N/T/2**i))
+    if ((Y*T*$1<=N)) ; then
+      run build/bin/vecsort -n$N -y$Y -t$T -f$1
       echo -e "$hline" >> $LOG
     fi
   done
@@ -26,9 +22,9 @@ function build() {
 # Default params
 TIMEEXE=/usr/bin/time
 T=4
-GB=1
+GB=16
 POWS="1 2 4 8 16 32 64 128 256 512 1024 2048"
-TEMPLATE="matmult"
+TEMPLATE="vecsort"
 HLINE="\n================================================================================\n"
 hline="\n--------------------------------------------------------------------------------\n"
 

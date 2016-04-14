@@ -24,6 +24,9 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* uint64_t */
+#include <inttypes.h>
+
 /* fabs */
 #include <math.h>
 
@@ -33,7 +36,7 @@ THE SOFTWARE.
 /* printf */
 #include <stdio.h>
 
-/* rand_r, RAND_MAX, EXIT_SUCCESS */
+/* malloc, calloc, free, rand, RAND_MAX, EXIT_SUCCESS */
 #include <stdlib.h>
 
 /* memset */
@@ -59,8 +62,8 @@ THE SOFTWARE.
 
 struct args
 {
-  size_t n, y;
-  double * restrict a;
+  size_t n, x;
+  uint64_t * a, * b;
 };
 
 
@@ -79,36 +82,64 @@ S_getelapsed(double const * const ts, double const * const te)
 
 
 static void
-S_vecfill(size_t const n, double * const a)
+S_rsort(void * const restrict a, void * const restrict b, size_t const num,
+        size_t const size)
 {
-  size_t i;
+  size_t i, n;
+  unsigned char * p, * b_, * a_;
+  size_t c[256];
 
-  for (i=0; i<n; ++i) {
-    a[i] = (double)rand()/RAND_MAX;
+  /* initialize the pointers so that after the last swap, the final sorted
+   * data will be in a */
+  a_ = (unsigned char*)a;
+  b_ = (unsigned char*)b;
+
+  for (n=0; n<size; ++n) {
+    memset(c, 0, 256*sizeof(size_t));
+
+    /* count each bucket */
+    for(p=a_+n; p<a_+num*size; p+=size)
+      c[*p]++;
+
+    /* prefix sum buckets */
+    for(i=1; i<256; ++i)
+      c[i] += c[i-1];
+
+    /* put values into new places */
+    for(p=a_+num*size-size+n; p>=a_; p-=size)
+      memcpy(&b_[--c[*p]*size], &a_[((size_t)(p-a_)/size)*size], size);
+
+    /* swap pointers */
+    p=b_; b_=a_; a_=p;
   }
 }
 
 
-static int
-S_veccomp(void const * const restrict a, void const * const restrict b)
+static void
+S_vecfill(size_t const n, uint64_t * const a)
 {
-  return *(double*)a < *(double*)b ? -1 : 1;
+  size_t i;
+
+  for (i=0; i<n; ++i) {
+    a[i] = (uint64_t)rand();
+  }
 }
 
 
 static void
 S_vecsort_kern(size_t const i, void * const state)
 {
-  size_t n, y;
-  double * restrict a;
+  size_t n, x;
+  uint64_t * a, * b;
   struct args const * args;
 
   args = (struct args const*)state;
   n = args->n;
-  y = args->y;
+  x = args->x;
   a = args->a;
+  b = args->b;
 
-  qsort(a+i, i+y<n?y:n-i, sizeof(*a), S_veccomp);
+  S_rsort(a+i, b+i, i+x<n?x:n-i, sizeof(*a));
 }
 
 
@@ -126,11 +157,12 @@ main(int argc, char * argv[])
 {
   int ret, opt, num_fibers, num_threads, validate;
   double ts, te, t1_sec, t2_sec, t3_sec, t4_sec;
-  size_t n, y;
+  size_t n, y, x;
+  size_t is, ie;
   size_t i, j;
   time_t now;
   struct args args;
-  double * a;
+  uint64_t * a, * b;
 
   now = time(NULL);
 
@@ -142,9 +174,10 @@ main(int argc, char * argv[])
   validate = 0;
   n = 32768;
   y = 2;
+  x = 2;
   num_fibers = 0;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "vn:y:f:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "vn:y:x:f:t:"))) {
     switch (opt) {
     case 'f':
       num_fibers = atoi(optarg);
@@ -158,12 +191,15 @@ main(int argc, char * argv[])
     case 'v':
       validate = 1;
       break;
+    case 'x':
+      x = (size_t)atol(optarg);
+      break;
     case 'y':
       y = (size_t)atol(optarg);
       break;
     default: /* '?' */
-      fprintf(stderr, "Usage: %s [-v] [-n n dim] [-y y dim] [-f num_fibers] "\
-        "[-t num_threads]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-v] [-n n dim] [-y y dim] [-x x dim] "\
+        "[-f num_fibers] [-t num_threads]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
@@ -175,14 +211,20 @@ main(int argc, char * argv[])
 
   /* Fix-up input. */
   y = (y < n) ? y : n;
+  x = (x < y) ? x : y;
 
   /* Allocate memory. */
   a = mmap(NULL, n*sizeof(*a), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
     -1, 0);
   assert(MAP_FAILED != a);
+  b = mmap(NULL, n*sizeof(*b), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
+    -1, 0);
+  assert(MAP_FAILED != b);
 
   /* Try to disable readahead. */
   ret = madvise(a, n*sizeof(*a), MADV_RANDOM);
+  assert(!ret);
+  ret = madvise(b, n*sizeof(*b), MADV_RANDOM);
   assert(!ret);
 
   /* Output build info. */
@@ -203,6 +245,7 @@ main(int argc, char * argv[])
   printf("============================\n");
   printf("  n            = %11zu\n", n);
   printf("  y            = %11zu\n", y);
+  printf("  x            = %11zu\n", x);
   printf("  # fibers     = %11d\n", num_fibers);
   printf("  # threads    = %11d\n", num_threads);
   printf("\n");
@@ -219,36 +262,40 @@ main(int argc, char * argv[])
   if (num_fibers) {
     /* Prepare OOC environment. */
     ooc_set_num_fibers((unsigned int)num_fibers);
-
-    ret = mprotect(a, n*sizeof(*a), PROT_NONE);
-    assert(!ret);
   }
 
   /* Setup args struct. */
   args.n = n;
-  args.y = y;
+  args.x = x;
   args.a = a;
+  args.b = b;
 
   printf("  Sorting vector blocks...\n");
   S_gettime(&ts);
   /* Sort each block. */
   if (num_fibers) {
-    #pragma omp parallel num_threads(num_threads)
+    #pragma omp parallel num_threads(num_threads) private(is,ie,ret)
     {
-      #pragma omp for nowait
-      for (i=0; i<n; i+=y) {
-        S_vecsort_ooc(i, &args);
-      }
-      ooc_wait(); /* Need this to wait for any outstanding fibers. */
-      #pragma omp barrier
+      for (is=0; is<n; is+=y) {
+        ie = is+y < n ? is+y : n;
 
-      #pragma omp single
-      {
-        /* `flush pages`, i.e., undo memory protections, so that fibers
-         * are able to be invoked the next iteration that this memory is
-         * touched. */
-        ret = mprotect(a, n*sizeof(*a), PROT_NONE);
-        assert(!ret);
+        #pragma omp single
+        {
+          /* `flush pages`, i.e., undo memory protections, so that fibers
+           * are able to be invoked the next iteration that this memory is
+           * touched. */
+          ret = mprotect(a+is, (ie-is)*sizeof(*a), PROT_NONE);
+          assert(!ret);
+          ret = mprotect(b+is, (ie-is)*sizeof(*b), PROT_NONE);
+          assert(!ret);
+        }
+
+        #pragma omp for nowait schedule(static)
+        for (i=is; i<ie; i+=x) {
+          S_vecsort_ooc(i, &args);
+        }
+        ooc_wait(); /* Need this to wait for any outstanding fibers. */
+        #pragma omp barrier
       }
 
       ret = ooc_finalize(); /* Need this to and remove the signal handler. */
@@ -256,9 +303,13 @@ main(int argc, char * argv[])
     }
   }
   else {
-    #pragma omp parallel for num_threads(num_threads)
-    for (i=0; i<n; i+=y) {
-      S_vecsort_kern(i, &args);
+    for (is=0; is<n; is+=y) {
+      ie = is+y < n ? is+y : n;
+
+      #pragma omp parallel for num_threads(num_threads) schedule(static)
+      for (i=is; i<ie; i+=x) {
+        S_vecsort_kern(i, &args);
+      }
     }
   }
   S_gettime(&te);
@@ -277,7 +328,7 @@ main(int argc, char * argv[])
   if (validate) {
     printf("  Validating results...\n");
     S_gettime(&ts);
-    #pragma omp parallel for num_threads(num_threads)
+    #pragma omp parallel for num_threads(num_threads) schedule(static) private(j)
     for (i=0; i<n; i+=y) {
       for (j=i+1; j<(i+y<n?i+y:n); ++j) {
         assert(a[j] >= a[j-1]);
@@ -302,6 +353,8 @@ main(int argc, char * argv[])
   }
 
   ret = munmap(a, n*sizeof(*a));
+  assert(!ret);
+  ret = munmap(b, n*sizeof(*b));
   assert(!ret);
 
   return EXIT_SUCCESS;

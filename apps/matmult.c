@@ -331,7 +331,7 @@ main(int argc, char * argv[])
   }
   else {                            /* tiled */
     if (num_fibers) {
-      #pragma omp parallel num_threads(num_threads) private(is,ie,js,je,ks,ke)
+      #pragma omp parallel num_threads(num_threads) private(is,ie,js,je,ks,ke,ret)
       {
         for (is=0; is<n; is+=y) {
           ie = is+y < n ? is+y : n;
@@ -353,7 +353,7 @@ main(int argc, char * argv[])
                 args.ke = ke;
               }
 
-              #pragma omp for nowait
+              #pragma omp for nowait schedule(static)
               for (i=is; i<ie; ++i) {
                 S_matmult_ooc(i, &args);
               }
@@ -389,7 +389,7 @@ main(int argc, char * argv[])
             args.ks = ks;
             args.ke = ke;
 
-            #pragma omp parallel for num_threads(num_threads)
+            #pragma omp parallel for num_threads(num_threads) schedule(static)
             for (i=is; i<ie; ++i) {
               S_matmult_kern(i, &args);
             }
