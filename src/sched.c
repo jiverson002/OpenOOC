@@ -55,6 +55,9 @@ THE SOFTWARE.
 #include "common.h"
 
 
+#define USE_AIO 1
+
+
 /******************************************************************************/
 /*
  *  Page flag bits flow chart for S_sigsegv_handler
@@ -100,6 +103,7 @@ struct process process;
 static int
 S_is_runnable(int const id)
 {
+#if defined(USE_AIO) && USE_AIO > 0
   int ret;
   unsigned char incore=0;
   void * page;
@@ -120,6 +124,10 @@ S_is_runnable(int const id)
   assert(EINPROGRESS == ret || 0 == ret);
 
   return (0 == ret);
+#else
+  (void)id;
+  return 1;
+#endif
 }
 
 
