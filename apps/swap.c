@@ -24,6 +24,9 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* CHAR_MAX */
+#include <limits.h>
+
 /* omp_get_wtime */
 #include <omp.h>
 
@@ -62,10 +65,10 @@ THE SOFTWARE.
 
 struct args
 {
-  int write_flag;
-  size_t p_size, n_pages, n_gb;
+  int what;
+  size_t p_size, c_size;
+  size_t n_pages, n_clust;
   char * page;
-  size_t * map;
 };
 
 
@@ -105,6 +108,8 @@ S_getpagecluster(void)
 static void
 S_fill_dram(void)
 {
+  size_t n_bytes=0;
+
   /* Allocate GBs. */
   for (;;) {
     if (MAP_FAILED == mmap(NULL, GB, PROT_READ|PROT_WRITE,\
@@ -112,6 +117,7 @@ S_fill_dram(void)
     {
       break;
     }
+    n_bytes += GB;
   }
 
   /* Allocate MBs. */
@@ -121,39 +127,63 @@ S_fill_dram(void)
     {
       break;
     }
+    n_bytes += MB;
   }
 
   /* Allocate 8*KBs. */
-  for (;;) {
+  /*for (;;) {
     if (MAP_FAILED == mmap(NULL, 8*KB, PROT_READ|PROT_WRITE,\
       MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0))
     {
       break;
     }
-  }
+  }*/
+
+  printf("  Filled with %.2f MiB...\n", (double)n_bytes/1048576.0);
 }
 
 
 static void
 S_swap_kern(size_t const i, void * const state)
 {
-  int write_flag;
-  size_t j, k, l, m, n, o, p, jj, kk, ll, mm, nn, oo, pp, idx;
-  size_t p_size, n_pages, n_gb;
+  int what;
+  size_t j, k, l;
+  size_t p_size, c_size, n_pages, n_clust;
   volatile char * page;
-  size_t * map;
   struct args const * args;
-  size_t const map8[8] = { 5, 3, 7, 1, 0, 2, 6, 4 };
 
   args = (struct args const*)state;
-  p_size     = args->p_size;
-  n_pages    = args->n_pages;
-  n_gb       = args->n_gb;
-  page       = args->page;
-  map        = args->map;
-  write_flag = args->write_flag;
+  what    = args->what;
+  p_size  = args->p_size;
+  c_size  = args->c_size;
+  n_pages = args->n_pages;
+  n_clust = args->n_clust;
+  page    = args->page;
 
 #if 1
+  j = i % n_clust;  /* get cluster # */
+  k = i / n_clust;  /* get entry in cluster */
+  l = j * c_size + k * p_size;
+
+  /*if (i < 8) {
+    printf("i=%zu\n", i);
+    printf("  p_size=%zu, c_size=%zu, n_pages=%zu, n_clust=%zu\n", p_size,\
+      c_size, n_pages, n_clust);
+    printf("  j=%zu\n", j);
+    printf("  k=%zu\n", k);
+    printf("  l=%zu\n", l);
+  }*/
+
+  assert(l < n_pages * p_size);
+  assert(0 == (l & (p_size - 1)));
+
+  if (what) {
+    page[l] = (char)(l%CHAR_MAX);
+  }
+  else {
+    assert((char)(l%CHAR_MAX) == page[l]);
+  }
+#elif 0
   /* Pick a system page */
   jj = i / (8 * 8 * 8 * 8 * 8 * n_gb);
   /* Pick a 32KB chunk */
@@ -187,10 +217,10 @@ S_swap_kern(size_t const i, void * const state)
 
   idx = p*GB+o*128*MB+n*16*MB+m*2*MB+l*256*KB+k*32*KB+j*p_size;
 
-  assert(idx < n_pages*p_size);
+  assert(idx < n_gb*GB);
   assert(0 == (idx & (p_size-1)));
 
-  if (write_flag) {
+  if (what) {
     page[idx] = (char)idx;
   }
   else {
@@ -233,7 +263,7 @@ S_swap_kern(size_t const i, void * const state)
 
                 idx = p*GB+o*128*MB+n*16*MB+m*2*MB+l*256*KB+k*32*KB+j*p_size;
 
-                if (write_flag) {
+                if (what) {
                   mem[idx] = (char)idx;
                 }
                 else {
@@ -260,39 +290,20 @@ __ooc_defn ( static void S_swap_ooc )(size_t const i, void * const state)
 
 
 static void
-S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
-            size_t const n_threads, size_t const n_fibers)
+S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
+            size_t const n_pages, size_t const n_clust, size_t const n_threads,\
+            size_t const n_fibers)
 {
   int ret;
-  size_t m_size, n_gb;
-  double ts, te, r_sec/*, w_sec*/;
-  size_t i, p, pp, tmp;
+  size_t i, m_size;
+  double ts, te, r_sec, w_sec;
   struct args args;
   struct rusage usage1, usage2, usage3;
   char * page;
-  size_t * map;
 
   printf("===============================\n");
   printf(" Progress =====================\n");
   printf("===============================\n");
-
-  n_gb   = 1+((n_pages*p_size-1)/GB);
-  m_size = n_gb*GB;
-
-  map = mmap(NULL, n_gb*sizeof(*map), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != map);
-
-  /* Shuffle the gigabyte map. */ 
-  for (p=0; p<n_gb; ++p) {
-    map[p] = p;
-  }
-  for (p=0; p<n_gb; ++p) {
-    pp = (size_t)rand()%n_gb;
-    tmp = map[pp];
-    map[pp] = map[p];
-    map[p] = tmp;
-  }
 
   /* Lock all current (i.e., overhead memory, due to the testing environment).
    * The purpose of this is to reduce the number of minor page faults. */
@@ -304,6 +315,9 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
     printf("  Filling DRAM...\n");
     S_fill_dram();
   }
+
+  /* Compute memory footprint. */
+  m_size = n_pages * p_size;
 
   /* Allocate memory for swaping. */
   page = mmap(NULL, m_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
@@ -345,18 +359,20 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
 
   /* Setup args struct. */
   args.p_size  = p_size;
+  args.c_size  = c_size;
   args.n_pages = n_pages;
-  args.n_gb    = n_gb;
+  args.n_clust = n_clust;
   args.page    = page;
-  args.map     = map;
 
   printf("  Initializing pages...\n");
-  /* Touch pages once to make sure that they are populated so that they must be
-   * swapped for subsequent access. */
-  args.write_flag = 1;
+  /* Touch pages all once to make sure that they are populated so that they must
+   * be swapped for subsequent access. */
+  args.what = 1;
+  /* TODO Initialize pages in a completely random order... some of the memory
+   * used to fill DRAM could be re-purposed to achieve this. */
   #pragma omp parallel for num_threads(n_threads) schedule(static)
   for (i=0; i<n_pages; ++i) {
-    S_swap_kern(i, &args);
+    page[i * p_size] = (char)((i * p_size) % CHAR_MAX);
   }
 
   /* Try to clear buffer caches. */
@@ -366,16 +382,14 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
   ret = getrusage(RUSAGE_SELF, &usage1);
   assert(!ret);
 
-  if (n_fibers) {
-    /* Prepare OOC environment. */
-    ooc_set_num_fibers((unsigned int)n_fibers);
-  }
-
   printf("  Testing swap read latency...\n");
   /* Test swap read latency. */
   S_gettime(&ts);
-  args.write_flag = 0;
+  args.what = 0;
   if (n_fibers) {
+    /* Prepare OOC environment. */
+    ooc_set_num_fibers((unsigned int)n_fibers);
+
     #pragma omp parallel num_threads(n_threads) private(ret)
     {
       #pragma omp single
@@ -410,31 +424,33 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
   ret = getrusage(RUSAGE_SELF, &usage2);
   assert(!ret);
 
-#if 0
   printf("  Testing swap write latency...\n");
   /* Test swap write latency. */
   S_gettime(&ts);
-  args.write_flag = 1;
+  args.what = 1;
   if (n_fibers) {
-    #pragma omp parallel num_threads(n_threads) private(ret)
-    {
-      #pragma omp single
+    if (0) {
+      #pragma omp parallel num_threads(n_threads) private(ret)
       {
-        /* `flush pages`, i.e., undo memory protections, so that fibers are able
-         * to be invoked the next iteration that this memory is touched. */
-        ret = mprotect(page, m_size, PROT_NONE);
+        #pragma omp single
+        {
+          /* `flush pages`, i.e., undo memory protections, so that fibers are
+           * able to be invoked the next iteration that this memory is touched.
+           * */
+          ret = mprotect(page, m_size, PROT_NONE);
+          assert(!ret);
+        }
+
+        #pragma omp for nowait schedule(static)
+        for (i=0; i<n_pages; ++i) {
+          S_swap_ooc(i, &args);
+        }
+        ooc_wait(); /* Need this to wait for any outstanding fibers. */
+        #pragma omp barrier
+
+        ret = ooc_finalize(); /* Need this to and remove the signal handler. */
         assert(!ret);
       }
-
-      #pragma omp for nowait schedule(static)
-      for (i=0; i<n_pages; ++i) {
-        S_swap_ooc(i, &args);
-      }
-      ooc_wait(); /* Need this to wait for any outstanding fibers. */
-      #pragma omp barrier
-
-      ret = ooc_finalize(); /* Need this to and remove the signal handler. */
-      assert(!ret);
     }
   }
   else {
@@ -445,14 +461,12 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
   }
   S_gettime(&te);
   w_sec = S_getelapsed(&ts, &te);
-#endif
 
   /* Get usage statistics after all tests. */
   ret = getrusage(RUSAGE_SELF, &usage3);
   assert(!ret);
 
   /* Release memory. */
-  munmap(map, n_gb*sizeof(*map));
   munmap(page, m_size);
 
   /* Output results. */
@@ -463,36 +477,41 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const n_pages,\
   printf("  RD time (s)     = %11.5f\n", r_sec);
   printf("  RD bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/r_sec);
   printf("  RD latency (ns) = %11.0f\n", r_sec*1e9/(double)n_pages);
-/*
   printf("  WR time (s)     = %11.5f\n", w_sec);
   printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
   printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
-*/
   printf("\n");
   printf("===============================\n");
   printf(" Page faults ==================\n");
   printf("===============================\n");
   printf("  RD # Minor      = %11lu\n", usage2.ru_minflt-usage1.ru_minflt);
   printf("  RD # Major      = %11lu\n", usage2.ru_majflt-usage1.ru_majflt);
-/*
   printf("  WR # Minor      = %11lu\n", usage3.ru_minflt-usage2.ru_minflt);
   printf("  WR # Major      = %11lu\n", usage3.ru_majflt-usage2.ru_majflt);
-*/
 }
 
 
 int
 main(int argc, char * argv[])
 {
-  int opt, fill_dram, c_size;
-  size_t p_size, n_fibers, n_pages, n_threads;
+  int opt, fill_dram;
+  size_t p_size, c_size;
+  size_t n_pages, n_clust, n_fibers, n_threads;
   time_t now;
 
+  /* Get current time. */
   now = time(NULL);
 
+  /* Get page size. */
+  p_size = (size_t)sysconf(_SC_PAGESIZE);
+
+  /* Get page-cluster value. */
+  c_size = (1lu << S_getpagecluster()) * p_size;
+
+  /* Parse command-line parameters. */
   fill_dram = 0;
+  n_pages   = GB / p_size;
   n_fibers  = 0;
-  n_pages   = 32768;
   n_threads = 1;
   while (-1 != (opt=getopt(argc, argv, "df:n:t:"))) {
     switch (opt) {
@@ -520,11 +539,8 @@ main(int argc, char * argv[])
   assert(n_pages > 0);
   assert(n_threads > 0);
 
-  /* Get page size. */
-  p_size = (size_t)sysconf(_SC_PAGESIZE);
-
-  /* Get page-cluster value. */
-  c_size = S_getpagecluster();
+  /* Compute the testing memory footprint. */
+  n_clust = n_pages * p_size / c_size;
 
   /* Output build info. */
   printf("===============================\n");
@@ -535,26 +551,22 @@ main(int argc, char * argv[])
   printf("  Build date      = %s\n", STR(DATE));
   printf("  Run date        = %s", ctime(&now));
   printf("  Git commit      = %11s\n", STR(COMMIT));
-  printf("  SysPage size    = %11lu\n", p_size);
-  printf("  Page-cluster    = %11d\n", c_size);
+  printf("  PageCluster (B) = %11lu\n", c_size);
+  printf("  SysPage (B)     = %11lu\n", p_size);
   printf("\n");
 
   /* Output problem info. */
   printf("===============================\n");
   printf(" Parameters ===================\n");
   printf("===============================\n");
+  printf("  # clusters      = %11zu\n", n_clust);
   printf("  # pages         = %11zu\n", n_pages);
-  printf("  # clusters      = %11zu\n", n_pages>>c_size);
   printf("  # fibers        = %11zu\n", n_fibers);
   printf("  # threads       = %11zu\n", n_threads);
   printf("\n");
 
-  /* Adjust p_size and n_pages for system page-cluster size. */
-  /*p_size <<= c_size;
-  n_pages >>= c_size;*/
-
   /* Do test. */  
-  S_swap_test(fill_dram, p_size, n_pages, n_threads, n_fibers);
+  S_swap_test(fill_dram, p_size, c_size, n_pages, n_clust, n_threads, n_fibers);
 
   return EXIT_SUCCESS;
 }
