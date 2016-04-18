@@ -59,6 +59,12 @@ THE SOFTWARE.
 
 
 /******************************************************************************/
+/* To profile with perf under linux, compile with -ggdb and before running call
+ * sudo sh -c "echo '0' > /proc/sys/kernel/kptr_restrict". */
+/******************************************************************************/
+
+
+/******************************************************************************/
 /*
  *  Page flag bits flow chart for S_sigsegv_handler
  *    - Each page has two bits designated [xy] as flags
@@ -132,7 +138,7 @@ S_is_runnable(int const id)
 
 
 static void
-S_sigsegv_handler1(void)
+S_sigsegv_handler(void)
 {
   int ret;
   ssize_t retval;
@@ -198,7 +204,7 @@ S_sigsegv_handler1(void)
 
 #if 0
 static void
-S_sigsegv_handler2(void)
+S_sigsegv_handler(void)
 {
   int ret, prot;
   uintptr_t addr;
@@ -294,7 +300,7 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   F_addr(T_me) = si->si_addr;
 
-  memset(&tmp_uc, 0, sizeof(ucontext_t));
+  //memset(&tmp_uc, 0, sizeof(ucontext_t));
   ret = getcontext(&tmp_uc);
   assert(!ret);
   tmp_uc.uc_stack.ss_sp = tmp_stack;
@@ -302,8 +308,7 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   tmp_uc.uc_stack.ss_flags = 0;
   memcpy(&(tmp_uc.uc_sigmask), &(T_main.uc_sigmask), sizeof(T_main.uc_sigmask));
 
-  /* FIXME POC */
-  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler1, 0);
+  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler, 0);
 
   dbg_printf("[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
     (int)syscall(SYS_gettid), T_me);
