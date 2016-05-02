@@ -98,13 +98,13 @@ S_siglongjmp_test(size_t const n_iters, size_t const n_threads,
 {
   double t_sec=0.0;
 
-  /* Setup */
   #pragma omp parallel num_threads(n_threads) shared(t_sec)
   {
     size_t i, fid;
     double ts, te;
     jmp_buf * fiber;
 
+    /* Setup */
     fiber = malloc(n_fibers*sizeof(*fiber));
     assert(fiber);
     for (fid=0; fid<n_fibers; ++fid) {

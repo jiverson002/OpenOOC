@@ -85,7 +85,6 @@ S_swapcontext_test(size_t const n_iters, size_t const n_threads,
 {
   double t_sec=0.0;
 
-  /* Setup */
   #pragma omp parallel num_threads(n_threads) shared(t_sec)
   {
     int ret;

@@ -30,6 +30,9 @@ THE SOFTWARE.
 /* fopen, fclose, fscanf, printf */
 #include <stdio.h>
 
+/* mmap, MAP_FAILED, MAP_PRIVATE, MAP_ANONYMOUS, MAP_LOCKED */
+#include <sys/mman.h>
+
 /* ctime, time_t */
 #include <time.h>
 
@@ -74,6 +77,44 @@ S_getpagecluster(void)
   assert(!ret);
 
   return c_size;
+}
+
+
+static void
+S_fill_dram(void)
+{
+  size_t n_bytes=0;
+
+  /* Allocate GBs. */
+  for (;;) {
+    if (MAP_FAILED == mmap(NULL, GB, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0))
+    {
+      break;
+    }
+    n_bytes += GB;
+  }
+
+  /* Allocate MBs. */
+  for (;;) {
+    if (MAP_FAILED == mmap(NULL, MB, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0))
+    {
+      break;
+    }
+    n_bytes += MB;
+  }
+
+  /* Allocate 8*KBs. */
+  /*for (;;) {
+    if (MAP_FAILED == mmap(NULL, 8*KB, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0))
+    {
+      break;
+    }
+  }*/
+
+  printf("  Filled with %.2f MiB...\n", (double)n_bytes/1048576.0);
 }
 
 
