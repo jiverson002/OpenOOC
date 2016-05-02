@@ -1,14 +1,17 @@
-bench_PROGRAMS := micro micro-latency swap
+bench_PROGRAMS := longjmp mprotect siglongjmp sigsegv swap swapcontext
 bench_CFLAGS   := -fopenmp
+bench_LDFLAGS  := -fopenmp
+#bench_LDFLAGS := -fopenmp -ggdb
 
-micro_SOURCES  := impl/io.c impl/libc.c impl/sbma.c micro.c
-micro_HEADERS  := impl/impl.h
-micro_LDLIBS   := -lrt
+longjmp_SOURCES := longjmp.c
 
-micro-latency_SOURCES := micro-latency.c
-micro-latency_LDLIBS  := -lrt
+mprotect_SOURCES := mprotect.c
+
+siglongjmp_SOURCES := siglongjmp.c
+
+sigsegv_SOURCES := sigsegv.c
 
 swap_SOURCES := swap.c
 swap_LDADD   := libooc.a
-swap_LDFLAGS := -fopenmp
-#swap_LDFLAGS := -fopenmp -ggdb
+
+swapcontext_SOURCES := swapcontext.c

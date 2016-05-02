@@ -45,7 +45,7 @@ THE SOFTWARE.
 /* struct rusage, getrusage */
 #include <sys/resource.h>
 
-/* time, ctime, time_t */
+/* time, time_t */
 #include <time.h>
 
 /* getopt, sync, sysconf, _SC_PAGESIZE */
@@ -54,13 +54,8 @@ THE SOFTWARE.
 /* OOC library */
 #include "src/ooc.h"
 
-
-#define XSTR(X) #X
-#define STR(X)  XSTR(X)
-
-#define KB (1lu<<10) /* 1KB */
-#define MB (1lu<<20) /* 1MB */
-#define GB (1lu<<30) /* 1GB */
+/* */
+#include "util.h"
 
 
 struct args
@@ -70,39 +65,6 @@ struct args
   size_t n_pages, n_clust;
   char * page;
 };
-
-
-static void
-S_gettime(double * const t)
-{
-  *t = omp_get_wtime();
-}
-
-
-static double
-S_getelapsed(double const * const ts, double * const te)
-{
-  return *te-*ts;
-}
-
-
-static int
-S_getpagecluster(void)
-{
-  int ret, c_size;
-  FILE * fp;
-
-  fp = fopen("/proc/sys/vm/page-cluster", "r");
-  assert(fp);
-
-  ret = fscanf(fp, "%d", &c_size);
-  assert(1 == ret);
-
-  ret = fclose(fp);
-  assert(!ret);
-
-  return c_size;
-}
 
 
 static void
@@ -164,15 +126,6 @@ S_swap_kern(size_t const i, void * const state)
   j = i % n_clust;  /* get cluster # */
   k = i / n_clust;  /* get entry in cluster */
   l = j * c_size + k * p_size;
-
-  /*if (i < 8) {
-    printf("i=%zu\n", i);
-    printf("  p_size=%zu, c_size=%zu, n_pages=%zu, n_clust=%zu\n", p_size,\
-      c_size, n_pages, n_clust);
-    printf("  j=%zu\n", j);
-    printf("  k=%zu\n", k);
-    printf("  l=%zu\n", l);
-  }*/
 
   assert(l < n_pages * p_size);
   assert(0 == (l & (p_size - 1)));
@@ -305,6 +258,15 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf(" Progress =====================\n");
   printf("===============================\n");
 
+  if (n_fibers) {
+    #pragma omp parallel num_threads(n_threads) private(ret)
+    {
+      /* Prepare OOC environment -- this is done prior to locking current memory
+       * so that page faults are not incurred for loading context data. */
+      ooc_set_num_fibers((unsigned int)n_fibers);
+    }
+  }
+
   /* Lock all current (i.e., overhead memory, due to the testing environment).
    * The purpose of this is to reduce the number of minor page faults. */
   ret = mlockall(MCL_CURRENT);
@@ -365,7 +327,7 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   args.page    = page;
 
   printf("  Initializing pages...\n");
-  /* Touch pages all once to make sure that they are populated so that they must
+  /* Touch all pages once to make sure that they are populated so that they must
    * be swapped for subsequent access. */
   args.what = 1;
   /* TODO Initialize pages in a completely random order... some of the memory
@@ -387,9 +349,6 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   S_gettime(&ts);
   args.what = 0;
   if (n_fibers) {
-    /* Prepare OOC environment. */
-    ooc_set_num_fibers((unsigned int)n_fibers);
-
     #pragma omp parallel num_threads(n_threads) private(ret)
     {
       #pragma omp single
@@ -477,9 +436,11 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("  RD time (s)     = %11.5f\n", r_sec);
   printf("  RD bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/r_sec);
   printf("  RD latency (ns) = %11.0f\n", r_sec*1e9/(double)n_pages);
-  printf("  WR time (s)     = %11.5f\n", w_sec);
-  printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
-  printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
+  if (!n_fibers) {
+    printf("  WR time (s)     = %11.5f\n", w_sec);
+    printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
+    printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
+  }
   printf("\n");
   printf("===============================\n");
   printf(" Page faults ==================\n");
@@ -543,17 +504,7 @@ main(int argc, char * argv[])
   n_clust = n_pages * p_size / c_size;
 
   /* Output build info. */
-  printf("===============================\n");
-  printf(" General ======================\n");
-  printf("===============================\n");
-  printf("  Machine info    = %s\n", STR(UNAME));
-  printf("  GCC version     = %s\n", STR(GCCV));
-  printf("  Build date      = %s\n", STR(DATE));
-  printf("  Run date        = %s", ctime(&now));
-  printf("  Git commit      = %11s\n", STR(COMMIT));
-  printf("  PageCluster (B) = %11lu\n", c_size);
-  printf("  SysPage (B)     = %11lu\n", p_size);
-  printf("\n");
+  S_printbuildinfo(&now, p_size, c_size);
 
   /* Output problem info. */
   printf("===============================\n");
