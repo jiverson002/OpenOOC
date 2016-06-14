@@ -211,7 +211,7 @@ S_aio_test(int const fill_dram, size_t const p_size, size_t const c_size,
     else {
       #pragma omp for schedule(static)
       for (i=0; i<n_pages; ++i) {
-        S_aio_helper(i, req, p_size, c_size, n_pages, n_clust, mem, 0);
+        S_aio_helper(i, NULL, p_size, c_size, n_pages, n_clust, mem, 0);
       }
     }
     S_gettime(&te);

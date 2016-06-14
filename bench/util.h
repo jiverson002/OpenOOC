@@ -33,6 +33,12 @@ THE SOFTWARE.
 /* mmap, MAP_FAILED, MAP_PRIVATE, MAP_ANONYMOUS, MAP_LOCKED */
 #include <sys/mman.h>
 
+/* getrlimit */
+#include <sys/resource.h>
+
+/* getrlimit */
+#include <sys/time.h>
+
 /* ctime, time_t */
 #include <time.h>
 
@@ -122,6 +128,12 @@ static void
 S_printbuildinfo(time_t const * const now, size_t const p_size,
                  size_t const c_size)
 {
+  int ret;
+  struct rlimit rlim;
+
+  ret = getrlimit(RLIMIT_MEMLOCK, &rlim);
+  assert(!ret);
+
   /* Output build info. */
   printf("===============================\n");
   printf(" General ======================\n");
@@ -131,7 +143,8 @@ S_printbuildinfo(time_t const * const now, size_t const p_size,
   printf("  Build date      = %s\n", STR(DATE));
   printf("  Run date        = %s", ctime(now));
   printf("  Git commit      = %11s\n", STR(COMMIT));
-  printf("  PageCluster (B) = %11lu\n", c_size);
-  printf("  SysPage (B)     = %11lu\n", p_size);
+  printf("  PageCluster (B) = %11zu\n", c_size);
+  printf("  SysPage (B)     = %11zu\n", p_size);
+  printf("  Memlock Max     = %11lu\n", (long unsigned)rlim.rlim_max);
   printf("\n");
 }
