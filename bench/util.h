@@ -86,7 +86,7 @@ S_getpagecluster(void)
 }
 
 
-static void
+static void __attribute__((unused))
 S_fill_dram(void)
 {
   size_t n_bytes=0;

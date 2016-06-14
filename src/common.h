@@ -34,6 +34,9 @@ THE SOFTWARE.
 /* size_t */
 #include <stddef.h>
 
+/* FILE */
+#include <stdio.h>
+
 /* ucontext_t */
 #include <ucontext.h>
 

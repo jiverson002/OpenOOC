@@ -243,7 +243,7 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   /* Compute memory footprint. */
   m_size = n_pages * p_size;
 
-  /* Allocate memory for swaping. */
+  /* Allocate memory for swapping. */
   page = mmap(NULL, m_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,\
     -1, 0);
   assert(MAP_FAILED != page);
@@ -409,8 +409,10 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("===============================\n");
   printf("  RD # Minor      = %11lu\n", usage2.ru_minflt-usage1.ru_minflt);
   printf("  RD # Major      = %11lu\n", usage2.ru_majflt-usage1.ru_majflt);
-  printf("  WR # Minor      = %11lu\n", usage3.ru_minflt-usage2.ru_minflt);
-  printf("  WR # Major      = %11lu\n", usage3.ru_majflt-usage2.ru_majflt);
+  if (!n_fibers) {
+    printf("  WR # Minor      = %11lu\n", usage3.ru_minflt-usage2.ru_minflt);
+    printf("  WR # Major      = %11lu\n", usage3.ru_majflt-usage2.ru_majflt);
+  }
 }
 
 

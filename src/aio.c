@@ -50,8 +50,17 @@ THE SOFTWARE.
   /* sem_t, sem_wait, sem_post, sem_init, sem_destroy */
   #include <semaphore.h>
 
+  /* FILENAME_MAX, fopen, fclose, fprintf */
+  #include <stdio.h>
+
+  /* malloc, free */
+  #include <stdlib.h>
+
   /* mprotect, PROT_READ, PROT_WRITE */
   #include <sys/mman.h>
+
+  /* syscall, __NR_* */
+  #include <sys/syscall.h>
 
 
   /*! Maximum number of outstanding async-i/o requests. */
@@ -197,9 +206,18 @@ S_aiothread_func(void * const state)
   int ret;
   unsigned char incore;
   unsigned long ps;
+  char * lname;
+  FILE * log;
   ooc_aioreq_t * aioreq;
   struct ooc_aioargs * args;
   struct ooc_aioq * oq, * cq;
+
+  /* Open log file */
+  lname = malloc(FILENAME_MAX);
+  sprintf(lname, "t-%d", (int)syscall(SYS_gettid));
+  log = fopen(lname, "w");
+  assert(log);
+  free(lname);
 
   /* Get system page size */
   ps = (uintptr_t)OOC_PAGE_SIZE;
@@ -213,6 +231,8 @@ S_aiothread_func(void * const state)
   for (;;) {
     /* Dequeue outstanding request. */
     S_q_deq(oq, &aioreq);
+
+    fprintf(log, "s %f\n", omp_get_wtime());
 
     /* Process request. */
     /* FIXME POC */
@@ -238,7 +258,12 @@ S_aiothread_func(void * const state)
 
     /* Enqueue completed request. */
     S_q_enq(cq, aioreq);
+
+    //fprintf(log, "e %f\n", omp_get_wtime());
   }
+
+  ret = fclose(log);
+  assert(!ret);
 
   return NULL;
 }

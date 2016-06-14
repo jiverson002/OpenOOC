@@ -45,6 +45,9 @@ THE SOFTWARE.
 /* mprotect, PROT_READ, PROT_WRITE */
 #include <sys/mman.h>
 
+/* syscall, __NR_* */
+#include <sys/syscall.h>
+
 /* ucontext_t, getcontext, makecontext, swapcontext, setcontext */
 #include <ucontext.h>
 
@@ -104,6 +107,10 @@ __thread struct thread thread = { .is_init=0 };
 
 /*! Process context. */
 struct process process;
+
+
+/*! Fiber log. */
+static FILE * S_log;
 
 
 static int
@@ -370,6 +377,7 @@ S_init(void)
 {
   int ret, i;
   struct sigaction act;
+  //char * lname;
 
   /* Clear thread context. */
   memset(&thread, 0, sizeof(struct thread));
@@ -386,6 +394,13 @@ S_init(void)
   act.sa_flags = SA_SIGINFO;
   ret = sigaction(SIGSEGV, &act, &T_old_act);
   assert(!ret);
+
+  /* Open fiber log file. */
+  //lname = malloc(FILENAME_MAX);
+  //sprintf(lname, "f-%d", (int)syscall(SYS_gettid));
+  //S_log = fopen(lname, "w");
+  //assert(S_log);
+  //free(lname);
 
   /* Setup per-thread fibers. */
   for (i=0; i<(int)T_num_fibers; ++i) {
@@ -425,6 +440,10 @@ ooc_finalize(void)
   /* Destroy per-thread async-io context. */
   ret = aio_destroy(T_aioctx);
   assert(!ret);
+
+  /* Close fiber log. */
+  //ret = fclose(S_log);
+  //assert(!ret);
 
   /* Mark thread as uninitialized. */
   T_is_init = 0;
@@ -516,10 +535,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       dbg_printf("[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
+      //fprintf(S_log, "s %d %f\n", idle, omp_get_wtime());
+
       /* Switch fibers. */
       T_me = idle;
       ret = swapcontext(&T_main, &(F_kern(T_me)));
       assert(!ret);
+
+      //fprintf(S_log, "e %d %f\n", idle, omp_get_wtime());
 
       dbg_printf("[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
@@ -535,10 +558,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       break;
     }
     else if (-1 != wait) {
+      //fprintf(S_log, "s %d %f\n", wait, omp_get_wtime());
+
       /* Switch fibers. */
       T_me = wait;
       ret = swapcontext(&T_main, &(F_handler(T_me)));
       assert(!ret);
+
+      //fprintf(S_log, "e %d %f\n", wait, omp_get_wtime());
 
       /* XXX At this point the fiber T_me has either successfully completed its
        * execution of the kernel F_kern(T_me) or it received another SIGSEGV and
