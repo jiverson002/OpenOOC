@@ -294,9 +294,9 @@ static void
 S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 {
   /* Signal handler context. */
-  static __thread ucontext_t tmp_uc;
+  //ucontext_t tmp_uc;
   /* Alternate stack for signal handler context. */
-  static __thread char tmp_stack[SIGSTKSZ];
+  /*static __thread char tmp_stack[SIGSTKSZ];*/
   int ret;
 
   assert(SIGSEGV == sig);
@@ -307,20 +307,21 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   F_addr(T_me) = si->si_addr;
 
-  //memset(&tmp_uc, 0, sizeof(ucontext_t));
-  ret = getcontext(&tmp_uc);
+  memset(&(F_tmp_uc(T_me)), 0, sizeof(F_tmp_uc(T_me)));
+  ret = getcontext(&(F_tmp_uc(T_me)));
   assert(!ret);
-  tmp_uc.uc_stack.ss_sp = tmp_stack;
-  tmp_uc.uc_stack.ss_size = SIGSTKSZ;
-  tmp_uc.uc_stack.ss_flags = 0;
-  memcpy(&(tmp_uc.uc_sigmask), &(T_main.uc_sigmask), sizeof(T_main.uc_sigmask));
+  F_tmp_uc(T_me).uc_stack.ss_sp = F_tmp_stack(T_me);
+  F_tmp_uc(T_me).uc_stack.ss_size = SIGSTKSZ;
+  F_tmp_uc(T_me).uc_stack.ss_flags = 0;
+  memcpy(&(F_tmp_uc(T_me).uc_sigmask), &(T_main.uc_sigmask),\
+    sizeof(T_main.uc_sigmask));
 
-  makecontext(&tmp_uc, (void (*)(void))S_sigsegv_handler, 0);
+  makecontext(&(F_tmp_uc(T_me)), (void (*)(void))S_sigsegv_handler, 0);
 
   dbg_printf("[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
     (int)syscall(SYS_gettid), T_me);
 
-  swapcontext(&(F_trampoline(T_me)), &tmp_uc);
+  swapcontext(&(F_trampoline(T_me)), &(F_tmp_uc(T_me)));
 
   if (uc) {}
 }
@@ -402,10 +403,27 @@ S_init(void)
   //assert(S_log);
   //free(lname);
 
+  /* Allocate memory for idle list. */
+  T_idle_list = malloc(OOC_MAX_FIBERS*sizeof(*T_idle_list));
+  assert(T_idle_list);
+
+  /* Allocate memory for fibers. */
+  T_fiber = malloc(OOC_MAX_FIBERS*sizeof(*T_fiber));
+  assert(T_fiber);
+
   /* Setup per-thread fibers. */
   for (i=0; i<(int)T_num_fibers; ++i) {
     /* Clear fiber context. */
     memset(&(T_fiber[i]), 0, sizeof(struct fiber));
+
+#if 0 && defined(MAP_STACK)
+    F_stack(i) = mmap(NULL, SIGSTKSZ, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0);
+    assert(MAP_FAILED != F_stack(i));
+    F_tmp_stack(i) = mmap(NULL, SIGSTKSZ, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0);
+    assert(MAP_FAILED != F_tmp_stack(i));
+#endif
 
     /* Initialize fiber kernel. */
     ret = S_kern_init(i);
@@ -440,6 +458,21 @@ ooc_finalize(void)
   /* Destroy per-thread async-io context. */
   ret = aio_destroy(T_aioctx);
   assert(!ret);
+
+  /* Free memory for idle list. */
+  free(T_idle_list);
+
+  /* Free memory for fibers. */
+  free(T_fiber);
+
+#if 0 && defined(MAP_STACK)
+  for (i=0; i<(int)T_num_fibers; ++i) {
+    ret = munmap(F_stack(i), SIGSTKSZ);
+    assert(!ret);
+    ret = munmap(F_tmp_stack(i), SIGSTKSZ);
+    assert(!ret);
+  }
+#endif
 
   /* Close fiber log. */
   //ret = fclose(S_log);

@@ -56,6 +56,9 @@ THE SOFTWARE.
   /* malloc, free */
   #include <stdlib.h>
 
+  /* memset */
+  #include <string.h>
+
   /* mprotect, PROT_READ, PROT_WRITE */
   #include <sys/mman.h>
 
@@ -73,8 +76,8 @@ THE SOFTWARE.
 
   /*! Asynchronous i/o request queue. */
   struct ooc_aioq {
-    int head;
-    int tail;
+    volatile int head;
+    volatile int tail;
     sem_t full;                               /*!< Indicator of full queue. */
     sem_t empty;                              /*!< Indicator of empty queue. */
     struct ooc_aioreq * aioreq[AIO_MAX_REQS]; /*!< Array of requests. */
@@ -93,10 +96,10 @@ THE SOFTWARE.
   static __thread pthread_t S_aiothread;
 
   /*! Outstanding work queue. */
-  static __thread struct ooc_aioq S_oq;
+  static __thread struct ooc_aioq * S_oq;
 
   /*! Completed work queue. */
-  static __thread struct ooc_aioq S_cq;
+  static __thread struct ooc_aioq * S_cq;
 
   /*! Args to be passed to async i/o thread. */
   static __thread struct ooc_aioargs S_args;
@@ -206,33 +209,32 @@ S_aiothread_func(void * const state)
   int ret;
   unsigned char incore;
   unsigned long ps;
-  char * lname;
-  FILE * log;
+  /*char * lname;
+  FILE * log;*/
   ooc_aioreq_t * aioreq;
   struct ooc_aioargs * args;
   struct ooc_aioq * oq, * cq;
 
+  dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
+
   /* Open log file */
-  lname = malloc(FILENAME_MAX);
+  /*lname = malloc(FILENAME_MAX);
   sprintf(lname, "t-%d", (int)syscall(SYS_gettid));
   log = fopen(lname, "w");
   assert(log);
-  free(lname);
+  free(lname);*/
 
   /* Get system page size */
   ps = (uintptr_t)OOC_PAGE_SIZE;
-
-  dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
 
   args = (struct ooc_aioargs*)state;
   oq = args->oq;
   cq = args->cq;
 
   for (;;) {
-    /* Dequeue outstanding request. */
     S_q_deq(oq, &aioreq);
 
-    fprintf(log, "s %f\n", omp_get_wtime());
+    //fprintf(log, "s %f\n", omp_get_wtime());
 
     /* Process request. */
     /* FIXME POC */
@@ -262,8 +264,11 @@ S_aiothread_func(void * const state)
     //fprintf(log, "e %f\n", omp_get_wtime());
   }
 
-  ret = fclose(log);
-  assert(!ret);
+  /* Close log. */
+  /*ret = fclose(log);
+  assert(!ret);*/
+
+  dbg_printf("[%5d.aio]   Async I/O thread dead\n", (int)syscall(SYS_gettid));
 
   return NULL;
 }
@@ -285,17 +290,23 @@ ooc_aio_setup(unsigned int const nr, ooc_aioctx_t * const ctx)
   dbg_printf("[%5d.***] Setting up async i/o context\n",\
     (int)syscall(SYS_gettid));
 
-  ret = S_q_setup(&S_oq);
+  S_oq = malloc(sizeof(*S_oq));
+  assert(S_oq);
+  S_cq = malloc(sizeof(*S_cq));
+  assert(S_cq);
+
+  ret = S_q_setup(S_oq);
   if (ret) {
     return ret;
   }
-  ret = S_q_setup(&S_cq);
+  ret = S_q_setup(S_cq);
   if (ret) {
     return ret;
   }
 
-  S_args.oq = &S_oq;
-  S_args.cq = &S_cq;
+  S_args.oq = S_oq;
+  S_args.cq = S_cq;
+
   ret = pthread_create(&S_aiothread, NULL, &S_aiothread_func, &S_args);
   if (ret) {
     return ret;
@@ -326,14 +337,17 @@ ooc_aio_destroy(ooc_aioctx_t ctx)
   /* FIXME If the queues get destroyed before async i/o thread is killed, it
    * could have undefined behavior when interacting with the queues semaphores.
    * */
-  ret = S_q_destroy(&S_oq);
+  ret = S_q_destroy(S_oq);
   if (ret) {
     return ret;
   }
-  ret = S_q_destroy(&S_cq);
+  ret = S_q_destroy(S_cq);
   if (ret) {
     return ret;
   }
+
+  free(S_oq);
+  free(S_cq);
 
   /* FIXME Send S_aiothread some type of cancel message. */
   /*ret = pthread_join(S_aiothread, NULL);
@@ -378,7 +392,7 @@ ooc_aio_read(void * const buf, size_t const count, ooc_aioreq_t * const aioreq)
   aioreq->aio_op = 0;
 
   /* Enqueue page read. */
-  S_q_enq(&S_oq, aioreq);
+  S_q_enq(S_oq, aioreq);
 
   dbg_printf("[%5d.***]   Read request enqueued\n", (int)syscall(SYS_gettid));
 
@@ -420,7 +434,7 @@ ooc_aio_write(void const * const buf, size_t const count,
   aioreq->aio_op = 1;
 
   /* Enqueue page write. */
-  S_q_enq(&S_oq, aioreq);
+  S_q_enq(S_oq, aioreq);
 
   /* FIXME Not fully implemented. */
   ret = -1;
@@ -495,7 +509,7 @@ ooc_aio_suspend(void)
   ret = aio_suspend(aioreq_list, (int)nr, timeout);
 #else
   /* Dequeue completed request. */
-  S_q_deq(&S_cq, &retval);
+  S_q_deq(S_cq, &retval);
 #endif
 
   return retval;

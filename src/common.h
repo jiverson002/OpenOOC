@@ -157,9 +157,11 @@ struct fiber
   ucontext_t handler;
   ucontext_t trampoline;
   ucontext_t kern;
+  ucontext_t tmp_uc;
   void *     args;
   void *     addr;
   char       stack[SIGSTKSZ];
+  char       tmp_stack[SIGSTKSZ];
   void       (*kernel)(size_t const, void * const);
 
   #define F_iter(id)       (T_fiber[id].iter)
@@ -167,9 +169,11 @@ struct fiber
   #define F_handler(id)    (T_fiber[id].handler)
   #define F_trampoline(id) (T_fiber[id].trampoline)
   #define F_kern(id)       (T_fiber[id].kern)
+  #define F_tmp_uc(id)     (T_fiber[id].tmp_uc)
   #define F_args(id)       (T_fiber[id].args)
   #define F_addr(id)       (T_fiber[id].addr)
   #define F_stack(id)      (T_fiber[id].stack)
+  #define F_tmp_stack(id)  (T_fiber[id].tmp_stack)
   #define F_kernel(id)     (T_fiber[id].kernel)
 };
 
@@ -178,17 +182,17 @@ struct fiber
 #define thread ooc_thread
 struct thread
 {
-  int              is_init;                   /*!< Indicator of library init. */
-  int              me;                        /*!< Current fiber id. */
-  int              n_wait;                    /*!< Waiting fiber counter. */
-  int              n_idle;                    /*!< Idle fiber counter. */
-  unsigned int     num_fibers;                /*!< Number of fibers. */
-  uintptr_t        ps;                        /*!< System page size. */
-  aioctx_t         aioctx;                    /*!< Async I/O context. */
-  ucontext_t       main;                      /*!< The main context. */
-  struct sigaction old_act;                   /*!< Old sigaction. */
-  int              idle_list[OOC_MAX_FIBERS]; /*!< List of idle fibers. */
-  struct fiber     fiber[OOC_MAX_FIBERS];     /*!< Fibers. */
+  int              is_init;     /*!< Indicator of library init. */
+  int              me;          /*!< Current fiber id. */
+  int              n_wait;      /*!< Waiting fiber counter. */
+  int              n_idle;      /*!< Idle fiber counter. */
+  unsigned int     num_fibers;  /*!< Number of fibers. */
+  uintptr_t        ps;          /*!< System page size. */
+  aioctx_t         aioctx;      /*!< Async I/O context. */
+  ucontext_t       main;        /*!< The main context. */
+  struct sigaction old_act;     /*!< Old sigaction. */
+  int              * idle_list; /*!< List of idle fibers. */
+  struct fiber     * fiber;     /*!< Fibers. */
 
   #define T_is_init    (thread.is_init)
   #define T_me         (thread.me)
@@ -321,7 +325,7 @@ extern struct process process;
 #if 0
 #include <stdio.h>
 #include <sys/syscall.h>
-#define dbg_printf(...) printf(__VA_ARGS__)
+#define dbg_printf(...) (printf(__VA_ARGS__), fflush(stdout))
 #else
 #define dbg_printf(...)
 #endif
