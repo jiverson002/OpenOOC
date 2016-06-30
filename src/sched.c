@@ -378,7 +378,7 @@ S_init(void)
 {
   int ret, i;
   struct sigaction act;
-  //char * lname;
+  char * lname;
 
   /* Clear thread context. */
   memset(&thread, 0, sizeof(struct thread));
@@ -397,11 +397,11 @@ S_init(void)
   assert(!ret);
 
   /* Open fiber log file. */
-  //lname = malloc(FILENAME_MAX);
-  //sprintf(lname, "f-%d", (int)syscall(SYS_gettid));
-  //S_log = fopen(lname, "w");
-  //assert(S_log);
-  //free(lname);
+  lname = malloc(FILENAME_MAX);
+  sprintf(lname, "f-%d", (int)syscall(SYS_gettid));
+  S_log = fopen(lname, "w");
+  assert(S_log);
+  free(lname);
 
   /* Allocate memory for idle list. */
   T_idle_list = malloc(OOC_MAX_FIBERS*sizeof(*T_idle_list));
@@ -475,8 +475,8 @@ ooc_finalize(void)
 #endif
 
   /* Close fiber log. */
-  //ret = fclose(S_log);
-  //assert(!ret);
+  ret = fclose(S_log);
+  assert(!ret);
 
   /* Mark thread as uninitialized. */
   T_is_init = 0;
@@ -568,14 +568,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       dbg_printf("[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
-      //fprintf(S_log, "s %d %f\n", idle, omp_get_wtime());
+      fprintf(S_log, "%d %f ", idle, omp_get_wtime());
 
       /* Switch fibers. */
       T_me = idle;
       ret = swapcontext(&T_main, &(F_kern(T_me)));
       assert(!ret);
 
-      //fprintf(S_log, "e %d %f\n", idle, omp_get_wtime());
+      fprintf(S_log, "%f\n", omp_get_wtime());
 
       dbg_printf("[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
@@ -591,14 +591,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       break;
     }
     else if (-1 != wait) {
-      //fprintf(S_log, "s %d %f\n", wait, omp_get_wtime());
+      fprintf(S_log, "%d %f ", wait, omp_get_wtime());
 
       /* Switch fibers. */
       T_me = wait;
       ret = swapcontext(&T_main, &(F_handler(T_me)));
       assert(!ret);
 
-      //fprintf(S_log, "e %d %f\n", wait, omp_get_wtime());
+      fprintf(S_log, "%f\n", omp_get_wtime());
 
       /* XXX At this point the fiber T_me has either successfully completed its
        * execution of the kernel F_kern(T_me) or it received another SIGSEGV and

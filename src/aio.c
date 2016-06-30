@@ -209,8 +209,8 @@ S_aiothread_func(void * const state)
   int ret;
   unsigned char incore;
   unsigned long ps;
-  /*char * lname;
-  FILE * log;*/
+  char * lname;
+  FILE * log;
   ooc_aioreq_t * aioreq;
   struct ooc_aioargs * args;
   struct ooc_aioq * oq, * cq;
@@ -218,11 +218,11 @@ S_aiothread_func(void * const state)
   dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
 
   /* Open log file */
-  /*lname = malloc(FILENAME_MAX);
+  lname = malloc(FILENAME_MAX);
   sprintf(lname, "t-%d", (int)syscall(SYS_gettid));
   log = fopen(lname, "w");
   assert(log);
-  free(lname);*/
+  free(lname);
 
   /* Get system page size */
   ps = (uintptr_t)OOC_PAGE_SIZE;
@@ -234,7 +234,7 @@ S_aiothread_func(void * const state)
   for (;;) {
     S_q_deq(oq, &aioreq);
 
-    //fprintf(log, "s %f\n", omp_get_wtime());
+    fprintf(log, "%d %f ", aioreq->aio_id, omp_get_wtime());
 
     /* Process request. */
     /* FIXME POC */
@@ -261,12 +261,12 @@ S_aiothread_func(void * const state)
     /* Enqueue completed request. */
     S_q_enq(cq, aioreq);
 
-    //fprintf(log, "e %f\n", omp_get_wtime());
+    fprintf(log, "%f\n", omp_get_wtime());
   }
 
   /* Close log. */
-  /*ret = fclose(log);
-  assert(!ret);*/
+  ret = fclose(log);
+  assert(!ret);
 
   dbg_printf("[%5d.aio]   Async I/O thread dead\n", (int)syscall(SYS_gettid));
 

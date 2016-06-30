@@ -85,9 +85,14 @@ S_swap_kern(size_t const i, void * const state)
   page    = args->page;
 
 #if 1
+  j = i / (n_pages / n_clust); /* get cluster # */
+  k = i % (n_pages / n_clust); /* get page # in cluster */
+  l = j * c_size + k * p_size; /* compute byte offset */
+#else
   j = i % n_clust;  /* get cluster # */
   k = i / n_clust;  /* get entry in cluster */
   l = j * c_size + k * p_size;
+#endif
 
   assert(l < n_pages * p_size);
   assert(0 == (l & (p_size - 1)));
@@ -98,100 +103,6 @@ S_swap_kern(size_t const i, void * const state)
   else {
     assert((char)(l%CHAR_MAX) == page[l]);
   }
-#elif 0
-  /* Pick a system page */
-  jj = i / (8 * 8 * 8 * 8 * 8 * n_gb);
-  /* Pick a 32KB chunk */
-  kk = (i % (8 * 8 * 8 * 8 * 8 * n_gb)) / (8 * 8 * 8 * 8 * n_gb);
-  /* Pick a 256KB chunk */
-  ll = (i % (8 * 8 * 8 * 8 * n_gb)) / (8 * 8 * 8 * n_gb);
-  /* Pick a 2MB chunk */
-  mm = (i % (8 * 8 * 8 * n_gb)) / (8 * 8 * n_gb);
-  /* Pick a 16MB chunk */
-  nn = (i % (8 * 8 * n_gb)) / (8 * n_gb);
-  /* Pick a 128MB chunk */
-  oo = (i % (8 * n_gb)) / n_gb;
-  /* Pick a 1GB chunk */
-  pp = i % n_gb;
-
-  assert(jj < 8);
-  assert(kk < 8);
-  assert(ll < 8);
-  assert(mm < 8);
-  assert(nn < 8);
-  assert(oo < 8);
-  assert(pp < n_gb);
-
-  j = map8[jj] % (32 * KB / p_size);
-  k = map8[kk];
-  l = map8[ll];
-  m = map8[mm];
-  n = map8[nn];
-  o = map8[oo];
-  p = map[pp];
-
-  idx = p*GB+o*128*MB+n*16*MB+m*2*MB+l*256*KB+k*32*KB+j*p_size;
-
-  assert(idx < n_gb*GB);
-  assert(0 == (idx & (p_size-1)));
-
-  if (what) {
-    page[idx] = (char)idx;
-  }
-  else {
-    /*printf("i=%zu\n", i);
-    printf("  jj=%zu, kk=%zu, ll=%zu, mm=%zu, nn=%zu, oo=%zu, pp=%zu\n", jj,\
-      kk, ll, mm, nn, oo, pp);
-    printf("  j=%zu, k=%zu, l=%zu, m=%zu, n=%zu, o=%zu, p=%zu, idx=%zu\n", j,\
-      k, l, m, n, o, p, idx);*/
-
-    assert((char)idx == page[idx]);
-  }
-#else
-  /* FIXME map8 is size 8, but 32*KB/p_size could be greater than 8 or 0
-   * if p_size < 4096 or p_size > 32*KB, respectively. So here we ensure that
-   * system page size is at least 4096. */
-  p_size = p_size < 4096 ? 4096 : p_size;
-  p_size = p_size > 32*KB ? 32*KB : p_size;
-
-  /* Pick a system page */
-  for (jj=0; jj<32*KB/p_size; ++jj) {
-    j = map8[jj];
-    /* Pick a 32KB chunk */
-    for (kk=0; kk<8; ++kk) {
-      k = map8[kk];
-      /* Pick a 256KB chunk */
-      for (ll=0; ll<8; ++ll) {
-        l = map8[ll];
-        /* Pick a 2MB chunk */
-        for (mm=0; mm<8; ++mm) {
-          m = map8[mm];
-          /* Pick a 16MB chunk */
-          for (nn=0; nn<8; ++nn) {
-            n = map8[nn];
-            /* Pick a 128MB chunk */
-            for (oo=0; oo<8; ++oo) {
-              o = map8[oo];
-              /* Pick a 1GB chunk */
-              for (pp=0; pp<n_gb; ++pp) {
-                p = map[pp];
-
-                idx = p*GB+o*128*MB+n*16*MB+m*2*MB+l*256*KB+k*32*KB+j*p_size;
-
-                if (what) {
-                  mem[idx] = (char)idx;
-                }
-                else {
-                  assert((char)idx == mem[idx]);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-#endif
 }
 
 
