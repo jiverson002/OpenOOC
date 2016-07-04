@@ -53,6 +53,7 @@ S_mprotect_helper(size_t const i, size_t const p_size, size_t const c_size,
   int ret;
   size_t j, k, l;
 
+  /* See note in swap.c about how this will access pages. */
   j = i % n_clust;  /* get cluster # */
   k = i / n_clust;  /* get entry in cluster */
   l = j * c_size + k * p_size;
