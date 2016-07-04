@@ -51,48 +51,23 @@ THE SOFTWARE.
 /* getopt, sync, sysconf, _SC_PAGESIZE */
 #include <unistd.h>
 
-/* OOC library */
-#include "src/ooc.h"
-
 /* */
 #include "util.h"
 
 
-struct args
-{
-  int what;
-  size_t p_size, c_size;
-  size_t n_pages, n_clust;
-  char * page;
-};
-
-
 static void
-S_swap_kern(size_t const i, void * const state)
+S_swap_helper(int const what, size_t const p_size, size_t const c_size,
+              size_t const n_pages, size_t const n_clust, char * const page,
+              size_t const i)
 {
-  int what;
   size_t j, k, l;
-  size_t p_size, c_size, n_pages, n_clust;
-  volatile char * page;
-  struct args const * args;
 
-  args = (struct args const*)state;
-  what    = args->what;
-  p_size  = args->p_size;
-  c_size  = args->c_size;
-  n_pages = args->n_pages;
-  n_clust = args->n_clust;
-  page    = args->page;
-
-#if 1
-  j = i / (n_pages / n_clust); /* get cluster # */
-  k = i % (n_pages / n_clust); /* get page # in cluster */
+  /* If we organize the pages in a 2D matrix where each row is a cluster, then
+   * we will traverse the pages in column major order, so that each cluster is
+   * touched only once before every other cluster has been touched. */
+  j = i % n_clust;             /* get cluster # (row) */
+  k = i / n_clust;             /* get page # in cluster (column) */
   l = j * c_size + k * p_size; /* compute byte offset */
-#else
-  j = i % n_clust;  /* get cluster # */
-  k = i / n_clust;  /* get entry in cluster */
-  l = j * c_size + k * p_size;
-#endif
 
   assert(l < n_pages * p_size);
   assert(0 == (l & (p_size - 1)));
@@ -106,39 +81,19 @@ S_swap_kern(size_t const i, void * const state)
 }
 
 
-__ooc_decl ( static void S_swap_ooc )(size_t const i, void * const state);
-
-
-__ooc_defn ( static void S_swap_ooc )(size_t const i, void * const state)
-{
-  S_swap_kern(i, state);
-}
-
-
 static void
 S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
-            size_t const n_pages, size_t const n_clust, size_t const n_threads,\
-            size_t const n_fibers)
+            size_t const n_pages, size_t const n_clust, size_t const n_threads)
 {
   int ret;
   size_t i, m_size;
   double ts, te, r_sec, w_sec;
-  struct args args;
   struct rusage usage1, usage2, usage3;
   char * page;
 
   printf("===============================\n");
   printf(" Progress =====================\n");
   printf("===============================\n");
-
-  if (n_fibers) {
-    #pragma omp parallel num_threads(n_threads) private(ret)
-    {
-      /* Prepare OOC environment -- this is done prior to locking current memory
-       * so that page faults are not incurred for loading context data. */
-      ooc_set_num_fibers((unsigned int)n_fibers);
-    }
-  }
 
   /* Lock all current (i.e., overhead memory, due to the testing environment).
    * The purpose of this is to reduce the number of minor page faults. */
@@ -192,22 +147,12 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   ret = madvise(page, m_size, MADV_RANDOM);
   assert(!ret);
 
-  /* Setup args struct. */
-  args.p_size  = p_size;
-  args.c_size  = c_size;
-  args.n_pages = n_pages;
-  args.n_clust = n_clust;
-  args.page    = page;
-
   printf("  Initializing pages...\n");
   /* Touch all pages once to make sure that they are populated so that they must
    * be swapped for subsequent access. */
-  args.what = 1;
-  /* TODO Initialize pages in a completely random order... some of the memory
-   * used to fill DRAM could be re-purposed to achieve this. */
   #pragma omp parallel for num_threads(n_threads) schedule(static)
   for (i=0; i<n_pages; ++i) {
-    page[i * p_size] = (char)((i * p_size) % CHAR_MAX);
+    S_swap_helper(1, p_size, c_size, n_pages, n_clust, page, i);
   }
 
   /* Try to clear buffer caches. */
@@ -220,34 +165,9 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("  Testing swap read latency...\n");
   /* Test swap read latency. */
   S_gettime(&ts);
-  args.what = 0;
-  if (n_fibers) {
-    #pragma omp parallel num_threads(n_threads) private(ret)
-    {
-      #pragma omp single
-      {
-        /* `flush pages`, i.e., undo memory protections, so that fibers are able
-         * to be invoked the next iteration that this memory is touched. */
-        ret = mprotect(page, m_size, PROT_NONE);
-        assert(!ret);
-      }
-
-      #pragma omp for nowait schedule(static)
-      for (i=0; i<n_pages; ++i) {
-        S_swap_ooc(i, &args);
-      }
-      ooc_wait(); /* Need this to wait for any outstanding fibers. */
-      #pragma omp barrier
-
-      ret = ooc_finalize(); /* Need this to and remove the signal handler. */
-      assert(!ret);
-    }
-  }
-  else {
-    #pragma omp parallel for num_threads(n_threads) schedule(static)
-    for (i=0; i<n_pages; ++i) {
-      S_swap_kern(i, &args);
-    }
+  #pragma omp parallel for num_threads(n_threads) schedule(static)
+  for (i=0; i<n_pages; ++i) {
+    S_swap_helper(0, p_size, c_size, n_pages, n_clust, page, i);
   }
   S_gettime(&te);
   r_sec = S_getelapsed(&ts, &te);
@@ -259,37 +179,9 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("  Testing swap write latency...\n");
   /* Test swap write latency. */
   S_gettime(&ts);
-  args.what = 1;
-  if (n_fibers) {
-    if (0) {
-      #pragma omp parallel num_threads(n_threads) private(ret)
-      {
-        #pragma omp single
-        {
-          /* `flush pages`, i.e., undo memory protections, so that fibers are
-           * able to be invoked the next iteration that this memory is touched.
-           * */
-          ret = mprotect(page, m_size, PROT_NONE);
-          assert(!ret);
-        }
-
-        #pragma omp for nowait schedule(static)
-        for (i=0; i<n_pages; ++i) {
-          S_swap_ooc(i, &args);
-        }
-        ooc_wait(); /* Need this to wait for any outstanding fibers. */
-        #pragma omp barrier
-
-        ret = ooc_finalize(); /* Need this to and remove the signal handler. */
-        assert(!ret);
-      }
-    }
-  }
-  else {
-    #pragma omp parallel for num_threads(n_threads) schedule(static)
-    for (i=0; i<n_pages; ++i) {
-      S_swap_kern(i, &args);
-    }
+  #pragma omp parallel for num_threads(n_threads) schedule(static)
+  for (i=0; i<n_pages; ++i) {
+    S_swap_helper(1, p_size, c_size, n_pages, n_clust, page, i);
   }
   S_gettime(&te);
   w_sec = S_getelapsed(&ts, &te);
@@ -309,21 +201,17 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("  RD time (s)     = %11.5f\n", r_sec);
   printf("  RD bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/r_sec);
   printf("  RD latency (ns) = %11.0f\n", r_sec*1e9/(double)n_pages);
-  if (!n_fibers) {
-    printf("  WR time (s)     = %11.5f\n", w_sec);
-    printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
-    printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
-  }
+  printf("  WR time (s)     = %11.5f\n", w_sec);
+  printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
+  printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
   printf("\n");
   printf("===============================\n");
   printf(" Page faults ==================\n");
   printf("===============================\n");
   printf("  RD # Minor      = %11lu\n", usage2.ru_minflt-usage1.ru_minflt);
   printf("  RD # Major      = %11lu\n", usage2.ru_majflt-usage1.ru_majflt);
-  if (!n_fibers) {
-    printf("  WR # Minor      = %11lu\n", usage3.ru_minflt-usage2.ru_minflt);
-    printf("  WR # Major      = %11lu\n", usage3.ru_majflt-usage2.ru_majflt);
-  }
+  printf("  WR # Minor      = %11lu\n", usage3.ru_minflt-usage2.ru_minflt);
+  printf("  WR # Major      = %11lu\n", usage3.ru_majflt-usage2.ru_majflt);
 }
 
 
@@ -332,7 +220,7 @@ main(int argc, char * argv[])
 {
   int opt, fill_dram;
   size_t p_size, c_size;
-  size_t n_pages, n_clust, n_fibers, n_threads;
+  size_t n_pages, n_clust, n_threads;
   time_t now;
 
   /* Get current time. */
@@ -347,15 +235,11 @@ main(int argc, char * argv[])
   /* Parse command-line parameters. */
   fill_dram = 0;
   n_pages   = GB / p_size;
-  n_fibers  = 0;
   n_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "df:n:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "dn:t:"))) {
     switch (opt) {
     case 'd':
       fill_dram = 1;
-      break;
-    case 'f':
-      n_fibers = (size_t)atol(optarg);
       break;
     case 'n':
       n_pages = (size_t)atol(optarg);
@@ -364,14 +248,12 @@ main(int argc, char * argv[])
       n_threads = (size_t)atol(optarg);
       break;
     default: /* '?' */
-      fprintf(stderr, "Usage: %s [-d] [-f n_fibers] [-n n_pages] "\
-        "[-t n_threads]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-d] [-n n_pages] [-t n_threads]\n", argv[0]);
       return EXIT_FAILURE;
     }
   }
 
   /* Validate input. */
-  /*assert(n_fibers >= 0);*/
   assert(n_pages > 0);
   assert(n_threads > 0);
 
@@ -387,12 +269,11 @@ main(int argc, char * argv[])
   printf("===============================\n");
   printf("  # clusters      = %11zu\n", n_clust);
   printf("  # pages         = %11zu\n", n_pages);
-  printf("  # fibers        = %11zu\n", n_fibers);
   printf("  # threads       = %11zu\n", n_threads);
   printf("\n");
 
   /* Do test. */  
-  S_swap_test(fill_dram, p_size, c_size, n_pages, n_clust, n_threads, n_fibers);
+  S_swap_test(fill_dram, p_size, c_size, n_pages, n_clust, n_threads);
 
   return EXIT_SUCCESS;
 }
