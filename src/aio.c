@@ -209,7 +209,6 @@ S_aiothread_func(void * const state)
   int ret;
   unsigned char incore;
   unsigned long ps;
-  char * lname;
   FILE * log;
   ooc_aioreq_t * aioreq;
   struct ooc_aioargs * args;
@@ -217,24 +216,21 @@ S_aiothread_func(void * const state)
 
   dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
 
-  /* Open log file */
-  lname = malloc(FILENAME_MAX);
-  sprintf(lname, "t-%d", (int)syscall(SYS_gettid));
-  log = fopen(lname, "w");
-  assert(log);
-  free(lname);
+  /* Initialize log file */
+  log_init(log, "t-");
 
   /* Get system page size */
   ps = (uintptr_t)OOC_PAGE_SIZE;
-
   args = (struct ooc_aioargs*)state;
   oq = args->oq;
   cq = args->cq;
 
   for (;;) {
+    log_fprintf(log, "%f ", omp_get_wtime());
+
     S_q_deq(oq, &aioreq);
 
-    fprintf(log, "%d %f ", aioreq->aio_id, omp_get_wtime());
+    log_fprintf(log, "%d %f ", aioreq->aio_id, omp_get_wtime());
 
     /* Process request. */
     /* FIXME POC */
@@ -244,11 +240,17 @@ S_aiothread_func(void * const state)
       ret = mprotect(aioreq->aio_buf, aioreq->aio_count, PROT_READ|PROT_WRITE);
       assert(!ret);
 
+      log_fprintf(log, "%f ", omp_get_wtime());
+
       /* Brute force the kernel to page fault the buffer into core. */
       dummy = *(char volatile*)aioreq->aio_buf;
 
+      log_fprintf(log, "%f ", omp_get_wtime());
+
       /* Sanity check... */
       assert(!mincore(aioreq->aio_buf, ps, &incore) && incore);
+
+      log_fprintf(log, "%f ", omp_get_wtime());
 
       /* Update request status. */
       aioreq->aio_error = 0;
@@ -258,15 +260,16 @@ S_aiothread_func(void * const state)
       break;
     }
 
+    log_fprintf(log, "%f ", omp_get_wtime());
+
     /* Enqueue completed request. */
     S_q_enq(cq, aioreq);
 
-    fprintf(log, "%f\n", omp_get_wtime());
+    log_fprintf(log, "%f\n", omp_get_wtime());
   }
 
-  /* Close log. */
-  ret = fclose(log);
-  assert(!ret);
+  /* Finalize log. */
+  log_finalize(log);
 
   dbg_printf("[%5d.aio]   Async I/O thread dead\n", (int)syscall(SYS_gettid));
 

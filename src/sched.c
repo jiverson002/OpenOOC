@@ -109,8 +109,10 @@ __thread struct thread thread = { .is_init=0 };
 struct process process;
 
 
+/*! Main thread log. */
+static FILE * S_mlog;
 /*! Fiber log. */
-static FILE * S_log;
+static FILE * S_flog;
 
 
 static int
@@ -378,7 +380,6 @@ S_init(void)
 {
   int ret, i;
   struct sigaction act;
-  char * lname;
 
   /* Clear thread context. */
   memset(&thread, 0, sizeof(struct thread));
@@ -396,12 +397,9 @@ S_init(void)
   ret = sigaction(SIGSEGV, &act, &T_old_act);
   assert(!ret);
 
-  /* Open fiber log file. */
-  lname = malloc(FILENAME_MAX);
-  sprintf(lname, "f-%d", (int)syscall(SYS_gettid));
-  S_log = fopen(lname, "w");
-  assert(S_log);
-  free(lname);
+  /* Initialize log files. */
+  log_init(S_mlog, "m-");
+  log_init(S_flog, "f-");
 
   /* Allocate memory for idle list. */
   T_idle_list = malloc(OOC_MAX_FIBERS*sizeof(*T_idle_list));
@@ -474,9 +472,9 @@ ooc_finalize(void)
   }
 #endif
 
-  /* Close fiber log. */
-  ret = fclose(S_log);
-  assert(!ret);
+  /* Finalize log files. */
+  log_finalize(S_mlog);
+  log_finalize(S_flog);
 
   /* Mark thread as uninitialized. */
   T_is_init = 0;
@@ -550,10 +548,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     }
     /* Wait for a fiber to become runnable. */
     else {
+      log_fprintf(S_mlog, "%f ", omp_get_wtime());
+
       /* Since we are in the `main` context and no fibers are idle, all fibers
        * must be blocked on async-io, thus we just wait on async-io. */
       aioreq = aio_suspend();
       assert(aioreq);
+
+      log_fprintf(S_mlog, "%f\n", omp_get_wtime());
 
       /* Get fiber id. */
       wait = aioreq->aio_id;
@@ -568,14 +570,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       dbg_printf("[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
-      fprintf(S_log, "%d %f ", idle, omp_get_wtime());
+      log_fprintf(S_flog, "%d %f ", idle, omp_get_wtime());
 
       /* Switch fibers. */
       T_me = idle;
       ret = swapcontext(&T_main, &(F_kern(T_me)));
       assert(!ret);
 
-      fprintf(S_log, "%f\n", omp_get_wtime());
+      log_fprintf(S_flog, "%f\n", omp_get_wtime());
 
       dbg_printf("[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
@@ -591,14 +593,14 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       break;
     }
     else if (-1 != wait) {
-      fprintf(S_log, "%d %f ", wait, omp_get_wtime());
+      log_fprintf(S_flog, "%d %f ", wait, omp_get_wtime());
 
       /* Switch fibers. */
       T_me = wait;
       ret = swapcontext(&T_main, &(F_handler(T_me)));
       assert(!ret);
 
-      fprintf(S_log, "%f\n", omp_get_wtime());
+      log_fprintf(S_flog, "%f\n", omp_get_wtime());
 
       /* XXX At this point the fiber T_me has either successfully completed its
        * execution of the kernel F_kern(T_me) or it received another SIGSEGV and

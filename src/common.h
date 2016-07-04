@@ -327,7 +327,34 @@ extern struct process process;
 #include <sys/syscall.h>
 #define dbg_printf(...) (printf(__VA_ARGS__), fflush(stdout))
 #else
-#define dbg_printf(...)
+#define dbg_printf(...) (void)(0)
+#endif
+
+
+/*----------------------------------------------------------------------------*/
+/* Log print statements. */
+/*----------------------------------------------------------------------------*/
+#if 0
+#include <stdio.h>
+#include <sys/syscall.h>
+#define log_init(log,name) \
+{\
+  char * _lname = malloc(FILENAME_MAX);\
+  sprintf(_lname, name "%d", (int)syscall(SYS_gettid));\
+  log = fopen(_lname, "w");\
+  assert(log);\
+  free(_lname);\
+}
+#define log_finalize(log) \
+{\
+  int _ret = fclose(log);\
+  assert(!_ret);\
+}
+#define log_fprintf(log,...) (fprintf(log,__VA_ARGS__), fflush(log))
+#else
+#define log_init(...)        (void)(0)
+#define log_finalize(...)    (void)(0)
+#define log_fprintf(log,...) (void)(0 && log)
 #endif
 
 
