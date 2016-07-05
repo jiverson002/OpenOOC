@@ -27,6 +27,9 @@ THE SOFTWARE.
 /* fabs */
 #include <math.h>
 
+/* omp_get_wtime */
+#include <omp.h>
+
 /* printf */
 #include <stdio.h>
 
@@ -40,7 +43,7 @@ THE SOFTWARE.
  * MAP_ANONYMOUS */
 #include <sys/mman.h>
 
-/* CLOCK_MONOTONIC, struct timespec, clock_gettime */
+/* time, ctime */
 #include <time.h>
 
 /* getopt */
@@ -62,32 +65,6 @@ struct args
   double const * restrict b;
   double       * restrict c;
 };
-
-
-static void
-S_gettime(struct timespec * const t)
-{
-  struct timespec tt;
-  clock_gettime(CLOCK_MONOTONIC, &tt);
-  t->tv_sec = tt.tv_sec;
-  t->tv_nsec = tt.tv_nsec;
-}
-
-
-static unsigned long
-S_getelapsed(struct timespec const * const ts, struct timespec const * const te)
-{
-  struct timespec t;
-  if (te->tv_nsec < ts->tv_nsec) {
-    t.tv_nsec = 1000000000L + te->tv_nsec - ts->tv_nsec;
-    t.tv_sec = te->tv_sec - 1 - ts->tv_sec;
-  }
-  else {
-    t.tv_nsec = te->tv_nsec - ts->tv_nsec;
-    t.tv_sec = te->tv_sec - ts->tv_sec;
-  }
-  return (unsigned long)(t.tv_sec * 1000000000L + t.tv_nsec);
-}
 
 
 static void
@@ -155,20 +132,15 @@ int
 main(int argc, char * argv[])
 {
   int ret, opt, num_fibers, num_threads, validate;
-  unsigned long t1_nsec, t2_nsec, t3_nsec;
+  double ts, te, t1, t2, t3;
   size_t n, m, p, y, x, z;
   size_t i, j, k;
   size_t is, ie, js, je, ks, ke;
   time_t now;
   struct args args;
-  struct timespec ts, te;
   double * a, * b, * c, * v;
 
   now = time(NULL);
-
-  t1_nsec = 0;
-  t2_nsec = 0;
-  t3_nsec = 0;
 
   validate = 0;
   n = 32768;
@@ -225,28 +197,6 @@ main(int argc, char * argv[])
   x = (x < m) ? x : m;
   z = (z < p) ? z : p;
 
-  /* Allocate memory. */
-  a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != a);
-  b = mmap(NULL, m*p*sizeof(*b), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != b);
-  c = mmap(NULL, n*p*sizeof(*c), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != c);
-  v = mmap(NULL, n*p*sizeof(*v), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != v);
-
-  /* Try to disable readahead. */
-  ret = madvise(a, n*m*sizeof(*a), MADV_RANDOM);
-  assert(!ret);
-  ret = madvise(b, m*p*sizeof(*b), MADV_RANDOM);
-  assert(!ret);
-  ret = madvise(c, n*p*sizeof(*c), MADV_RANDOM);
-  assert(!ret);
-
   /* Output build info. */
   printf("==========================\n");
   printf(" General =================\n");
@@ -273,20 +223,40 @@ main(int argc, char * argv[])
   printf("  # threads    = %9d\n", num_threads);
   printf("\n");
 
+  /* Allocate memory. */
+  a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != a);
+  b = mmap(NULL, m*p*sizeof(*b), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != b);
+  c = mmap(NULL, n*p*sizeof(*c), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != c);
+  v = mmap(NULL, n*p*sizeof(*v), PROT_READ|PROT_WRITE,\
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  assert(MAP_FAILED != v);
+
+  /* Try to disable readahead. */
+  ret = madvise(a, n*m*sizeof(*a), MADV_RANDOM);
+  assert(!ret);
+  ret = madvise(b, m*p*sizeof(*b), MADV_RANDOM);
+  assert(!ret);
+  ret = madvise(c, n*p*sizeof(*c), MADV_RANDOM);
+  assert(!ret);
+
   printf("==========================\n");
   printf(" Status ==================\n");
   printf("==========================\n");
   printf("  Generating matrices...\n");
-  S_gettime(&ts);
+  
+  ts = omp_get_wtime();
   S_matfill(n, m, a);
   S_matfill(m, p, b);
-  S_gettime(&te);
-  t1_nsec = S_getelapsed(&ts, &te);
+  te = omp_get_wtime();
+  t1 = te-ts;
 
   if (num_fibers) {
-    /* Prepare OOC environment. */
-    ooc_set_num_fibers((unsigned int)num_fibers);
-
     ret = mprotect(a, n*m*sizeof(*a), PROT_NONE);
     assert(!ret);
     ret = mprotect(b, m*p*sizeof(*b), PROT_NONE);
@@ -303,7 +273,7 @@ main(int argc, char * argv[])
   args.c = c;
 
   printf("  Computing matrix multiplication...\n");
-  S_gettime(&ts);
+  ts = omp_get_wtime();
   if (1 == y && 1 == x && 1 == z) { /* standard */
     args.js = 0;
     args.je = p;
@@ -312,6 +282,9 @@ main(int argc, char * argv[])
     if (num_fibers) {
       #pragma omp parallel num_threads(num_threads)
       {
+        /* Prepare OOC environment. */
+        ooc_set_num_fibers((unsigned int)num_fibers);
+
         #pragma omp for nowait
         for (i=0; i<n; ++i) {
           S_matmult_ooc(i, &args);
@@ -333,6 +306,9 @@ main(int argc, char * argv[])
     if (num_fibers) {
       #pragma omp parallel num_threads(num_threads) private(is,ie,js,je,ks,ke,ret)
       {
+        /* Prepare OOC environment. */
+        ooc_set_num_fibers((unsigned int)num_fibers);
+
         for (is=0; is<n; is+=y) {
           ie = is+y < n ? is+y : n;
 
@@ -398,12 +374,12 @@ main(int argc, char * argv[])
       }
     }
   }
-  S_gettime(&te);
-  t2_nsec = S_getelapsed(&ts, &te);
+  te = omp_get_wtime();
+  t2 = te-ts;
 
   if (validate) {
     printf("  Validating results...\n");
-    S_gettime(&ts);
+    ts = omp_get_wtime();
     #pragma omp parallel for num_threads(num_threads)
     for (i=0; i<n; ++i) {
       for (j=0; j<p; ++j) {
@@ -413,18 +389,18 @@ main(int argc, char * argv[])
         assert(v[i*p+j] == c[i*p+j]);
       }
     }
-    S_gettime(&te);
-    t3_nsec = S_getelapsed(&ts, &te);
+    te = omp_get_wtime();
+    t3 = te-ts;
   }
 
   printf("\n");
   printf("==========================\n");
   printf(" Timing (s) ==============\n");
   printf("==========================\n");
-  printf("  Generate     = %9.5f\n", (double)t1_nsec/1e9);
-  printf("  Compute      = %9.5f\n", (double)t2_nsec/1e9);
+  printf("  Generate     = %9.5f\n", (double)t1);
+  printf("  Compute      = %9.5f\n", (double)t2);
   if (validate) {
-    printf("  Validate     = %9.5f\n", (double)t3_nsec/1e9);
+    printf("  Validate     = %9.5f\n", (double)t3);
   }
 
   munmap(a, n*m*sizeof(*a));
