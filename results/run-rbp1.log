@@ -1,0 +1,2094 @@
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Tue Jul  5 14:50:18 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 181.86407
+  Compute      = 21969.81469
+2883.29user 4633.12system 6:09:12elapsed 33%CPU (0avgtext+0avgdata 910024maxresident)k
+346985872inputs+8outputs (81662822major+92074323minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y4 -x112640 -z12 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Tue Jul  5 20:59:30 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         4
+  x            =    112640
+  z            =        12
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 173.95583
+  Compute      = 21871.57285
+3192.58user 4703.53system 6:07:26elapsed 35%CPU (0avgtext+0avgdata 911424maxresident)k
+350515824inputs+8outputs (85726088major+88247423minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y8 -x56320 -z24 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 03:06:57 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         8
+  x            =     56320
+  z            =        24
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 187.46817
+  Compute      = 11321.40490
+3388.30user 2417.98system 3:11:49elapsed 50%CPU (0avgtext+0avgdata 911716maxresident)k
+174690976inputs+8outputs (47923423major+39549720minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y16 -x28160 -z48 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 06:18:47 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        16
+  x            =     28160
+  z            =        48
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 169.16022
+  Compute      = 6095.30405
+3304.11user 1155.38system 1:44:25elapsed 71%CPU (0avgtext+0avgdata 912300maxresident)k
+87847216inputs+16outputs (25968429major+18130844minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y32 -x14080 -z96 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 08:03:12 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        32
+  x            =     14080
+  z            =        96
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 174.20021
+  Compute      = 3492.62968
+3026.95user 571.39system 1:01:07elapsed 98%CPU (0avgtext+0avgdata 911776maxresident)k
+44391656inputs+8outputs (13723461major+8772445minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 09:04:20 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 177.58604
+  Compute      = 2141.02019
+2677.58user 292.40system 38:39.46elapsed 128%CPU (0avgtext+0avgdata 911204maxresident)k
+22727888inputs+8outputs (7157111major+4551207minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 09:43:00 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 183.80761
+  Compute      = 1334.96519
+2004.92user 152.24system 25:19.70elapsed 141%CPU (0avgtext+0avgdata 911896maxresident)k
+11932176inputs+8outputs (3721211major+2570807minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 10:08:19 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 169.46283
+  Compute      = 904.99053
+1624.34user 91.00system 17:55.29elapsed 159%CPU (0avgtext+0avgdata 912028maxresident)k
+6376664inputs+8outputs (1814864major+1586151minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f0
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 10:26:15 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =         0
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 159.34656
+  Compute      = 781.65095
+1862.19user 67.04system 15:41.82elapsed 204%CPU (0avgtext+0avgdata 912688maxresident)k
+3028672inputs+8outputs (762068major+983409minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 10:41:57 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 174.17138
+  Compute      = 21542.37650
+2959.11user 4746.80system 6:01:57elapsed 35%CPU (0avgtext+0avgdata 911352maxresident)k
+347140120inputs+8outputs (82262503major+92674211minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y4 -x112640 -z12 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Wed Jul  6 16:43:55 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         4
+  x            =    112640
+  z            =        12
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 174.02658
+  Compute      = 27968.90501
+5174.10user 19939.60system 7:49:03elapsed 89%CPU (0avgtext+0avgdata 912448maxresident)k
+351044904inputs+16outputs (51117392major+270918552minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y8 -x56320 -z24 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 00:32:59 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         8
+  x            =     56320
+  z            =        24
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 206.39022
+  Compute      = 13646.48908
+4230.44user 9735.90system 3:50:53elapsed 100%CPU (0avgtext+0avgdata 911368maxresident)k
+174124056inputs+8outputs (25953643major+139402890minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y16 -x28160 -z48 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 04:23:53 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        16
+  x            =     28160
+  z            =        48
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 194.47873
+  Compute      = 7375.38258
+3727.00user 4902.07system 2:06:10elapsed 113%CPU (0avgtext+0avgdata 911788maxresident)k
+87714616inputs+8outputs (12841992major+70925779minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y32 -x14080 -z96 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 06:30:03 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        32
+  x            =     14080
+  z            =        96
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 227.89684
+  Compute      = 4164.32030
+3261.92user 2394.31system 1:13:13elapsed 128%CPU (0avgtext+0avgdata 911428maxresident)k
+44272696inputs+16outputs (6423581major+35802374minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 07:43:17 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 217.02668
+  Compute      = 2477.30042
+2782.79user 1201.28system 44:55.22elapsed 147%CPU (0avgtext+0avgdata 912008maxresident)k
+22743528inputs+8outputs (3246345major+18418653minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 08:28:12 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 230.97568
+  Compute      = 1534.48326
+2068.52user 612.19system 29:26.36elapsed 151%CPU (0avgtext+0avgdata 912072maxresident)k
+11893520inputs+8outputs (1687321major+9609119minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 08:57:38 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 200.18931
+  Compute      = 1053.90419
+1666.79user 338.19system 20:55.71elapsed 159%CPU (0avgtext+0avgdata 912208maxresident)k
+6520408inputs+8outputs (905967major+5076422minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f1
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 09:18:34 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =         1
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 227.99425
+  Compute      = 901.97627
+1871.41user 208.20system 18:50.85elapsed 183%CPU (0avgtext+0avgdata 911924maxresident)k
+3241344inputs+16outputs (439078major+2697620minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 09:37:25 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 212.95017
+  Compute      = 11373.24165
+3272.68user 2358.55system 3:13:07elapsed 48%CPU (0avgtext+0avgdata 911836maxresident)k
+174467112inputs+8outputs (40409025major+67327750minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y8 -x56320 -z24 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 12:50:33 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         8
+  x            =     56320
+  z            =        24
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 229.80333
+  Compute      = 13769.89645
+3525.17user 9598.15system 3:53:20elapsed 93%CPU (0avgtext+0avgdata 909928maxresident)k
+175230232inputs+8outputs (29573646major+187508365minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y16 -x28160 -z48 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 16:43:53 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        16
+  x            =     28160
+  z            =        48
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 221.19199
+  Compute      = 7720.77596
+3373.95user 5301.35system 2:12:23elapsed 109%CPU (0avgtext+0avgdata 909904maxresident)k
+88447816inputs+16outputs (15444463major+99770680minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y32 -x14080 -z96 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 18:56:17 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        32
+  x            =     14080
+  z            =        96
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 233.02211
+  Compute      = 4317.33383
+3177.98user 2608.02system 1:15:51elapsed 127%CPU (0avgtext+0avgdata 909980maxresident)k
+44276160inputs+8outputs (7759658major+49708484minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 20:12:08 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 235.16865
+  Compute      = 2592.84327
+2787.40user 1300.26system 47:08.91elapsed 144%CPU (0avgtext+0avgdata 910948maxresident)k
+22724200inputs+8outputs (3791524major+25228239minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 20:59:17 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 239.80049
+  Compute      = 1683.26515
+2265.62user 663.06system 32:04.01elapsed 152%CPU (0avgtext+0avgdata 910228maxresident)k
+11889808inputs+8outputs (1926330major+13088652minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 21:31:21 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 240.53660
+  Compute      = 1129.26582
+1772.72user 359.65system 22:50.72elapsed 155%CPU (0avgtext+0avgdata 910200maxresident)k
+6614312inputs+8outputs (996282major+6782960minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f2
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 21:54:12 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =         2
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 251.35655
+  Compute      = 916.81604
+1841.33user 216.61system 19:29.05elapsed 176%CPU (0avgtext+0avgdata 910580maxresident)k
+3241224inputs+8outputs (469427major+3424573minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Thu Jul  7 22:13:41 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 256.28447
+  Compute      = 6380.24236
+3459.55user 1216.14system 1:50:37elapsed 70%CPU (0avgtext+0avgdata 910492maxresident)k
+88147216inputs+8outputs (19818019major+47685650minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y16 -x28160 -z48 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 00:04:19 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        16
+  x            =     28160
+  z            =        48
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 253.47561
+  Compute      = 7722.24902
+3185.46user 5179.38system 2:12:56elapsed 104%CPU (0avgtext+0avgdata 909492maxresident)k
+88367888inputs+16outputs (14680926major+94421039minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y32 -x14080 -z96 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 02:17:16 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        32
+  x            =     14080
+  z            =        96
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 268.21694
+  Compute      = 4362.31936
+3120.12user 2729.91system 1:17:11elapsed 126%CPU (0avgtext+0avgdata 910328maxresident)k
+44271744inputs+8outputs (7880469major+48768443minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 03:34:27 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 247.32099
+  Compute      = 2678.01141
+2831.98user 1383.55system 48:46.24elapsed 144%CPU (0avgtext+0avgdata 910252maxresident)k
+22733296inputs+8outputs (4029188major+24811494minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 04:23:14 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 275.73707
+  Compute      = 1670.91672
+2239.28user 675.35system 32:27.62elapsed 149%CPU (0avgtext+0avgdata 910400maxresident)k
+11880808inputs+16outputs (1994348major+12722947minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 04:55:41 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 322.49465
+  Compute      = 1099.57315
+1784.55user 364.39system 23:51.15elapsed 150%CPU (0avgtext+0avgdata 910764maxresident)k
+6732000inputs+8outputs (1094904major+6547525minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f4
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 05:19:33 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =         4
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 272.35655
+  Compute      = 939.49419
+1828.32user 213.85system 20:12.75elapsed 168%CPU (0avgtext+0avgdata 911312maxresident)k
+3241472inputs+8outputs (497816major+3335139minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 05:39:46 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 250.06889
+  Compute      = 3843.63198
+3591.69user 686.83system 1:08:14elapsed 104%CPU (0avgtext+0avgdata 910892maxresident)k
+44938808inputs+8outputs (9901024major+22606443minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y32 -x14080 -z96 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 06:48:00 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        32
+  x            =     14080
+  z            =        96
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 259.01867
+  Compute      = 4374.70567
+3026.21user 2821.60system 1:17:15elapsed 126%CPU (0avgtext+0avgdata 910916maxresident)k
+44323552inputs+16outputs (7395091major+46868528minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 08:05:16 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 262.13494
+  Compute      = 2723.43112
+2877.92user 1499.10system 49:46.45elapsed 146%CPU (0avgtext+0avgdata 911612maxresident)k
+22743856inputs+8outputs (3983333major+24686650minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 08:55:02 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 269.97268
+  Compute      = 1735.32028
+2178.96user 747.60system 33:26.26elapsed 145%CPU (0avgtext+0avgdata 910464maxresident)k
+11863736inputs+8outputs (1997289major+12784400minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 09:28:29 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 275.21836
+  Compute      = 1154.77206
+1733.27user 376.46system 24:05.30elapsed 145%CPU (0avgtext+0avgdata 910052maxresident)k
+6683328inputs+16outputs (1030905major+6637924minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f8
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 09:52:34 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =         8
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 278.88242
+  Compute      = 948.65691
+1807.69user 216.02system 20:28.43elapsed 164%CPU (0avgtext+0avgdata 909336maxresident)k
+3241144inputs+8outputs (468704major+3352429minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 10:13:03 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 298.70093
+  Compute      = 2548.34670
+3613.64user 470.11system 47:27.88elapsed 143%CPU (0avgtext+0avgdata 910264maxresident)k
+23296720inputs+8outputs (5033302major+11528197minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y64 -x7040 -z192 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 11:00:31 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =        64
+  x            =      7040
+  z            =       192
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 293.29499
+  Compute      = 2587.31621
+2633.32user 1629.17system 48:01.56elapsed 147%CPU (0avgtext+0avgdata 911100maxresident)k
+22986656inputs+8outputs (4259651major+23647684minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 11:48:33 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 281.03342
+  Compute      = 1654.61075
+2029.09user 782.03system 32:16.59elapsed 145%CPU (0avgtext+0avgdata 911200maxresident)k
+11921800inputs+8outputs (2087960major+12764435minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 12:20:49 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 298.24276
+  Compute      = 1147.83588
+1643.69user 384.94system 24:06.93elapsed 140%CPU (0avgtext+0avgdata 911672maxresident)k
+6594984inputs+8outputs (1037175major+6700836minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f16
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 12:44:56 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =        16
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 314.71411
+  Compute      = 935.26368
+1760.90user 225.84system 20:50.89elapsed 158%CPU (0avgtext+0avgdata 911016maxresident)k
+3244696inputs+8outputs (468967major+3370226minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 13:05:47 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 297.99275
+  Compute      = 1864.92243
+3636.29user 328.79system 36:07.17elapsed 182%CPU (0avgtext+0avgdata 910868maxresident)k
+12364944inputs+16outputs (2453571major+5316137minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y128 -x3520 -z384 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 13:41:55 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       128
+  x            =      3520
+  z            =       384
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 315.70101
+  Compute      = 1524.05882
+1886.47user 878.94system 30:40.68elapsed 150%CPU (0avgtext+0avgdata 909644maxresident)k
+11964912inputs+8outputs (2293895major+11589128minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 14:12:35 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 283.79445
+  Compute      = 1150.85079
+1533.67user 412.10system 23:55.53elapsed 135%CPU (0avgtext+0avgdata 911000maxresident)k
+6896160inputs+8outputs (1150169major+6335588minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f32
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 14:36:31 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =        32
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 339.43617
+  Compute      = 882.70039
+1611.59user 222.41system 20:23.02elapsed 149%CPU (0avgtext+0avgdata 910172maxresident)k
+3242360inputs+16outputs (495584major+3308000minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 14:56:54 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 311.65377
+  Compute      = 1550.75118
+3657.75user 265.55system 31:03.34elapsed 210%CPU (0avgtext+0avgdata 912440maxresident)k
+6821328inputs+8outputs (1153532major+2790316minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y256 -x1760 -z768 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 15:27:58 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       256
+  x            =      1760
+  z            =       768
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 312.84778
+  Compute      = 1075.47540
+1614.15user 433.88system 23:09.19elapsed 147%CPU (0avgtext+0avgdata 910484maxresident)k
+6986760inputs+8outputs (1111931major+4044867minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f64
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 15:51:07 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =        64
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 345.05323
+  Compute      = 816.53248
+1426.10user 229.39system 19:22.49elapsed 142%CPU (0avgtext+0avgdata 910792maxresident)k
+3246840inputs+8outputs (505681major+2640735minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
+build/bin/matmult -n512 -m112640 -p1536 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 16:10:30 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 305.59316
+  Compute      = 1392.87537
+3655.08user 229.06system 28:22.79elapsed 228%CPU (0avgtext+0avgdata 910284maxresident)k
+3806896inputs+16outputs (474934major+2025384minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+build/bin/matmult -n512 -m112640 -p1536 -y512 -x880 -z1536 -t4 -f128
+==========================
+ General =================
+==========================
+  Machine info = rbp1-umh 4.1.19-v7+
+  GCC version  = gcc (Debian 4.6.3-14+rpi1) 4.6.3
+  Build date   = Tue Jul 05 12:20:05 2016
+  Run date     = Fri Jul  8 16:38:53 2016
+  Git commit   =   5c08bd0
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  n            =       512
+  m            =    112640
+  p            =      1536
+  y            =       512
+  x            =       880
+  z            =      1536
+  # fibers     =       128
+  # threads    =         4
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     = 361.76140
+  Compute      = 868.78473
+1552.81user 243.99system 20:31.42elapsed 145%CPU (0avgtext+0avgdata 911056maxresident)k
+3247536inputs+8outputs (472730major+1925232minor)pagefaults 0swaps
+
+--------------------------------------------------------------------------------
+
+
+================================================================================
+
