@@ -7,7 +7,8 @@ function run() {
 
 function build() {
   N=$((T*2**GLG))
-  M=$((7208960*GB/T/2**LLG))
+  M=$((450560*GB/T/2**LLG))
+  #M=$((7208960*GB/T/2**LLG))
   #M=$((1802240*GB/T/2**LLG))
   P=$((T*3*2**GLG))
   run build/bin/matmult -n$N -m$M -p$P -t$T -f$1
