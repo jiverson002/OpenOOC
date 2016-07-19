@@ -113,7 +113,7 @@ struct aioreq
   void *          aio_buf;   /*! Location of buffer */
   size_t          aio_count; /*! Length of transfer */
   volatile int    aio_error; /*! Request error */
-  int             aio_op;    /*! Indicator of read(0) / write(1) operation */
+  int             aio_op;    /*! Indicator of read(0) / write(1) / exit(-1) operation */
 };
 typedef struct aioreq aioreq_t;
 

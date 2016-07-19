@@ -230,6 +230,12 @@ S_aiothread_func(void * const state)
 
     S_q_deq(oq, &aioreq);
 
+    /* Handle exit op. */
+    if (-1 == aioreq->aio_op) {
+      log_fprintf(log, "-1 %f\n", omp_get_wtime());
+      break;
+    }
+
     log_fprintf(log, "%d %f ", aioreq->aio_id, omp_get_wtime());
 
     /* Process request. */
@@ -326,6 +332,7 @@ int
 ooc_aio_destroy(ooc_aioctx_t ctx)
 {
   int ret;
+  ooc_aioreq_t aioreq;
 
 #if defined(WITH_NATIVE_AIO)
   ret = syscall(__NR_io_destroy, ctx);
@@ -337,9 +344,19 @@ ooc_aio_destroy(ooc_aioctx_t ctx)
   dbg_printf("[%5d.***] Destroying async i/o context\n",\
     (int)syscall(SYS_gettid));
 
-  /* FIXME If the queues get destroyed before async i/o thread is killed, it
-   * could have undefined behavior when interacting with the queues semaphores.
-   * */
+  /* Send S_aiothread exit operation. */
+  aioreq.aio_op = -1;
+
+  /* Enqueue exit op. */
+  S_q_enq(S_oq, &aioreq);
+
+  /* Wait for S_aiothread. */
+  ret = pthread_join(S_aiothread, NULL);
+  if (ret) {
+    return ret;
+  }
+
+  /* Destroy queues. */
   ret = S_q_destroy(S_oq);
   if (ret) {
     return ret;
@@ -351,12 +368,6 @@ ooc_aio_destroy(ooc_aioctx_t ctx)
 
   free(S_oq);
   free(S_cq);
-
-  /* FIXME Send S_aiothread some type of cancel message. */
-  /*ret = pthread_join(S_aiothread, NULL);
-  if (ret) {
-    return ret;
-  }*/
 
   if (ctx) {}
 #endif
