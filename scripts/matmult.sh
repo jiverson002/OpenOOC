@@ -7,7 +7,8 @@ function run() {
 
 function build() {
   N=$((T*2**GLG))
-  M=$((450560*GB/T/2**LLG))
+  M=$((225580*GB/T/2**LLG))
+  #M=$((450560*GB/T/2**LLG))
   #M=$((7208960*GB/T/2**LLG))
   #M=$((1802240*GB/T/2**LLG))
   P=$((T*3*2**GLG))
@@ -17,7 +18,7 @@ function build() {
     Y=$((N/2**(GLG-i)))
     X=$((M/2**(i-LLG)))
     Z=$((P/2**(GLG-i)))
-    if (($1*$T<=$Y)) ; then
+    if (($1*$T==$Y)) ; then
       run build/bin/matmult -n$N -m$M -p$P -y$Y -x$X -z$Z -t$T -f$1
       echo -e "$hline" >> $LOG
     fi
