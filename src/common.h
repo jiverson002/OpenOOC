@@ -322,12 +322,18 @@ extern struct process process;
 /*----------------------------------------------------------------------------*/
 /* Debug print statements. */
 /*----------------------------------------------------------------------------*/
-#if 0
-#include <stdio.h>
-#include <sys/syscall.h>
-#define dbg_printf(...) (printf(__VA_ARGS__), fflush(stdout))
+#define DBG_NONE    0x0
+#define DBG_TRACE   0x1
+#define DBG_SCHED   0x2
+#define DBG_SIGSEGV 0x4
+#define DBG_AIO     0x8
+#define DBG_MASK    (DBG_NONE)
+#if DBG_MASK > 0
+  #include <stdio.h>
+  #include <sys/syscall.h>
+  #define dbg_printf(bit, ...) if (bit & DBG_MASK) { printf(__VA_ARGS__); fflush(stdout); }
 #else
-#define dbg_printf(...) (void)(0)
+  #define dbg_printf(...) (void)(0)
 #endif
 
 

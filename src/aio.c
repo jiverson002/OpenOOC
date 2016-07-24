@@ -214,7 +214,7 @@ S_aiothread_func(void * const state)
   struct ooc_aioargs * args;
   struct ooc_aioq * oq, * cq;
 
-  dbg_printf("[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
+  dbg_printf(DBG_AIO, "[%5d.aio]   Async I/O thread alive\n", (int)syscall(SYS_gettid));
 
   /* Initialize log file */
   log_init(log, "t-");
@@ -277,7 +277,7 @@ S_aiothread_func(void * const state)
   /* Finalize log. */
   log_finalize(log);
 
-  dbg_printf("[%5d.aio]   Async I/O thread dead\n", (int)syscall(SYS_gettid));
+  dbg_printf(DBG_AIO, "[%5d.aio]   Async I/O thread dead\n", (int)syscall(SYS_gettid));
 
   return NULL;
 }
@@ -296,7 +296,7 @@ ooc_aio_setup(unsigned int const nr, ooc_aioctx_t * const ctx)
 
   if (nr || ctx) {}
 #else
-  dbg_printf("[%5d.***] Setting up async i/o context\n",\
+  dbg_printf(DBG_AIO, "[%5d.***] Setting up async i/o context\n",\
     (int)syscall(SYS_gettid));
 
   S_oq = malloc(sizeof(*S_oq));
@@ -341,7 +341,7 @@ ooc_aio_destroy(ooc_aioctx_t ctx)
 
   if (ctx) {}
 #else
-  dbg_printf("[%5d.***] Destroying async i/o context\n",\
+  dbg_printf(DBG_AIO, "[%5d.***] Destroying async i/o context\n",\
     (int)syscall(SYS_gettid));
 
   /* Send S_aiothread exit operation. */
@@ -408,7 +408,7 @@ ooc_aio_read(void * const buf, size_t const count, ooc_aioreq_t * const aioreq)
   /* Enqueue page read. */
   S_q_enq(S_oq, aioreq);
 
-  dbg_printf("[%5d.***]   Read request enqueued\n", (int)syscall(SYS_gettid));
+  dbg_printf(DBG_AIO, "[%5d.***]   Read request enqueued\n", (int)syscall(SYS_gettid));
 
   ret = 0;
 #endif

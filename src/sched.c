@@ -181,7 +181,7 @@ S_sigsegv_handler(void)
     /* Increment count of waiting fibers. */
     T_n_wait++;
 
-    dbg_printf("[%5d.%.3d]     Not runnable, switching to T_main\n",\
+    dbg_printf(DBG_SCHED, "[%5d.%.3d]     Not runnable, switching to T_main\n",\
       (int)syscall(SYS_gettid), T_me);
 
     /* Switch back to main context to allow another fiber to execute. */
@@ -196,7 +196,8 @@ S_sigsegv_handler(void)
     assert((ssize_t)T_ps == retval);
   }
   else {
-    dbg_printf("[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), T_me);
+    dbg_printf(DBG_SCHED,\
+      "[%5d.%.3d]     Runnable\n", (int)syscall(SYS_gettid), T_me);
 
     /* Apply updates to page containing offending address. */
     ret = mprotect(page, T_ps, PROT_READ|PROT_WRITE);
@@ -303,8 +304,10 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   assert(SIGSEGV == sig);
 
-  dbg_printf("[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), T_me);
-  dbg_printf("[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), T_me,\
+  dbg_printf(DBG_SIGSEGV,\
+    "[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), T_me);
+  dbg_printf(DBG_SIGSEGV,\
+    "[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), T_me,\
     si->si_addr);
 
   F_addr(T_me) = si->si_addr;
@@ -320,7 +323,7 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
 
   makecontext(&(F_tmp_uc(T_me)), (void (*)(void))S_sigsegv_handler, 0);
 
-  dbg_printf("[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
+  dbg_printf(DBG_SCHED, "[%5d.%.3d]     Switching to S_sigsegv_handler1\n",\
     (int)syscall(SYS_gettid), T_me);
 
   swapcontext(&(F_trampoline(T_me)), &(F_tmp_uc(T_me)));
@@ -438,7 +441,7 @@ S_init(void)
   /* Mark thread as initialized. */
   T_is_init = 1;
 
-  dbg_printf("[%5d.***] Library initialized -- pagesize=%lu\n",\
+  dbg_printf(DBG_TRACE, "[%5d.***] Library initialized -- pagesize=%lu\n",\
     (int)syscall(SYS_gettid), (long unsigned)T_ps);
 
   return ret;
@@ -479,6 +482,9 @@ ooc_finalize(void)
   /* Mark thread as uninitialized. */
   T_is_init = 0;
 
+  dbg_printf(DBG_TRACE, "[%5d.***] Library finalized\n",\
+    (int)syscall(SYS_gettid));
+
   return ret;
 }
 
@@ -489,7 +495,7 @@ ooc_wait(void)
   int ret, wait;
   aioreq_t * aioreq;
 
-  dbg_printf("[%5d.***] Waiting for outstanding %d fibers\n",\
+  dbg_printf(DBG_TRACE, "[%5d.***] Waiting for outstanding %d fibers\n",\
     (int)syscall(SYS_gettid), T_n_wait);
 
   while (T_n_wait) {
@@ -503,7 +509,7 @@ ooc_wait(void)
     wait = aioreq->aio_id;
 
     if (-1 != wait) {
-      dbg_printf("[%5d.%.3d]   Runnable, switching to F_handler\n",\
+      dbg_printf(DBG_SCHED, "[%5d.%.3d]   Runnable, switching to F_handler\n",\
         (int)syscall(SYS_gettid), wait);
 
       /* Switch fibers. */
@@ -516,6 +522,9 @@ ooc_wait(void)
       assert(0);
     }
   }
+
+  dbg_printf(DBG_TRACE, "[%5d.***] Finished waiting\n",\
+    (int)syscall(SYS_gettid));
 }
 
 
@@ -532,11 +541,12 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
     assert(!ret);
   }
 
-  dbg_printf("[%5d.***] Scheduling a new fiber\n", (int)syscall(SYS_gettid));
-  dbg_printf("[%5d.***]   %d fibers idle\n", (int)syscall(SYS_gettid),\
-    T_n_idle);
-  dbg_printf("[%5d.***]   %d fibers waiting\n", (int)syscall(SYS_gettid),\
-    T_n_wait);
+  dbg_printf(DBG_SCHED, "[%5d.***] Scheduling a new fiber\n",\
+    (int)syscall(SYS_gettid));
+  dbg_printf(DBG_SCHED, "[%5d.***]   %d fibers idle\n",\
+    (int)syscall(SYS_gettid), T_n_idle);
+  dbg_printf(DBG_SCHED, "[%5d.***]   %d fibers waiting\n",\
+    (int)syscall(SYS_gettid), T_n_wait);
 
   for (;;) {
     idle = wait = -1;
@@ -567,7 +577,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
       F_kernel(idle) = kern;
       F_args(idle) = args;
 
-      dbg_printf("[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
+      dbg_printf(DBG_SCHED, "[%5d.%.3d]   Switching to F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
       log_fprintf(S_flog, "%d %f ", idle, omp_get_wtime());
@@ -579,7 +589,7 @@ ooc_sched(void (*kern)(size_t const, void * const), size_t const i,
 
       log_fprintf(S_flog, "%f\n", omp_get_wtime());
 
-      dbg_printf("[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
+      dbg_printf(DBG_SCHED, "[%5d.%.3d]   Returned from F_kern for iter %zu\n",\
         (int)syscall(SYS_gettid), idle, i);
 
       /* XXX At this point the fiber T_me has either successfully completed its
@@ -636,7 +646,7 @@ ooc_set_num_fibers(unsigned int const num_fibers)
     T_idle_list[T_n_idle++] = i;
   }
 
-  dbg_printf("[%5d.***] Set number of fibers to %u / %d\n",\
+  dbg_printf(DBG_TRACE, "[%5d.***] Set number of fibers to %u / %d\n",\
     (int)syscall(SYS_gettid), T_num_fibers, T_n_idle);
 }
 
