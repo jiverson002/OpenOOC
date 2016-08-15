@@ -133,15 +133,18 @@ main(int argc, char * argv[])
 {
   int ret, opt, num_fibers, num_threads, validate;
   double ts, te, t1, t2, t3;
+  size_t lock;
   size_t n, m, p, y, x, z;
   size_t i, j, k;
   size_t is, ie, js, je, ks, ke;
   time_t now;
   struct args args;
+  void * l;
   double * a, * b, * c, * v;
 
   now = time(NULL);
 
+  lock = 0;
   validate = 0;
   n = 32768;
   m = 32768;
@@ -151,40 +154,53 @@ main(int argc, char * argv[])
   z = 1;
   num_fibers = 0;
   num_threads = 1;
-  while (-1 != (opt=getopt(argc, argv, "vm:n:p:x:y:z:f:t:"))) {
+  while (-1 != (opt=getopt(argc, argv, "vl:m:n:p:x:y:z:f:t:"))) {
     switch (opt) {
-    case 'f':
+      case 'l':
+      lock = (size_t)atol(optarg);
+      break;
+
+      case 'f':
       num_fibers = atoi(optarg);
       break;
-    case 'm':
+
+      case 'm':
       m = (size_t)atol(optarg);
       break;
-    case 'n':
+
+      case 'n':
       n = (size_t)atol(optarg);
       break;
-    case 'p':
+
+      case 'p':
       p = (size_t)atol(optarg);
       break;
-    case 't':
+
+      case 't':
       num_threads = atoi(optarg);
       break;
-    case 'v':
+
+      case 'v':
       validate = 1;
       break;
-    case 'x':
+
+      case 'x':
       x = (size_t)atol(optarg);
       break;
-    case 'y':
+
+      case 'y':
       y = (size_t)atol(optarg);
       break;
-    case 'z':
+
+      case 'z':
       z = (size_t)atol(optarg);
       break;
-    default: /* '?' */
-      fprintf(stderr, "Usage: %s [-v] [-n n dim] [-m m dim] [-p p dim] "\
-        "[-x x dim] [-y y dim] [-z z dim] [-f num_fibers] [-t num_threads]\n",\
-        argv[0]);
-      return EXIT_FAILURE;
+
+      default: /* '?' */
+        fprintf(stderr, "Usage: %s [-dv] [-n n dim] [-m m dim] [-p p dim] "\
+          "[-x x dim] [-y y dim] [-z z dim] [-f num_fibers] [-t num_threads]\n",\
+          argv[0]);
+        return EXIT_FAILURE;
     }
   }
 
@@ -197,31 +213,15 @@ main(int argc, char * argv[])
   x = (x < m) ? x : m;
   z = (z < p) ? z : p;
 
-  /* Output build info. */
-  printf("==========================\n");
-  printf(" General =================\n");
-  printf("==========================\n");
-  printf("  Machine info = %s\n", STR(UNAME));
-  printf("  GCC version  = %s\n", STR(GCCV));
-  printf("  Build date   = %s\n", STR(DATE));
-  printf("  Run date     = %s", ctime(&now));
-  printf("  Git commit   = %9s\n", STR(COMMIT));
-  printf("  SysPage size = %9lu\n", sysconf(_SC_PAGESIZE));
-  printf("\n");
-
-  /* Output problem info. */
-  printf("==========================\n");
-  printf(" Problem =================\n");
-  printf("==========================\n");
-  printf("  n            = %9zu\n", n);
-  printf("  m            = %9zu\n", m);
-  printf("  p            = %9zu\n", p);
-  printf("  y            = %9zu\n", y);
-  printf("  x            = %9zu\n", x);
-  printf("  z            = %9zu\n", z);
-  printf("  # fibers     = %9d\n", num_fibers);
-  printf("  # threads    = %9d\n", num_threads);
-  printf("\n");
+  /* Lock desired amount of memory. */
+  if (lock) {
+    l = mmap(NULL, lock, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0);
+    assert(MAP_FAILED != l);
+  }
+  else {
+    l = NULL; /* suppress used before initialized warning */
+  }
 
   /* Allocate memory. */
   a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
@@ -244,6 +244,33 @@ main(int argc, char * argv[])
   assert(!ret);
   ret = madvise(c, n*p*sizeof(*c), MADV_RANDOM);
   assert(!ret);
+
+  /* Output build info. */
+  printf("==========================\n");
+  printf(" General =================\n");
+  printf("==========================\n");
+  printf("  Machine info = %s\n", STR(UNAME));
+  printf("  GCC version  = %s\n", STR(GCCV));
+  printf("  Build date   = %s\n", STR(DATE));
+  printf("  Run date     = %s", ctime(&now));
+  printf("  Git commit   = %9s\n", STR(COMMIT));
+  printf("  SysPage size = %9lu\n", sysconf(_SC_PAGESIZE));
+  printf("\n");
+
+  /* Output problem info. */
+  printf("==========================\n");
+  printf(" Problem =================\n");
+  printf("==========================\n");
+  printf("  lock memory  = %9zu\n", lock);
+  printf("  n            = %9zu\n", n);
+  printf("  m            = %9zu\n", m);
+  printf("  p            = %9zu\n", p);
+  printf("  y            = %9zu\n", y);
+  printf("  x            = %9zu\n", x);
+  printf("  z            = %9zu\n", z);
+  printf("  # fibers     = %9d\n", num_fibers);
+  printf("  # threads    = %9d\n", num_threads);
+  printf("\n");
 
   printf("==========================\n");
   printf(" Status ==================\n");
@@ -403,6 +430,9 @@ main(int argc, char * argv[])
     printf("  Validate     = %9.5f\n", (double)t3);
   }
 
+  if (lock) {
+    munmap(l, lock);
+  }
   munmap(a, n*m*sizeof(*a));
   munmap(b, m*p*sizeof(*b));
   munmap(c, n*p*sizeof(*c));

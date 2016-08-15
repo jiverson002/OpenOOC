@@ -1,0 +1,5373 @@
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 08:59:37 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.81643
+  Compute      = 4344.71621
+303.24user 597.18system 1:12:31elapsed 20%CPU (0avgtext+0avgdata 3774128maxresident)k
+2690553696inputs+24outputs (42075879major+294600082minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 10:12:09 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.59743
+  Compute      = 298.73914
+172.94user 17.07system 5:05.77elapsed 62%CPU (0avgtext+0avgdata 3763360maxresident)k
+86725488inputs+24outputs (1356452major+10197440minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 10:17:15 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.78570
+  Compute      = 2201.73786
+240.10user 286.28system 36:48.93elapsed 23%CPU (0avgtext+0avgdata 3768220maxresident)k
+1342541320inputs+32outputs (20996735major+147209694minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 10:54:05 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.74590
+  Compute      = 229.32838
+191.67user 56.33system 3:56.50elapsed 104%CPU (0avgtext+0avgdata 3762296maxresident)k
+86675056inputs+32outputs (1357008major+10327205minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 10:58:01 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.72780
+  Compute      = 230.42771
+159.79user 10.13system 3:57.56elapsed 71%CPU (0avgtext+0avgdata 3762568maxresident)k
+45352856inputs+24outputs (710607major+5536164minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:01:59 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.79995
+  Compute      = 1553.31946
+219.77user 196.74system 26:00.53elapsed 26%CPU (0avgtext+0avgdata 3773448maxresident)k
+898666560inputs+24outputs (14058657major+98661742minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:28:00 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.15194
+  Compute      = 182.00068
+165.86user 30.26system 3:09.54elapsed 103%CPU (0avgtext+0avgdata 3762064maxresident)k
+44711592inputs+24outputs (701091major+5549375minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:31:10 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.78351
+  Compute      = 186.82540
+146.50user 6.42system 3:14.03elapsed 78%CPU (0avgtext+0avgdata 3762404maxresident)k
+24148344inputs+24outputs (381881major+3174613minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:34:24 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.01074
+  Compute      = 840.78501
+196.95user 96.69system 14:08.19elapsed 34%CPU (0avgtext+0avgdata 3765388maxresident)k
+436145576inputs+24outputs (6826279major+48237583minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:48:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.02238
+  Compute      = 165.01401
+152.24user 17.66system 2:52.41elapsed 98%CPU (0avgtext+0avgdata 3762564maxresident)k
+24585808inputs+24outputs (388942major+3304135minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:51:25 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.97444
+  Compute      = 173.79525
+145.48user 4.82system 3:01.15elapsed 82%CPU (0avgtext+0avgdata 3763860maxresident)k
+15976048inputs+32outputs (255958major+2312616minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 11:54:26 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.73131
+  Compute      = 701.38152
+204.37user 77.05system 11:48.51elapsed 39%CPU (0avgtext+0avgdata 3765844maxresident)k
+342947272inputs+24outputs (5368141major+38053361minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 12:06:15 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.98985
+  Compute      = 164.01457
+149.98user 12.95system 2:51.38elapsed 95%CPU (0avgtext+0avgdata 3763572maxresident)k
+15953000inputs+24outputs (255257major+2286602minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 12:09:07 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.88672
+  Compute      = 167.94870
+144.93user 5.09system 2:55.20elapsed 85%CPU (0avgtext+0avgdata 3762300maxresident)k
+10706424inputs+32outputs (172713major+1706207minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 12:12:02 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.54920
+  Compute      = 218.21322
+194.11user 15.32system 3:45.16elapsed 93%CPU (0avgtext+0avgdata 3762692maxresident)k
+16818624inputs+24outputs (268710major+2459068minor)pagefaults 0swaps
+build/bin/matmult -l2147483648 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 12:15:48 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2147483648
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.23666
+  Compute      = 160.01199
+146.89user 10.48system 2:47.63elapsed 93%CPU (0avgtext+0avgdata 3762704maxresident)k
+10744424inputs+16outputs (171210major+1798882minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 12:18:35 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.74090
+  Compute      = 4240.30001
+297.47user 583.23system 1:10:47elapsed 20%CPU (0avgtext+0avgdata 3773608maxresident)k
+2690114736inputs+8outputs (42063029major+294481502minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 13:29:23 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.91099
+  Compute      = 302.94557
+174.13user 17.49system 5:10.30elapsed 61%CPU (0avgtext+0avgdata 3762660maxresident)k
+86767024inputs+32outputs (1358247major+10151479minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 13:34:34 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.25381
+  Compute      = 2348.43545
+248.39user 311.34system 39:16.09elapsed 23%CPU (0avgtext+0avgdata 3768980maxresident)k
+1413234216inputs+32outputs (22115696major+154783646minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:13:50 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.11574
+  Compute      = 231.48562
+193.42user 58.10system 3:58.97elapsed 105%CPU (0avgtext+0avgdata 3762680maxresident)k
+86659088inputs+16outputs (1356598major+10238641minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:17:49 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.18120
+  Compute      = 232.37484
+160.15user 10.50system 3:59.94elapsed 71%CPU (0avgtext+0avgdata 3762264maxresident)k
+45246456inputs+32outputs (709478major+5517616minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:21:50 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.54074
+  Compute      = 1490.70450
+224.15user 192.53system 24:58.66elapsed 27%CPU (0avgtext+0avgdata 3762996maxresident)k
+812498952inputs+16outputs (12730923major+89026578minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:46:48 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.03787
+  Compute      = 180.94118
+165.14user 29.78system 3:08.37elapsed 103%CPU (0avgtext+0avgdata 3763160maxresident)k
+44705104inputs+24outputs (700201major+5505075minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:49:57 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.67188
+  Compute      = 187.30296
+146.57user 6.33system 3:14.33elapsed 78%CPU (0avgtext+0avgdata 3763096maxresident)k
+26261456inputs+24outputs (415387major+3491084minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 14:53:12 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.61792
+  Compute      = 969.35957
+203.47user 113.48system 16:16.39elapsed 32%CPU (0avgtext+0avgdata 3763604maxresident)k
+531544080inputs+24outputs (8317633major+58678250minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:09:28 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.91490
+  Compute      = 167.89420
+152.64user 18.17system 2:55.17elapsed 97%CPU (0avgtext+0avgdata 3763904maxresident)k
+26071624inputs+24outputs (413583major+3391139minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:12:24 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.77966
+  Compute      = 174.56093
+145.50user 5.12system 3:01.74elapsed 82%CPU (0avgtext+0avgdata 3763588maxresident)k
+16235200inputs+24outputs (259640major+2373757minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:15:26 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.66036
+  Compute      = 836.53563
+210.37user 95.31system 14:03.60elapsed 36%CPU (0avgtext+0avgdata 3766740maxresident)k
+435812320inputs+24outputs (6821219major+48227947minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:29:30 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.73197
+  Compute      = 164.93697
+150.66user 13.04system 2:52.05elapsed 95%CPU (0avgtext+0avgdata 3762648maxresident)k
+16257144inputs+24outputs (260823major+2407005minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:32:22 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.79642
+  Compute      = 168.63227
+145.43user 5.12system 2:55.81elapsed 85%CPU (0avgtext+0avgdata 3762580maxresident)k
+10879840inputs+24outputs (174900major+1702644minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:35:18 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.64403
+  Compute      = 227.45519
+197.07user 16.29system 3:54.49elapsed 90%CPU (0avgtext+0avgdata 3763372maxresident)k
+19717712inputs+16outputs (318719major+2819091minor)pagefaults 0swaps
+build/bin/matmult -l2281701376 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:39:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2281701376
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.71260
+  Compute      = 159.90052
+147.56user 10.08system 2:47.00elapsed 94%CPU (0avgtext+0avgdata 3762664maxresident)k
+10860472inputs+24outputs (173810major+1809856minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 15:42:00 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.80884
+  Compute      = 4241.51372
+293.18user 575.32system 1:10:48elapsed 20%CPU (0avgtext+0avgdata 3772820maxresident)k
+2689984624inputs+24outputs (42076480major+294514252minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 16:52:49 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.93265
+  Compute      = 301.79202
+174.40user 17.36system 5:09.11elapsed 62%CPU (0avgtext+0avgdata 3767676maxresident)k
+86797304inputs+24outputs (1358379major+10156607minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 16:57:58 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.02913
+  Compute      = 2711.03823
+260.93user 366.31system 45:18.46elapsed 23%CPU (0avgtext+0avgdata 3769044maxresident)k
+1623345560inputs+32outputs (25407421major+177775906minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 17:43:17 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.16672
+  Compute      = 230.79537
+193.35user 57.87system 3:58.35elapsed 105%CPU (0avgtext+0avgdata 3763252maxresident)k
+86673784inputs+24outputs (1357068major+10341544minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 17:47:16 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.20180
+  Compute      = 229.98630
+160.07user 9.99system 3:57.59elapsed 71%CPU (0avgtext+0avgdata 3768008maxresident)k
+46337920inputs+24outputs (727330major+5712806minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 17:51:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.00924
+  Compute      = 1820.99157
+233.27user 235.40system 30:28.41elapsed 25%CPU (0avgtext+0avgdata 3768476maxresident)k
+1055748008inputs+24outputs (16526897major+115739470minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:21:42 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.93962
+  Compute      = 182.37339
+166.90user 29.89system 3:09.70elapsed 103%CPU (0avgtext+0avgdata 3762608maxresident)k
+44768064inputs+24outputs (702207major+5558399minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:24:52 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.26079
+  Compute      = 187.53332
+146.76user 6.41system 3:15.17elapsed 78%CPU (0avgtext+0avgdata 3763056maxresident)k
+25832544inputs+24outputs (409320major+3505316minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:28:07 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.10101
+  Compute      = 1083.80687
+209.44user 128.01system 18:11.31elapsed 30%CPU (0avgtext+0avgdata 3771004maxresident)k
+610062616inputs+24outputs (9545933major+67269033minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:46:19 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.97587
+  Compute      = 164.40590
+153.08user 17.34system 2:51.76elapsed 99%CPU (0avgtext+0avgdata 3763992maxresident)k
+24307592inputs+24outputs (384640major+3319990minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:49:11 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.20810
+  Compute      = 174.60680
+145.64user 5.08system 3:02.22elapsed 82%CPU (0avgtext+0avgdata 3763232maxresident)k
+16481864inputs+16outputs (264658major+2440122minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 18:52:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.14127
+  Compute      = 914.55670
+216.34user 108.03system 15:22.09elapsed 35%CPU (0avgtext+0avgdata 3770116maxresident)k
+461272160inputs+16outputs (7224154major+50925006minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 19:07:36 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.83318
+  Compute      = 164.05840
+151.13user 13.19system 2:51.30elapsed 95%CPU (0avgtext+0avgdata 3763428maxresident)k
+15251648inputs+32outputs (247675major+2301793minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 19:10:27 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.00205
+  Compute      = 167.67711
+145.20user 4.89system 2:55.08elapsed 85%CPU (0avgtext+0avgdata 3763852maxresident)k
+11034176inputs+16outputs (179020major+1847943minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 19:13:23 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.03977
+  Compute      = 313.27580
+208.01user 26.33system 5:20.70elapsed 73%CPU (0avgtext+0avgdata 3763548maxresident)k
+65414544inputs+24outputs (1042879major+7755433minor)pagefaults 0swaps
+build/bin/matmult -l2415919104 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 19:18:44 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2415919104
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.44658
+  Compute      = 160.09423
+147.57user 10.79system 2:47.96elapsed 94%CPU (0avgtext+0avgdata 3763512maxresident)k
+11095656inputs+16outputs (180186major+1811466minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 19:21:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.99237
+  Compute      = 4280.36184
+297.28user 582.52system 1:11:27elapsed 20%CPU (0avgtext+0avgdata 3766400maxresident)k
+2690295208inputs+32outputs (42079371major+294507495minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 20:33:00 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.27284
+  Compute      = 300.88185
+173.37user 17.76system 5:08.55elapsed 61%CPU (0avgtext+0avgdata 3762512maxresident)k
+86965232inputs+24outputs (1360943major+10224910minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 20:38:09 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.27005
+  Compute      = 3202.91530
+288.66user 437.36system 53:30.58elapsed 22%CPU (0avgtext+0avgdata 3775380maxresident)k
+1914022664inputs+24outputs (30004832major+209439887minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 21:31:39 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.08976
+  Compute      = 229.89583
+193.93user 57.98system 3:57.37elapsed 106%CPU (0avgtext+0avgdata 3764076maxresident)k
+86628128inputs+32outputs (1355720major+10286287minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 21:35:37 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.30130
+  Compute      = 231.06009
+160.74user 10.10system 3:58.74elapsed 71%CPU (0avgtext+0avgdata 3763112maxresident)k
+45879848inputs+24outputs (720493major+5626107minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 21:39:36 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.15364
+  Compute      = 2413.85089
+265.02user 317.06system 40:21.41elapsed 24%CPU (0avgtext+0avgdata 3773452maxresident)k
+1454703808inputs+24outputs (22831715major+159422246minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 22:19:58 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.24647
+  Compute      = 181.48565
+165.76user 29.85system 3:09.11elapsed 103%CPU (0avgtext+0avgdata 3763644maxresident)k
+44909640inputs+24outputs (704366major+5676479minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 22:23:07 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.40140
+  Compute      = 190.35379
+146.79user 7.00system 3:18.15elapsed 77%CPU (0avgtext+0avgdata 3763796maxresident)k
+27217064inputs+32outputs (434148major+3580701minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 22:26:25 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.22840
+  Compute      = 1898.17060
+256.44user 245.62system 31:45.81elapsed 26%CPU (0avgtext+0avgdata 3774640maxresident)k
+1056931392inputs+24outputs (16655359major+115770042minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 22:58:11 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.78669
+  Compute      = 169.99522
+152.59user 19.09system 2:57.17elapsed 96%CPU (0avgtext+0avgdata 3764112maxresident)k
+27222920inputs+8outputs (432523major+3782553minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:01:09 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.99196
+  Compute      = 184.54002
+146.53user 6.60system 3:11.91elapsed 79%CPU (0avgtext+0avgdata 3764012maxresident)k
+21004272inputs+32outputs (350210major+2895904minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:04:21 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.76109
+  Compute      = 1210.01642
+236.97user 147.67system 20:17.18elapsed 31%CPU (0avgtext+0avgdata 3774232maxresident)k
+653334704inputs+24outputs (10275921major+72031193minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:24:38 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.78757
+  Compute      = 172.32846
+150.70user 14.37system 2:59.52elapsed 91%CPU (0avgtext+0avgdata 3764308maxresident)k
+20896144inputs+24outputs (345386major+3006723minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:27:38 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.17196
+  Compute      = 167.76227
+145.08user 5.27system 2:55.35elapsed 85%CPU (0avgtext+0avgdata 3764032maxresident)k
+11189416inputs+24outputs (182637major+1895252minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:30:34 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.97743
+  Compute      = 910.54094
+229.43user 108.53system 15:18.01elapsed 36%CPU (0avgtext+0avgdata 3764496maxresident)k
+413672792inputs+32outputs (6546579major+45892595minor)pagefaults 0swaps
+build/bin/matmult -l2550136832 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:45:52 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2550136832
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   6.92867
+  Compute      = 159.46057
+147.39user 10.58system 2:46.81elapsed 94%CPU (0avgtext+0avgdata 3763672maxresident)k
+11051224inputs+24outputs (179344major+1854152minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Thu Aug 11 23:48:39 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.18324
+  Compute      = 4177.47784
+288.08user 560.67system 1:09:45elapsed 20%CPU (0avgtext+0avgdata 3771404maxresident)k
+2688639520inputs+16outputs (42032403major+294610340minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 00:58:24 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.26183
+  Compute      = 299.19297
+174.48user 17.30system 5:06.88elapsed 62%CPU (0avgtext+0avgdata 3762156maxresident)k
+86664848inputs+32outputs (1355056major+10236467minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 01:03:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.35422
+  Compute      = 4025.63981
+288.44user 552.01system 1:07:13elapsed 20%CPU (0avgtext+0avgdata 3774576maxresident)k
+2531168568inputs+24outputs (39598343major+277055340minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 02:10:45 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.34105
+  Compute      = 227.95768
+192.95user 57.30system 3:55.70elapsed 106%CPU (0avgtext+0avgdata 3768604maxresident)k
+86610456inputs+24outputs (1354835major+10387478minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 02:14:41 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.81162
+  Compute      = 228.61428
+159.78user 10.33system 3:56.83elapsed 71%CPU (0avgtext+0avgdata 3762824maxresident)k
+45532848inputs+16outputs (712742major+5678460minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 02:18:38 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.24013
+  Compute      = 3745.83264
+277.64user 510.64system 1:02:33elapsed 21%CPU (0avgtext+0avgdata 3774260maxresident)k
+2363519920inputs+24outputs (36978986major+258869884minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 03:21:12 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.47419
+  Compute      = 181.21014
+166.01user 29.85system 3:09.09elapsed 103%CPU (0avgtext+0avgdata 3762712maxresident)k
+44840976inputs+32outputs (702069major+5647230minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 03:24:21 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.85846
+  Compute      = 186.45076
+147.17user 6.27system 3:14.73elapsed 78%CPU (0avgtext+0avgdata 3764060maxresident)k
+25620128inputs+16outputs (404687major+3495063minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 03:27:36 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.44930
+  Compute      = 3273.05436
+269.97user 443.25system 54:40.90elapsed 21%CPU (0avgtext+0avgdata 3774068maxresident)k
+2026176976inputs+24outputs (31706363major+222014763minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 04:22:18 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.24491
+  Compute      = 164.48281
+154.25user 17.28system 2:52.13elapsed 99%CPU (0avgtext+0avgdata 3761968maxresident)k
+24147488inputs+24outputs (381294major+3336864minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 04:25:10 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   8.19559
+  Compute      = 184.58330
+146.35user 6.80system 3:13.18elapsed 79%CPU (0avgtext+0avgdata 3762944maxresident)k
+21334400inputs+16outputs (341321major+2988861minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 04:28:23 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.61201
+  Compute      = 2224.58840
+251.63user 291.35system 37:12.60elapsed 24%CPU (0avgtext+0avgdata 3773596maxresident)k
+1353255488inputs+32outputs (21165583major+148511942minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 05:05:36 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.22575
+  Compute      = 172.72553
+151.42user 13.70system 3:00.36elapsed 91%CPU (0avgtext+0avgdata 3763228maxresident)k
+21290880inputs+24outputs (337562major+3010697minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 05:08:37 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.27822
+  Compute      = 168.03920
+145.22user 5.47system 2:55.70elapsed 85%CPU (0avgtext+0avgdata 3764128maxresident)k
+10833816inputs+16outputs (171758major+1838967minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 05:11:33 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.31387
+  Compute      = 963.86139
+230.65user 115.27system 16:11.58elapsed 35%CPU (0avgtext+0avgdata 3766844maxresident)k
+447312216inputs+24outputs (7002358major+49613463minor)pagefaults 0swaps
+build/bin/matmult -l2684354560 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 05:27:45 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2684354560
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.10205
+  Compute      = 159.49521
+147.63user 10.58system 2:47.03elapsed 94%CPU (0avgtext+0avgdata 3762980maxresident)k
+10934344inputs+32outputs (174670major+1952494minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 05:30:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.87063
+  Compute      = 4260.61863
+296.36user 582.31system 1:11:08elapsed 20%CPU (0avgtext+0avgdata 3774656maxresident)k
+2690154184inputs+24outputs (42055151major+294583657minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 06:41:41 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.24846
+  Compute      = 297.23827
+174.13user 16.78system 5:04.90elapsed 62%CPU (0avgtext+0avgdata 3769292maxresident)k
+86944224inputs+24outputs (1359602major+10300708minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 06:46:46 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.17404
+  Compute      = 4025.73738
+289.52user 564.70system 1:07:13elapsed 21%CPU (0avgtext+0avgdata 3780728maxresident)k
+2530579016inputs+32outputs (39571417major+277166390minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 07:54:00 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.40800
+  Compute      = 228.01731
+192.29user 58.08system 3:55.88elapsed 106%CPU (0avgtext+0avgdata 3765248maxresident)k
+86619792inputs+24outputs (1355126major+10355444minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 07:57:56 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.70116
+  Compute      = 227.54454
+160.73user 9.71system 3:55.64elapsed 72%CPU (0avgtext+0avgdata 3761688maxresident)k
+45391344inputs+24outputs (711421major+5711070minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 08:01:52 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.49855
+  Compute      = 3696.38984
+277.41user 499.90system 1:01:44elapsed 20%CPU (0avgtext+0avgdata 3772344maxresident)k
+2362590240inputs+24outputs (36944096major+258836105minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 09:03:37 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.36809
+  Compute      = 180.94630
+166.00user 30.14system 3:08.70elapsed 103%CPU (0avgtext+0avgdata 3761876maxresident)k
+44726368inputs+24outputs (699841major+5726921minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 09:06:46 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.79902
+  Compute      = 190.13403
+147.07user 7.18system 3:18.34elapsed 77%CPU (0avgtext+0avgdata 3761184maxresident)k
+27462976inputs+24outputs (436122major+3720236minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 09:10:04 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.47377
+  Compute      = 3236.24799
+267.34user 437.50system 54:04.11elapsed 21%CPU (0avgtext+0avgdata 3773608maxresident)k
+2025844800inputs+24outputs (31675445major+222011415minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:04:09 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.80135
+  Compute      = 170.09051
+154.28user 18.50system 2:58.29elapsed 96%CPU (0avgtext+0avgdata 3761300maxresident)k
+26784088inputs+32outputs (426818major+3675032minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:07:07 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   8.04533
+  Compute      = 183.98386
+146.57user 6.73system 3:12.42elapsed 79%CPU (0avgtext+0avgdata 3761880maxresident)k
+21407280inputs+16outputs (340536major+3049094minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:10:20 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.72182
+  Compute      = 2205.48498
+251.22user 285.95system 36:53.64elapsed 24%CPU (0avgtext+0avgdata 3772116maxresident)k
+1353482728inputs+24outputs (21166286major+148654185minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:47:14 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.43899
+  Compute      = 172.73301
+150.95user 14.20system 3:00.58elapsed 91%CPU (0avgtext+0avgdata 3761676maxresident)k
+21453496inputs+24outputs (342669major+3084487minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:50:14 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.46240
+  Compute      = 167.19148
+145.36user 5.18system 2:55.04elapsed 86%CPU (0avgtext+0avgdata 3761784maxresident)k
+10917712inputs+16outputs (174091major+1895109minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 10:53:10 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.56652
+  Compute      = 947.08531
+229.58user 113.47system 15:55.07elapsed 35%CPU (0avgtext+0avgdata 3766880maxresident)k
+442853504inputs+24outputs (6932740major+49163660minor)pagefaults 0swaps
+build/bin/matmult -l2818572288 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 11:09:05 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2818572288
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.37043
+  Compute      = 159.43049
+147.75user 10.73system 2:47.20elapsed 94%CPU (0avgtext+0avgdata 3761364maxresident)k
+10860304inputs+24outputs (172249major+1941075minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 11:11:53 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.60942
+  Compute      = 4212.74315
+291.50user 562.50system 1:10:20elapsed 20%CPU (0avgtext+0avgdata 3771116maxresident)k
+2689229424inputs+32outputs (42040342major+294639381minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 12:22:14 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.47647
+  Compute      = 297.75105
+175.13user 16.59system 5:05.64elapsed 62%CPU (0avgtext+0avgdata 3766712maxresident)k
+87156136inputs+16outputs (1362986major+10293968minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 12:27:19 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.51672
+  Compute      = 3987.24872
+285.56user 543.09system 1:06:35elapsed 20%CPU (0avgtext+0avgdata 3775292maxresident)k
+2531518880inputs+32outputs (39582316major+277217693minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 13:33:55 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.54064
+  Compute      = 230.35528
+193.38user 58.37system 3:58.30elapsed 105%CPU (0avgtext+0avgdata 3765120maxresident)k
+86679040inputs+16outputs (1357382major+10443625minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 13:37:53 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.75751
+  Compute      = 228.42313
+160.84user 10.16system 3:56.60elapsed 72%CPU (0avgtext+0avgdata 3763160maxresident)k
+45722832inputs+24outputs (716715major+5772264minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 13:41:50 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.84455
+  Compute      = 3730.99002
+279.92user 505.87system 1:02:19elapsed 21%CPU (0avgtext+0avgdata 3774276maxresident)k
+2364584928inputs+16outputs (36974599major+258905624minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 14:44:10 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.96345
+  Compute      = 181.71253
+166.65user 30.63system 3:10.08elapsed 103%CPU (0avgtext+0avgdata 3762024maxresident)k
+44866912inputs+24outputs (703438major+5744047minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 14:47:20 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.36524
+  Compute      = 197.45442
+148.02user 8.02system 3:25.23elapsed 76%CPU (0avgtext+0avgdata 3761636maxresident)k
+31502336inputs+32outputs (504510major+4243069minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 14:50:46 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.16681
+  Compute      = 3185.52036
+264.34user 426.84system 53:13.08elapsed 21%CPU (0avgtext+0avgdata 3772188maxresident)k
+2025567576inputs+24outputs (31666896major+222148498minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 15:43:59 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.76119
+  Compute      = 174.26950
+154.54user 19.19system 3:02.45elapsed 95%CPU (0avgtext+0avgdata 3760836maxresident)k
+28681832inputs+24outputs (458833major+3972217minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 15:47:02 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.62396
+  Compute      = 182.76545
+146.79user 6.53system 3:10.80elapsed 80%CPU (0avgtext+0avgdata 3761948maxresident)k
+21360192inputs+24outputs (338729major+3080474minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 15:50:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.62845
+  Compute      = 2201.49910
+251.89user 288.31system 36:49.52elapsed 24%CPU (0avgtext+0avgdata 3772592maxresident)k
+1353586928inputs+32outputs (21168218major+148739787minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 16:27:02 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.54898
+  Compute      = 172.13391
+150.90user 14.42system 3:00.08elapsed 91%CPU (0avgtext+0avgdata 3761884maxresident)k
+21431000inputs+24outputs (340855major+3110133minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 16:30:03 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.31976
+  Compute      = 167.53123
+145.77user 5.07system 2:55.26elapsed 86%CPU (0avgtext+0avgdata 3762816maxresident)k
+11059832inputs+24outputs (178189major+1964642minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 16:32:58 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.43144
+  Compute      = 954.94696
+231.06user 114.23system 16:02.78elapsed 35%CPU (0avgtext+0avgdata 3769072maxresident)k
+445416264inputs+32outputs (6969294major+49510670minor)pagefaults 0swaps
+build/bin/matmult -l2952790016 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 16:49:01 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 2952790016
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.69075
+  Compute      = 159.12146
+147.68user 10.62system 2:47.21elapsed 94%CPU (0avgtext+0avgdata 3762668maxresident)k
+10976416inputs+24outputs (174830major+1903674minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 16:51:49 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.28161
+  Compute      = 4216.44421
+291.48user 565.66system 1:10:24elapsed 20%CPU (0avgtext+0avgdata 3770608maxresident)k
+2689548088inputs+24outputs (42058076major+294644680minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 18:02:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.65174
+  Compute      = 298.32136
+174.82user 17.43system 5:06.39elapsed 62%CPU (0avgtext+0avgdata 3761560maxresident)k
+87172992inputs+32outputs (1363521major+10356691minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 18:07:20 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.25180
+  Compute      = 3970.76873
+289.58user 538.34system 1:06:18elapsed 20%CPU (0avgtext+0avgdata 3771004maxresident)k
+2531059608inputs+24outputs (39573835major+277300954minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 19:13:38 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.47644
+  Compute      = 227.93676
+194.71user 57.24system 3:55.84elapsed 106%CPU (0avgtext+0avgdata 3761896maxresident)k
+86602848inputs+24outputs (1354952major+10470624minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 19:17:34 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.87076
+  Compute      = 229.26476
+161.16user 10.44system 3:57.54elapsed 72%CPU (0avgtext+0avgdata 3770000maxresident)k
+46467864inputs+32outputs (729082major+5936170minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 19:21:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.65137
+  Compute      = 3720.93086
+279.45user 504.30system 1:02:08elapsed 21%CPU (0avgtext+0avgdata 3771532maxresident)k
+2362897616inputs+32outputs (36950531major+258869959minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 20:23:42 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.71966
+  Compute      = 182.03832
+166.60user 30.96system 3:10.17elapsed 103%CPU (0avgtext+0avgdata 3761712maxresident)k
+44978944inputs+16outputs (705475major+5822547minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 20:26:52 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.56511
+  Compute      = 195.25444
+148.11user 7.77system 3:23.22elapsed 76%CPU (0avgtext+0avgdata 3762268maxresident)k
+30020376inputs+16outputs (482174major+4075133minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 20:30:15 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.28352
+  Compute      = 3196.16082
+266.09user 426.15system 53:23.83elapsed 21%CPU (0avgtext+0avgdata 3773596maxresident)k
+2025564456inputs+32outputs (31668771major+222216190minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 21:23:40 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.98459
+  Compute      = 176.37543
+155.15user 19.38system 3:04.76elapsed 94%CPU (0avgtext+0avgdata 3762716maxresident)k
+29383920inputs+16outputs (475703major+4034616minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 21:26:45 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.62647
+  Compute      = 183.09885
+146.69user 6.87system 3:11.18elapsed 80%CPU (0avgtext+0avgdata 3761856maxresident)k
+21638888inputs+24outputs (345592major+3101376minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 21:29:56 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.38153
+  Compute      = 2251.34945
+261.63user 292.26system 37:39.12elapsed 24%CPU (0avgtext+0avgdata 3770956maxresident)k
+1368665200inputs+32outputs (21406145major+150413249minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 22:07:35 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.41913
+  Compute      = 172.61035
+151.14user 14.52system 3:00.43elapsed 91%CPU (0avgtext+0avgdata 3768340maxresident)k
+21656424inputs+16outputs (347002major+3167477minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 22:10:36 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.61442
+  Compute      = 167.86286
+145.82user 5.20system 2:55.94elapsed 85%CPU (0avgtext+0avgdata 3761960maxresident)k
+11261488inputs+24outputs (182890major+1956579minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 22:13:32 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.62112
+  Compute      = 948.89623
+229.56user 113.04system 15:56.95elapsed 35%CPU (0avgtext+0avgdata 3762328maxresident)k
+449857424inputs+32outputs (7040941major+49970812minor)pagefaults 0swaps
+build/bin/matmult -l3087007744 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 22:29:29 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3087007744
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.66943
+  Compute      = 159.03269
+147.75user 10.71system 2:47.10elapsed 94%CPU (0avgtext+0avgdata 3768292maxresident)k
+11117216inputs+32outputs (179389major+2015629minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 22:32:17 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.42191
+  Compute      = 4224.07869
+297.82user 569.94system 1:10:31elapsed 20%CPU (0avgtext+0avgdata 3773396maxresident)k
+2688661032inputs+24outputs (42039374major+294767305minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 23:42:49 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.58465
+  Compute      = 297.80206
+175.39user 17.24system 5:05.80elapsed 62%CPU (0avgtext+0avgdata 3771268maxresident)k
+87467080inputs+16outputs (1368576major+10468892minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Fri Aug 12 23:47:55 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.55523
+  Compute      = 4009.03781
+292.66user 549.55system 1:06:57elapsed 20%CPU (0avgtext+0avgdata 3776924maxresident)k
+2531894848inputs+24outputs (39602695major+277266849minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y32 -x327680 -z32 -t1 -f32
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 00:54:52 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        32
+  x            =    327680
+  z            =        32
+  # fibers     =        32
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.60328
+  Compute      = 229.37677
+194.88user 58.05system 3:57.39elapsed 106%CPU (0avgtext+0avgdata 3764660maxresident)k
+86674720inputs+16outputs (1356838major+10490365minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 00:58:50 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.74030
+  Compute      = 233.15636
+161.99user 10.97system 4:01.36elapsed 71%CPU (0avgtext+0avgdata 3762600maxresident)k
+48054272inputs+16outputs (756810major+6099023minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 01:02:51 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.66280
+  Compute      = 3735.09528
+283.94user 509.83system 1:02:23elapsed 21%CPU (0avgtext+0avgdata 3776840maxresident)k
+2363488648inputs+24outputs (36967311major+258932120minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y64 -x163840 -z64 -t1 -f64
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 02:05:15 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =        64
+  x            =    163840
+  z            =        64
+  # fibers     =        64
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.73102
+  Compute      = 184.18628
+168.73user 31.00system 3:12.32elapsed 103%CPU (0avgtext+0avgdata 3765356maxresident)k
+45297600inputs+40outputs (712850major+5819614minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 02:08:27 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.55122
+  Compute      = 216.99068
+150.63user 10.53system 3:44.99elapsed 71%CPU (0avgtext+0avgdata 3763552maxresident)k
+40793416inputs+24outputs (670539major+5241383minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 02:12:13 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.81588
+  Compute      = 3212.17987
+270.99user 434.14system 53:40.46elapsed 21%CPU (0avgtext+0avgdata 3775124maxresident)k
+2025681288inputs+24outputs (31671533major+222245503minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y128 -x81920 -z128 -t1 -f128
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 03:05:53 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       128
+  x            =     81920
+  z            =       128
+  # fibers     =       128
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.75319
+  Compute      = 193.44636
+155.66user 21.67system 3:21.59elapsed 87%CPU (0avgtext+0avgdata 3766004maxresident)k
+40369144inputs+32outputs (655049major+5235365minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 03:09:15 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   8.01687
+  Compute      = 185.20964
+146.98user 7.18system 3:13.64elapsed 79%CPU (0avgtext+0avgdata 3767924maxresident)k
+22213480inputs+24outputs (361210major+3161534minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 03:12:29 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.61191
+  Compute      = 2933.77194
+280.06user 398.62system 49:01.79elapsed 23%CPU (0avgtext+0avgdata 3769564maxresident)k
+1759126824inputs+24outputs (27543862major+193032039minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y256 -x40960 -z256 -t1 -f256
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 04:01:31 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       256
+  x            =     40960
+  z            =       256
+  # fibers     =       256
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.48783
+  Compute      = 174.40963
+151.99user 14.66system 3:02.30elapsed 91%CPU (0avgtext+0avgdata 3765016maxresident)k
+22173968inputs+24outputs (361005major+3205193minor)pagefaults 0swaps
+n--------------------------------------------------------------------------------n
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f0
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 04:04:34 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =         0
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.90489
+  Compute      = 167.91315
+145.87user 5.13system 2:56.24elapsed 85%CPU (0avgtext+0avgdata 3765944maxresident)k
+11623912inputs+32outputs (194604major+2043225minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y1 -x1 -z1 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 04:07:30 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =         1
+  x            =         1
+  z            =         1
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.54936
+  Compute      = 956.08176
+231.47user 113.74system 16:04.03elapsed 35%CPU (0avgtext+0avgdata 3771716maxresident)k
+453655952inputs+24outputs (7104839major+50363610minor)pagefaults 0swaps
+build/bin/matmult -l3221225472 -n512 -m327680 -p1024 -y512 -x20480 -z512 -t1 -f512
+==========================
+ General =================
+==========================
+  Machine info = bd2-umh 3.13.0-91-generic
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Tue Aug 02 09:30:56 2016
+  Run date     = Sat Aug 13 04:23:35 2016
+  Git commit   =   03aadf6
+  SysPage size =      4096
+
+==========================
+ Problem =================
+==========================
+  lock memory  = 3221225472
+  n            =       512
+  m            =    327680
+  p            =      1024
+  y            =       512
+  x            =     20480
+  z            =       512
+  # fibers     =       512
+  # threads    =         1
+
+==========================
+ Status ==================
+==========================
+  Generating matrices...
+  Computing matrix multiplication...
+
+==========================
+ Timing (s) ==============
+==========================
+  Generate     =   7.54233
+  Compute      = 159.05650
+147.93user 10.82system 2:47.01elapsed 95%CPU (0avgtext+0avgdata 3768168maxresident)k
+11588944inputs+24outputs (192232major+2022343minor)pagefaults 0swaps

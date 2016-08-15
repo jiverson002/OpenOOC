@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #define MB       (1lu<<20) /* 1MB */
-#define MEM_SIZE (2600*MB)
+#define MEM_SIZE (3328*MB)
 
 int
 main(void)
