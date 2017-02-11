@@ -17,7 +17,7 @@ done < tmp0.txt
 
 echo -e "-y1    -x1      -z1\n-y1760 -x32768  -z1760" > tmp0.txt
 
-echo -e "\t\t\t-f0\t\t-f1\t\t-f2\t\t-f4\t\t-f8\t\t-f16\t\t-f32\t\t-f64\t\t-f128\t\t-f256\t\t-f440" > table-compute.txt
-eval paste tmp{0..$num}.txt >> table-compute.txt
+echo -e "\t\t\t-f0\t\t-f1\t\t-f2\t\t-f4\t\t-f8\t\t-f16\t\t-f32\t\t-f64\t\t-f128\t\t-f256\t\t-f440" > table.txt
+eval paste tmp{0..$num}.txt >> table.txt
 
 eval rm -f tmp{0..$num}.txt

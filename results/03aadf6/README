@@ -1,0 +1,5 @@
+* run-v2.out
+  - with swapping, ran on bd4-umh with 4GB of memory installed
+
+* run-v3.out
+  - without swapping, ran on bd2-umh with 16GB of memory installed
