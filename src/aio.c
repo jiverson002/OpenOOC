@@ -236,7 +236,7 @@ S_aiothread_func(void * const state)
       break;
     }
 
-    log_fprintf(log, "%d %f ", aioreq->aio_id, omp_get_wtime());
+    log_fprintf(log, "%d %p %f ", aioreq->aio_id, aioreq->aio_buf, omp_get_wtime());
 
     /* Process request. */
     /* FIXME POC */

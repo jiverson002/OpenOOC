@@ -327,11 +327,12 @@ extern struct process process;
 #define DBG_SCHED   0x2
 #define DBG_SIGSEGV 0x4
 #define DBG_AIO     0x8
+//#define DBG_MASK    (DBG_TRACE|DBG_SCHED|DBG_SIGSEGV|DBG_AIO)
 #define DBG_MASK    (DBG_NONE)
 #if DBG_MASK > 0
   #include <stdio.h>
   #include <sys/syscall.h>
-  #define dbg_printf(bit, ...) if (bit & DBG_MASK) { printf(__VA_ARGS__); fflush(stdout); }
+  #define dbg_printf(bit, ...) if (bit & DBG_MASK) { printf("%f ", omp_get_wtime()); printf(__VA_ARGS__); fflush(stdout); }
 #else
   #define dbg_printf(...) (void)(0)
 #endif

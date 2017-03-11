@@ -134,6 +134,9 @@ S_is_runnable(int const id)
     ret = mincore(page, T_ps, &incore);
     assert(!ret);
 
+    dbg_printf(DBG_SCHED, "[%5d.%.3d]     address = %p, mincore = %d\n",\
+      (int)syscall(SYS_gettid), id, page, incore);
+
     return incore;
   }
   assert(EINPROGRESS == ret || 0 == ret);
@@ -307,8 +310,8 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
   dbg_printf(DBG_SIGSEGV,\
     "[%5d.%.3d]   Received SIGSEGV\n", (int)syscall(SYS_gettid), T_me);
   dbg_printf(DBG_SIGSEGV,\
-    "[%5d.%.3d]     Address = %p\n", (int)syscall(SYS_gettid), T_me,\
-    si->si_addr);
+    "[%5d.%.3d]     Address = %p %zu %p\n", (int)syscall(SYS_gettid), T_me,\
+    si->si_addr, (size_t)si->si_addr, (void*)((uintptr_t)si->si_addr&(~4095LU)));
 
   F_addr(T_me) = si->si_addr;
 
@@ -327,6 +330,9 @@ S_sigsegv_trampoline(int const sig, siginfo_t * const si, void * const uc)
     (int)syscall(SYS_gettid), T_me);
 
   swapcontext(&(F_trampoline(T_me)), &(F_tmp_uc(T_me)));
+
+  dbg_printf(DBG_SCHED, "[%5d.%.3d]     Returned from S_sigsegv_handler1\n",\
+    (int)syscall(SYS_gettid), T_me);
 
   if (uc) {}
 }
