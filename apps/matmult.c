@@ -56,6 +56,14 @@ THE SOFTWARE.
 #define XSTR(X) #X
 #define STR(X)  XSTR(X)
 
+#define ROWMJR(R,C,NR,NC) (R*NC+C)
+#define COLMJR(R,C,NR,NC) (C*NR+R)
+/* define access directions for matrices */
+#define a(R,C) a[ROWMJR(R,C,n,m)]
+#define b(R,C) b[COLMJR(R,C,m,p)]
+#define c(R,C) c[ROWMJR(R,C,n,p)]
+#define v(R,C) v[ROWMJR(R,C,n,p)]
+
 
 struct args
 {
@@ -101,17 +109,27 @@ S_matmult_kern(size_t const i, void * const state)
   b = args->b;
   c = args->c;
 
-  as = a+i*m+ks;
-  ae = a+i*m+ke;
-  bs = b+js*m+ks;
-  cs = c+i*p+js;
-  ce = c+i*p+je;
-  cp = cs;
-  for (; cp<ce; ++cp,bs+=m) {
-    ap = as;
-    bp = bs;
-    cv = *cp;
-    for (; ap<ae; ++ap,++bp) {
+  /* Compute kernel in two phases so that each fiber starts from a different
+   * location in b -- in phase one, each fiber starts offset by its fiber
+   * number and computes through the end of the block, in phase two each fiber
+   * starts from the beginning of the block and computes through the starting
+   * location of phase one. */
+  as = &a(i,ks);
+  ae = &a(i,ke);
+  bs = &b(ks,js+i);
+  cs = &c(i,js+i);
+  ce = &c(i,je);
+  for (cp=cs; cp<ce; ++cp,bs+=m) {
+    for (ap=as,bp=bs,cv=*cp; ap<ae; ++ap,++bp) {
+      cv += *ap * *bp;
+    }
+    *cp = cv;
+  }
+  bs = &b(ks,js);
+  cs = &c(i,js);
+  ce = &c(i,js+i);
+  for (cp=cs; cp<ce; ++cp,bs+=m) {
+    for (ap=as,bp=bs,cv=*cp; ap<ae; ++ap,++bp) {
       cv += *ap * *bp;
     }
     *cp = cv;
@@ -139,7 +157,7 @@ main(int argc, char * argv[])
   size_t is, ie, js, je, ks, ke;
   time_t now;
   struct args args;
-  void * l;
+  void * l=NULL;
   double * a, * b, * c, * v;
 
   now = time(NULL);
@@ -219,9 +237,6 @@ main(int argc, char * argv[])
       MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0);
     assert(MAP_FAILED != l);
   }
-  else {
-    l = NULL; /* suppress used before initialized warning */
-  }
 
   /* Allocate memory. */
   a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
@@ -233,9 +248,11 @@ main(int argc, char * argv[])
   c = mmap(NULL, n*p*sizeof(*c), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   assert(MAP_FAILED != c);
-  v = mmap(NULL, n*p*sizeof(*v), PROT_READ|PROT_WRITE,\
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  assert(MAP_FAILED != v);
+  if (validate) {
+    v = mmap(NULL, n*p*sizeof(*v), PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    assert(MAP_FAILED != v);
+  }
 
   /* Try to disable readahead. */
   ret = madvise(a, n*m*sizeof(*a), MADV_RANDOM);
@@ -246,36 +263,39 @@ main(int argc, char * argv[])
   assert(!ret);
 
   /* Output build info. */
-  printf("==========================\n");
-  printf(" General =================\n");
-  printf("==========================\n");
+  printf("===========================\n");
+  printf(" General ==================\n");
+  printf("===========================\n");
   printf("  Machine info = %s\n", STR(UNAME));
   printf("  GCC version  = %s\n", STR(GCCV));
   printf("  Build date   = %s\n", STR(DATE));
   printf("  Run date     = %s", ctime(&now));
-  printf("  Git commit   = %9s\n", STR(COMMIT));
-  printf("  SysPage size = %9lu\n", sysconf(_SC_PAGESIZE));
+  printf("  Git commit   = %10s\n", STR(COMMIT));
+  printf("  SysPage size = %10lu\n", sysconf(_SC_PAGESIZE));
   printf("\n");
 
   /* Output problem info. */
-  printf("==========================\n");
-  printf(" Problem =================\n");
-  printf("==========================\n");
-  printf("  lock memory  = %9zu\n", lock);
-  printf("  n            = %9zu\n", n);
-  printf("  m            = %9zu\n", m);
-  printf("  p            = %9zu\n", p);
-  printf("  y            = %9zu\n", y);
-  printf("  x            = %9zu\n", x);
-  printf("  z            = %9zu\n", z);
-  printf("  # fibers     = %9d\n", num_fibers);
-  printf("  # threads    = %9d\n", num_threads);
+  printf("===========================\n");
+  printf(" Problem ==================\n");
+  printf("===========================\n");
+  printf("  lock memory  = %10zu\n", lock);
+  printf("  n            = %10zu\n", n);
+  printf("  m            = %10zu\n", m);
+  printf("  p            = %10zu\n", p);
+  printf("  y            = %10zu\n", y);
+  printf("  x            = %10zu\n", x);
+  printf("  z            = %10zu\n", z);
+  printf("  # fibers     = %10d\n", num_fibers);
+  printf("  # threads    = %10d\n", num_threads);
   printf("\n");
 
-  printf("==========================\n");
-  printf(" Status ==================\n");
-  printf("==========================\n");
+  printf("===========================\n");
+  printf(" Status ===================\n");
+  printf("===========================\n");
   printf("  Generating matrices...\n");
+  printf("  A @ %p (%zu) -- %p (%zu)\n", (void*)a, (size_t)a, (void*)(a+n*m), (size_t)(a+n*m));
+  printf("  B @ %p (%zu) -- %p (%zu)\n", (void*)b, (size_t)b, (void*)(b+m*p), (size_t)(b+m*p));
+  printf("  C @ %p (%zu) -- %p (%zu)\n", (void*)c, (size_t)c, (void*)(c+n*p), (size_t)(c+n*p));
   
   ts = omp_get_wtime();
   S_matfill(n, m, a);
@@ -318,6 +338,8 @@ main(int argc, char * argv[])
         }
         ooc_wait(); /* Need this to wait for any outstanding fibers. */
         #pragma omp barrier
+
+        /* Finalize OOC environment. */
         ret = ooc_finalize(); /* Need this to and remove the signal handler. */
         assert(!ret);
       }
@@ -374,6 +396,8 @@ main(int argc, char * argv[])
             }
           }
         }
+
+        /* Finalize OOC environment. */
         ret = ooc_finalize(); /* Need this to and remove the signal handler. */
         assert(!ret);
       }
@@ -404,6 +428,21 @@ main(int argc, char * argv[])
   te = omp_get_wtime();
   t2 = te-ts;
 
+  /* Grant read/write protections back to the memory. */
+  if (num_fibers) {
+    ret = mprotect(a, n*m*sizeof(*a), PROT_READ|PROT_WRITE);
+    assert(!ret);
+    ret = mprotect(b, m*p*sizeof(*b), PROT_READ|PROT_WRITE);
+    assert(!ret);
+    ret = mprotect(c, n*p*sizeof(*c), PROT_READ|PROT_WRITE);
+    assert(!ret);
+  }
+
+  /* Unmap locked memory before trying to validate -- speeds up validating. */
+  if (lock) {
+    munmap(l, lock);
+  }
+
   if (validate) {
     printf("  Validating results...\n");
     ts = omp_get_wtime();
@@ -411,9 +450,9 @@ main(int argc, char * argv[])
     for (i=0; i<n; ++i) {
       for (j=0; j<p; ++j) {
         for (k=0; k<m; ++k) {
-          v[i*p+j] += a[i*m+k]*b[j*m+k];
+          v(i,j) += a(i,k)*b(k,j);
         }
-        assert(v[i*p+j] == c[i*p+j]);
+        assert(v(i,j) == c(i,j));
       }
     }
     te = omp_get_wtime();
@@ -421,22 +460,22 @@ main(int argc, char * argv[])
   }
 
   printf("\n");
-  printf("==========================\n");
-  printf(" Timing (s) ==============\n");
-  printf("==========================\n");
-  printf("  Generate     = %9.5f\n", (double)t1);
-  printf("  Compute      = %9.5f\n", (double)t2);
+  printf("===========================\n");
+  printf(" Timing (s) ===============\n");
+  printf("===========================\n");
+  printf("  Generate     = %10.5f\n", (double)t1);
+  printf("  Compute      = %10.5f\n", (double)t2);
   if (validate) {
-    printf("  Validate     = %9.5f\n", (double)t3);
+    printf("  Validate     = %10.5f\n", (double)t3);
   }
 
-  if (lock) {
-    munmap(l, lock);
-  }
+  /* Unmap remaining memory */
   munmap(a, n*m*sizeof(*a));
   munmap(b, m*p*sizeof(*b));
   munmap(c, n*p*sizeof(*c));
-  munmap(v, n*p*sizeof(*v));
+  if (validate) {
+    munmap(v, n*p*sizeof(*v));
+  }
 
   return EXIT_SUCCESS;
 }
