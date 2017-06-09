@@ -24,6 +24,9 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* HOST_NAME_MAX */
+#include <limits.h>
+
 /* fabs */
 #include <math.h>
 
@@ -46,7 +49,7 @@ THE SOFTWARE.
 /* time, ctime */
 #include <time.h>
 
-/* getopt */
+/* gethostname, getopt */
 #include <unistd.h>
 
 /* OOC library */
@@ -109,6 +112,7 @@ S_matmult_kern(size_t const i, void * const state)
   b = args->b;
   c = args->c;
 
+#if 0
   /* Compute kernel in two phases so that each fiber starts from a different
    * location in b -- in phase one, each fiber starts offset by its fiber
    * number and computes through the end of the block, in phase two each fiber
@@ -134,6 +138,19 @@ S_matmult_kern(size_t const i, void * const state)
     }
     *cp = cv;
   }
+#else
+  as = &a(i,ks);
+  ae = &a(i,ke);
+  bs = &b(ks,js);
+  cs = &c(i,js);
+  ce = &c(i,je);
+  for (cp=cs; cp<ce; ++cp,bs+=m) {
+    for (ap=as,bp=bs,cv=*cp; ap<ae; ++ap,++bp) {
+      cv += *ap * *bp;
+    }
+    *cp = cv;
+  }
+#endif
 }
 
 
@@ -159,6 +176,7 @@ main(int argc, char * argv[])
   struct args args;
   void * l=NULL;
   double * a, * b, * c, * v;
+  char hostname[HOST_NAME_MAX];
 
   now = time(NULL);
 
@@ -262,13 +280,16 @@ main(int argc, char * argv[])
   ret = madvise(c, n*p*sizeof(*c), MADV_RANDOM);
   assert(!ret);
 
+  ret = gethostname(hostname, sizeof(hostname));
+  assert(!ret);
+
   /* Output build info. */
   printf("===========================\n");
   printf(" General ==================\n");
   printf("===========================\n");
-  printf("  Machine info = %s\n", STR(UNAME));
   printf("  GCC version  = %s\n", STR(GCCV));
   printf("  Build date   = %s\n", STR(DATE));
+  printf("  Machine info = %10s\n", hostname);
   printf("  Run date     = %s", ctime(&now));
   printf("  Git commit   = %10s\n", STR(COMMIT));
   printf("  SysPage size = %10lu\n", sysconf(_SC_PAGESIZE));
