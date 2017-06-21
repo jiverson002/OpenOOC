@@ -13,7 +13,9 @@ function run() {
 
 for l in $1 ; do
   for f in 0 1 2 4 8 16 32 64 128 256 440 ; do
+    sudo fstrim /scratch-ssd
     run -l$l -n1760 -m262144 -p1760 -y1    -x1     -z1    -t4 -f$f
+    sudo fstrim /scratch-ssd
     run -l$l -n1760 -m262144 -p1760 -y1760 -x32768 -z1760 -t4 -f$f
   done
 done
