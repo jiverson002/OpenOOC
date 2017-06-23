@@ -1,7 +1,9 @@
-apps_PROGRAMS := matmult mlock samplesort vecsort
+apps_PROGRAMS := floyd matmult mlock samplesort vecsort
 apps_LDADD    := libooc.a
 apps_CFLAGS   := -fopenmp
 apps_LDFLAGS  := -fopenmp
+
+floyd_SOURCES := floyd.c
 
 matmult_SOURCES := matmult.c
 
