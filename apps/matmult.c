@@ -24,6 +24,9 @@ THE SOFTWARE.
 /* assert */
 #include <assert.h>
 
+/* DBL_EPSILON */
+#include <float.h>
+
 /* HOST_NAME_MAX */
 #include <limits.h>
 
@@ -249,13 +252,6 @@ main(int argc, char * argv[])
   x = (x < m) ? x : m;
   z = (z < p) ? z : p;
 
-  /* Lock desired amount of memory. */
-  if (lock) {
-    l = mmap(NULL, lock, PROT_READ|PROT_WRITE,\
-      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0);
-    assert(MAP_FAILED != l);
-  }
-
   /* Allocate memory. */
   a = mmap(NULL, n*m*sizeof(*a), PROT_READ|PROT_WRITE,\
     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -331,6 +327,13 @@ main(int argc, char * argv[])
     assert(!ret);
     ret = mprotect(c, n*p*sizeof(*c), PROT_NONE);
     assert(!ret);
+  }
+
+  /* Lock desired amount of memory. */
+  if (lock) {
+    l = mmap(NULL, lock, PROT_READ|PROT_WRITE,\
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_LOCKED, -1, 0);
+    assert(MAP_FAILED != l);
   }
 
   /* Setup args struct. */
@@ -473,7 +476,7 @@ main(int argc, char * argv[])
         for (k=0; k<m; ++k) {
           v(i,j) += a(i,k)*b(k,j);
         }
-        assert(v(i,j) == c(i,j));
+        assert(v(i,j) - c(i,j) <= DBL_EPSILON);
       }
     }
     te = omp_get_wtime();
