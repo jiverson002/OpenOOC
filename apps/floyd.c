@@ -129,6 +129,7 @@ static void
 S_floyd_block_os(struct args * const restrict args, size_t const is, size_t const ie, size_t const ks, size_t const ke)
 {
   size_t i, k;
+
   for (k=ks; k<ke; ++k) { 
     args->k = k;
 
@@ -148,6 +149,7 @@ S_floyd_block_ooc(struct args * const restrict args, size_t const is, size_t con
   size_t i, k;
   size_t const n = args->n;
   double * const restrict a = args->a;
+
   for (k=ks; k<ke; ++k) {
     args->k = k;
 
