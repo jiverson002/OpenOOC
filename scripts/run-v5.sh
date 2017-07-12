@@ -8,7 +8,7 @@ function run() {
   eval "echo $CMD $@ >> $LOG"
   eval "$CMD $@ >> $LOG 2>&1"
   # TODO Start monitor here
-  # ./mon.sh matmult 4 &
+  # ./mon-v5.sh matmult 4 &
   NBLOCKS=`cat /proc/diskstats | grep sdb1 | awk '{print $6}'`
   printf "  I/O (GB)     = %9.5f\n" `echo "scale=10; ($NBLOCKS - $OBLOCKS) * 512 / 1024^3" | bc` >> $LOG
 }
