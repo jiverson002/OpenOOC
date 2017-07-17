@@ -1,0 +1,39 @@
+/usr/bin/time build/bin/floyd -l3221225472 -n23040 -x1 -t4 -f0
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Mon Jun 26 14:08:16 2017
+  Machine info =    bd4-umh
+  Run date     = Mon Jun 26 14:18:24 2017
+  Git commit   =    931242c
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =          1
+  # fibers     =          0
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f125ea4d000 (139716873998336) -- 0x7f135bc4d000 (139721120731136)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    4.97788
+  Compute      = 713491.59726
+20647.13user 179495.39system 198:11:43elapsed 28%CPU (0avgtext+0avgdata 3786436maxresident)k
+191106188504inputs+8outputs (23887802287major+3670518757minor)pagefaults 0swaps
+  I/O (GB)     = 91157.55540
+/usr/bin/time build/bin/floyd -l3221225472 -n23040 -x1 -t4 -f1
+Command terminated by signal 15
+75621.07user 384244.04system 183:22:53elapsed 69%CPU (0avgtext+0avgdata 3784692maxresident)k
+161375740592inputs+0outputs (20171671379major+3408273573minor)pagefaults 0swaps

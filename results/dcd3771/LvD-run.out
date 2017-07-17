@@ -1,0 +1,451 @@
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f0
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Thu Jul 13 12:27:56 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =          0
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f6cfb665000 (140106050981888) -- 0x7f6df8865000 (140110297714688)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.64736
+  Compute      = 8524.28561
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   17.68324
+  Compute      =   93.75725
+31972.57user 112.05system 2:22:16elapsed 375%CPU (0avgtext+0avgdata 3771432maxresident)k
+68089984inputs+8outputs (11634628major+10762680minor)pagefaults 0swaps
+  I/O (GB)     =  32.51720
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f1
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Thu Jul 13 14:50:13 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =          1
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f3e93892000 (139906739937280) -- 0x7f3f90a92000 (139910986670080)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.27929
+  Compute      = 8749.21692
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.79040
+  Compute      =   90.66411
+31733.59user 737.04system 2:26:01elapsed 370%CPU (0avgtext+0avgdata 3771344maxresident)k
+69414096inputs+8outputs (11232900major+12635149minor)pagefaults 0swaps
+  I/O (GB)     =  33.14750
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f2
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Thu Jul 13 17:16:14 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =          2
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f5fc1f13000 (140049252429824) -- 0x7f60bf113000 (140053499162624)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.49660
+  Compute      = 8740.37600
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.10025
+  Compute      =   89.55562
+31314.00user 770.11system 2:25:52elapsed 366%CPU (0avgtext+0avgdata 3783076maxresident)k
+68071272inputs+8outputs (10137110major+22793944minor)pagefaults 0swaps
+  I/O (GB)     =  32.49191
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f4
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Thu Jul 13 19:42:07 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =          4
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7fee21a53000 (140660743417856) -- 0x7fef1ec53000 (140664990150656)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.52167
+  Compute      = 8761.63050
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   17.93329
+  Compute      =   89.16245
+31252.34user 788.75system 2:26:13elapsed 365%CPU (0avgtext+0avgdata 3770020maxresident)k
+68608432inputs+16outputs (10531354major+24969837minor)pagefaults 0swaps
+  I/O (GB)     =  32.75776
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f8
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Thu Jul 13 22:08:21 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =          8
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7ff218a09000 (140677771988992) -- 0x7ff315c09000 (140682018721792)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.38115
+  Compute      = 8834.77200
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.82586
+  Compute      =   88.99222
+31453.13user 795.80system 2:27:26elapsed 364%CPU (0avgtext+0avgdata 3769024maxresident)k
+68407224inputs+8outputs (10729173major+24546856minor)pagefaults 0swaps
+  I/O (GB)     =  32.65990
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f16
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 00:35:48 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =         16
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7fdb6edaa000 (140580434386944) -- 0x7fdc6bfaa000 (140584681119744)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.47023
+  Compute      = 8752.85738
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.06029
+  Compute      =   89.55269
+31357.67user 813.27system 2:26:04elapsed 367%CPU (0avgtext+0avgdata 3768628maxresident)k
+68583112inputs+8outputs (10794553major+24549028minor)pagefaults 0swaps
+  I/O (GB)     =  32.74146
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f32
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 03:01:54 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =         32
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f37f8cfd000 (139878374297600) -- 0x7f38f5efd000 (139882621030400)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.51368
+  Compute      = 8757.61386
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.27484
+  Compute      =   89.30705
+31288.74user 798.35system 2:26:09elapsed 365%CPU (0avgtext+0avgdata 3783852maxresident)k
+68093416inputs+16outputs (10746028major+24467487minor)pagefaults 0swaps
+  I/O (GB)     =  32.51353
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f64
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 05:28:03 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =         64
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f3cd188e000 (139899190173696) -- 0x7f3dcea8e000 (139903436906496)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.52052
+  Compute      = 8749.56138
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.11208
+  Compute      =   89.50175
+31328.09user 798.49system 2:26:01elapsed 366%CPU (0avgtext+0avgdata 3776872maxresident)k
+68739760inputs+8outputs (10820320major+24765605minor)pagefaults 0swaps
+  I/O (GB)     =  32.85170
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f128
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 07:54:05 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =        128
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f6b90744000 (140099961765888) -- 0x7f6c8d944000 (140104208498688)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.30521
+  Compute      = 8759.58180
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   19.03369
+  Compute      =   89.59202
+31395.60user 809.46system 2:26:11elapsed 367%CPU (0avgtext+0avgdata 3773192maxresident)k
+68902064inputs+8outputs (10870544major+24921276minor)pagefaults 0swaps
+  I/O (GB)     =  32.89825
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f256
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 10:20:18 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =        256
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7fa24ab5b000 (140335014850560) -- 0x7fa347d5b000 (140339261583360)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.45193
+  Compute      = 8767.45497
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   18.48928
+  Compute      =   89.44780
+31373.27user 817.24system 2:26:19elapsed 366%CPU (0avgtext+0avgdata 3769748maxresident)k
+69687928inputs+16outputs (11008864major+24517882minor)pagefaults 0swaps
+  I/O (GB)     =  33.27333
+/usr/bin/time build/bin/floyd -n23040 -x6144 -l3221225472 -t4 -f512
+===========================
+ General ==================
+===========================
+  GCC version  = gcc (Ubuntu 4.8.4-2ubuntu1~14.04.3) 4.8.4
+  Build date   = Fri Jul 07 13:21:53 2017
+  Machine info =    bd4-umh
+  Run date     = Fri Jul 14 12:46:38 2017
+  Git commit   =    96151c1
+  SysPage size =       4096
+
+===========================
+ Problem ==================
+===========================
+  lock memory  = 3221225472
+  n            =      23040
+  x            =       6144
+  # fibers     =        512
+  # threads    =          4
+
+===========================
+ Status ===================
+===========================
+  Generating matrices...
+  A @ 0x7f257d039000 (139798987902976) -- 0x7f267a239000 (139803234635776)
+  Computing Floyd all-pairs shortest path...
+
+===========================
+ Timing (s) ===============
+===========================
+  Generate     =    5.99747
+  Compute      = 8768.22543
+
+===========================
+ CPU Utilization (%) ======
+===========================
+  Generate     =   16.48278
+  Compute      =   89.40427
+31360.65user 817.83system 2:26:20elapsed 366%CPU (0avgtext+0avgdata 3769232maxresident)k
+70538456inputs+8outputs (11098084major+24829935minor)pagefaults 0swaps
+  I/O (GB)     =  33.67728
