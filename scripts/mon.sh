@@ -1,7 +1,7 @@
 #! /bin/bash
 
-# So that script can be started before $1 processes are started
-sleep 5
+# So that script can be started before processes are started
+sleep 10
 
 while : ; do
   # check exit condition
@@ -9,7 +9,7 @@ while : ; do
 
   # print [cpu mem] for each relevant process, all on one line
   tm=`date +%s`
-  top -d 1.0 -Hbn3 -o -PID | grep $1 | awk -v np=$3 -v tm=$tm \
+  top -d 1.0 -Hbn3 -o -PID | grep $2 | awk -v np=$3 -v tm=$tm \
     '{                                                        \
       if (1 == NR%np)                                         \
         printf "%lu ", tm++;                                  \
