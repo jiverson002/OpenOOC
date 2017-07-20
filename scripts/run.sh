@@ -1,13 +1,13 @@
 #! /bin/bash
 
-EXE="floyd"
+#EXE="floyd"
 #ARG="-n23040 -x1"
-ARG="-n23040 -x6144"
+#ARG="-n23040 -x6144"
 
-#EXE="matmult"
+EXE="matmult"
 #ARG="-n1760 -m65536  -p1760 -y1    -x1     -z1"
 #ARG="-n1760 -m65536  -p1760 -y1760 -x32768 -z1760"
-#ARG="-n1760 -m262144 -p1760 -y1760 -x32768 -z1760"
+ARG="-n1760 -m262144 -p1760 -y1760 -x32768 -z1760"
 
 # bin directory
 BIN="build/bin"
@@ -28,8 +28,9 @@ MON="$TMP-mon.out"
 CMD="/usr/bin/time $BIN/$EXE $ARG"
 
 function mon() {
+  echo "$CMD $@" >> $MON
   # start cpu monitor
-  scripts/mon.sh "$MON" "$EXE" "$1" &
+  scripts/mon.sh "$MON" "$EXE" &
 }
 
 function run() {
@@ -43,13 +44,15 @@ function run() {
 
 for l in $1 ; do
   for t in $2 ; do
-    mon $t
-
     for f in $3 ; do
       sudo fstrim /scratch-ssd
-      run -l$l -t$t -f$f
-    done
 
-    killall mon.sh
+      mon -l$l -t$t -f$f
+
+      run -l$l -t$t -f$f
+
+      # wait for mon.sh to kill itself
+      sleep 5
+    done
   done
 done
