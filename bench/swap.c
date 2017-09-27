@@ -154,6 +154,7 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   for (i=0; i<n_pages; ++i) {
     S_swap_helper(1, p_size, c_size, n_pages, n_clust, page, i);
   }
+  printf("  Initialized %.2f MiB...\n", (double)m_size/1048576.0);
 
   /* Try to clear buffer caches. */
   sync();
@@ -167,7 +168,7 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   S_gettime(&ts);
   #pragma omp parallel for num_threads(n_threads) schedule(static)
   for (i=0; i<n_pages; ++i) {
-    S_swap_helper(0, p_size, c_size, n_pages, n_clust, page, i);
+    S_swap_helper(1, p_size, c_size, n_pages, n_clust, page, i);
   }
   S_gettime(&te);
   r_sec = S_getelapsed(&ts, &te);
@@ -181,7 +182,7 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   S_gettime(&ts);
   #pragma omp parallel for num_threads(n_threads) schedule(static)
   for (i=0; i<n_pages; ++i) {
-    S_swap_helper(1, p_size, c_size, n_pages, n_clust, page, i);
+    S_swap_helper(0, p_size, c_size, n_pages, n_clust, page, i);
   }
   S_gettime(&te);
   w_sec = S_getelapsed(&ts, &te);
@@ -201,9 +202,11 @@ S_swap_test(int const fill_dram, size_t const p_size, size_t const c_size,\
   printf("  RD time (s)     = %11.5f\n", r_sec);
   printf("  RD bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/r_sec);
   printf("  RD latency (ns) = %11.0f\n", r_sec*1e9/(double)n_pages);
+  printf("  RD latency (ns) = %11.0f\n", r_sec*1e9/(double)(usage2.ru_majflt-usage1.ru_majflt));
   printf("  WR time (s)     = %11.5f\n", w_sec);
   printf("  WR bw (MiB/s)   = %11.0f\n", (double)(n_pages*p_size)/1048576.0/w_sec);
   printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)n_pages);
+  printf("  WR latency (ns) = %11.0f\n", w_sec*1e9/(double)(usage3.ru_majflt-usage2.ru_majflt));
   printf("\n");
   printf("===============================\n");
   printf(" Page faults ==================\n");

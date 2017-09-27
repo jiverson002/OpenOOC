@@ -145,6 +145,6 @@ S_printbuildinfo(time_t const * const now, size_t const p_size,
   printf("  Git commit      = %11s\n", STR(COMMIT));
   printf("  PageCluster (B) = %11zu\n", c_size);
   printf("  SysPage (B)     = %11zu\n", p_size);
-  printf("  Memlock Max     = %11lu\n", (long unsigned)rlim.rlim_max);
+  printf("  Memlock Max (B) = %11lu\n", (long unsigned)rlim.rlim_max);
   printf("\n");
 }
